@@ -1,11 +1,18 @@
 ## Image Optimizer for Visual Studio
 
-[![Build status](https://ci.appveyor.com/api/projects/status/hv6uyc059rqbc6fj?svg=true)](https://ci.appveyor.com/project/madskristensen/extensibilitytools)
+[![Build status](https://ci.appveyor.com/api/projects/status/26hxodkud0i54rv5?svg=true)](https://ci.appveyor.com/project/madskristensen/imageoptimizer)
 
 Optimizes any image files losslessly.
 
-Download this extension from the [VS Gallery](https://visualstudiogallery.msdn.microsoft.com/ab39a092-1343-46e2-b0f1-6a3f91155aa6)
-or get the [nightly build](http://vsixgallery.com/extension/f8330d54-0469-43a7-8fc0-7f19febeb897/).
+Download this extension from the [VS Gallery](https://visualstudiogallery.msdn.microsoft.com/a56eddd3-d79b-48ac-8c8f-2db06ade77c3)
+or get the [nightly build](http://vsixgallery.com/extension/bf95754f-93d3-42ff-bfe3-e05d23188b08/).
+
+- Optimizes PNGs
+- Optimizes GIFs
+- Optimizes animated GIFs
+- Optimizes JPGs
+- Works on single images files or entire folders
+
 
 ### Context menu
 Simply right-click any file or folder containing images and click the
@@ -15,3 +22,5 @@ Simply right-click any file or folder containing images and click the
 
 ### Output window
 The Output Window shows the detailed output from the optimization process.
+
+![Output window](art/output-window.png)
