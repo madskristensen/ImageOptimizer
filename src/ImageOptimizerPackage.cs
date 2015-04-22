@@ -62,7 +62,7 @@ namespace MadsKristensen.ImageOptimizer
                 var result = compressor.CompressFile(file);
                 HandleResult(result);
 
-                if (result.Saving > 0)
+                if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
                     list.Add(result);
             }
 
