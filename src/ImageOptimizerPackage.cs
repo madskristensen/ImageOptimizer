@@ -22,7 +22,7 @@ namespace MadsKristensen.ImageOptimizer
         public const string Version = "1.0";
         public DTE2 _dte;
         public static ImageOptimizerPackage Instance;
-        private IEnumerable<string> _selectedPaths;
+        private List<string> _selectedPaths;
 
         protected override void Initialize()
         {
@@ -40,9 +40,9 @@ namespace MadsKristensen.ImageOptimizer
         void MenuOptimizeBeforeQueryStatus(object sender, EventArgs e)
         {
             OleMenuCommand button = (OleMenuCommand)sender;
-            _selectedPaths = GetSelectedFilePaths().Where(file => Compressor.IsFileSupported(file));
+            _selectedPaths = GetSelectedFilePaths().Where(file => Compressor.IsFileSupported(file)).ToList();
 
-            int items = _selectedPaths.Count();
+            int items = _selectedPaths.Count;
 
             button.Text = items == 1 ? "Optimize image" : "Optimize images";
             button.Enabled = items > 0;
@@ -50,26 +50,28 @@ namespace MadsKristensen.ImageOptimizer
 
         private void OptimizeImage(object sender, EventArgs e)
         {
-            string text = _selectedPaths.Count() == 1 ? " image" : " images";
-            _dte.StatusBar.Text = "Optimizing " + _selectedPaths.Count() + text + "...";
-            _dte.StatusBar.Animate(true, vsStatusAnimation.vsStatusAnimationDeploy);
+            string text = _selectedPaths.Count == 1 ? " image" : " images";
+            _dte.StatusBar.Progress(true, "Optimizing " + _selectedPaths.Count + text + "...", AmountCompleted: 0, Total: _selectedPaths.Count);
 
             Compressor compressor = new Compressor();
             List<CompressionResult> list = new List<CompressionResult>();
 
-            foreach (string file in _selectedPaths)
+            System.Threading.ThreadPool.QueueUserWorkItem((o) =>
             {
-                var result = compressor.CompressFile(file);
-                HandleResult(result);
+                for (int i = 0; i < _selectedPaths.Count - 1; i++)
+                {
+                    string file = _selectedPaths[i];
 
-                if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
-                    list.Add(result);
-            }
+                    var result = compressor.CompressFile(file);
+                    HandleResult(result, i + 1);
 
-            _dte.StatusBar.Animate(false, vsStatusAnimation.vsStatusAnimationDeploy);
+                    if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
+                        list.Add(result);
+                }
 
-            if (list.Any())
+                _dte.StatusBar.Progress(false);
                 DisplayEndResult(list);
+            });
         }
 
         public IEnumerable<string> GetSelectedFilePaths()
@@ -93,11 +95,11 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private void HandleResult(CompressionResult result)
+        private void HandleResult(CompressionResult result, int count)
         {
             string name = Path.GetFileName(result.OriginalFileName);
 
-            if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
+            if (result.Saving > 0)
             {
                 if (_dte.SourceControl.IsItemUnderSCC(result.OriginalFileName) && !_dte.SourceControl.IsItemCheckedOut(result.OriginalFileName))
                     _dte.SourceControl.CheckOutItem(result.OriginalFileName);
@@ -105,13 +107,14 @@ namespace MadsKristensen.ImageOptimizer
                 File.Copy(result.ResultFileName, result.OriginalFileName, true);
 
                 string text = "Compressed " + name + " by " + result.Saving + " bytes / " + result.Percent + "%";
-                _dte.StatusBar.Text = text;
-                Logger.Log(result.ToString());
+                _dte.StatusBar.Progress(true, text, AmountCompleted: count, Total: _selectedPaths.Count);
             }
             else
             {
-                _dte.StatusBar.Text = name + " is already optimized";
+                _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count);
             }
+
+            Logger.Log(result.ToString());
         }
 
         private void DisplayEndResult(List<CompressionResult> list)
@@ -123,7 +126,8 @@ namespace MadsKristensen.ImageOptimizer
             if (savings > 0)
             {
                 double percent = Math.Round(100 - ((double)results / (double)originals * 100), 1, MidpointRounding.AwayFromZero);
-                _dte.StatusBar.Text = list.Count + " images optimized. Total saving of " + savings + " bytes / " + percent + "%";
+                string image = list.Count == 1 ? "image" : "images";
+                _dte.StatusBar.Text = list.Count + " " + image + " optimized. Total saving of " + savings + " bytes / " + percent + "%"; ;
             }
             else
             {

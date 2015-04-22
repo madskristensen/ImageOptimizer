@@ -53,7 +53,7 @@ namespace MadsKristensen.ImageOptimizer
             switch (ext)
             {
             case ".png":
-                return string.Format(CultureInfo.CurrentCulture, "/c png.cmd \"{0}\" \"{1}\"", sourceFile, targetFile);
+                return string.Format(CultureInfo.CurrentCulture, "/c pngout \"{0}\" \"{1}\" /s0 /y /v /kpHYs /force", sourceFile, targetFile);
 
             case ".jpg":
             case ".jpeg":
