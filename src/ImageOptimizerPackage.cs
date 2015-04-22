@@ -58,7 +58,7 @@ namespace MadsKristensen.ImageOptimizer
 
             System.Threading.ThreadPool.QueueUserWorkItem((o) =>
             {
-                for (int i = 0; i < _selectedPaths.Count - 1; i++)
+                for (int i = 0; i < _selectedPaths.Count; i++)
                 {
                     string file = _selectedPaths[i];
 
