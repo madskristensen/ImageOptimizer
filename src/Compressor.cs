@@ -29,7 +29,7 @@ namespace MadsKristensen.ImageOptimizer
             var process = new Process();
             process.StartInfo = start;
             process.Start();
-            process.WaitForExit(5000);
+            process.WaitForExit();
 
             return new CompressionResult(fileName, targetFile);
         }
