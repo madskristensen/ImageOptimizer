@@ -15,7 +15,7 @@ namespace MadsKristensen.ImageOptimizer
 
         public CompressionResult CompressFile(string fileName)
         {
-            string targetFile = Path.ChangeExtension(Path.GetTempFileName(), Path.GetExtension(fileName));
+            string targetFile = Path.GetTempFileName();
 
             ProcessStartInfo start = new ProcessStartInfo("cmd")
             {
