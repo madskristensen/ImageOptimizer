@@ -116,7 +116,7 @@ namespace MadsKristensen.ImageOptimizer
 
             if (string.IsNullOrEmpty(result.ResultFileName) && File.Exists(result.ResultFileName))
             {
-                File.Delete(result.ResultFileName)
+                File.Delete(result.ResultFileName);
             }
 
             Logger.Log(result.ToString());
