@@ -15,7 +15,7 @@ namespace MadsKristensen.ImageOptimizer
 
         public CompressionResult CompressFile(string fileName)
         {
-            string targetFile = Path.GetTempFileName();
+            string targetFile = CreateTempFileName(Path.GetExtension(fileName));
 
             ProcessStartInfo start = new ProcessStartInfo("cmd")
             {
@@ -32,6 +32,20 @@ namespace MadsKristensen.ImageOptimizer
             process.WaitForExit();
 
             return new CompressionResult(fileName, targetFile);
+        }
+
+        private static string CreateTempFileName(string extension)
+        {
+            switch(extension)
+            {
+                case ".png":
+                    string tempFileName = Path.GetTempFileName();
+                    string tempFileNameWithExt = Path.ChangeExtension(tempFileName, extension);
+                    File.Delete(tempFileName);
+                    return tempFileNameWithExt;
+                default:
+                    return Path.GetTempFileName();
+            }
         }
 
         private static string GetArguments(string sourceFile, string targetFile)
