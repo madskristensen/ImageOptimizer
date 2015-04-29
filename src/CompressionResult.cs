@@ -17,10 +17,14 @@ namespace MadsKristensen.ImageOptimizer
                 OriginalFileSize = original.Length;
             }
 
-            if (result.Exists)
+            if (result.Exists && result.Length > 0)
             {
                 ResultFileName = result.FullName;
                 ResultFileSize = result.Length;
+            }
+            else
+            {
+                ResultFileSize = OriginalFileSize;
             }
         }
 

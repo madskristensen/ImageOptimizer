@@ -26,10 +26,13 @@ namespace MadsKristensen.ImageOptimizer
                 CreateNoWindow = true,
             };
 
-            var process = new Process();
-            process.StartInfo = start;
-            process.Start();
-            process.WaitForExit();
+            if (!string.IsNullOrEmpty(start.Arguments))
+            {
+                var process = new Process();
+                process.StartInfo = start;
+                process.Start();
+                process.WaitForExit();
+            }
 
             return new CompressionResult(fileName, targetFile);
         }
