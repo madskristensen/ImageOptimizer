@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MadsKristensen.ImageOptimizer
 {
-    class CompressionResult
+    public class CompressionResult
     {
         public CompressionResult(string originalFileName, string resultFileName)
         {

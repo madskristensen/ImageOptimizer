@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MadsKristensen.ImageOptimizer
 {
-    class Compressor
+    public class Compressor
     {
         private static string[] _supported = new[] { ".png", ".jpg", ".jpeg", ".gif" };
 
