@@ -99,7 +99,7 @@ namespace MadsKristensen.ImageOptimizer
         {
             string name = Path.GetFileName(result.OriginalFileName);
 
-            if (result.Saving > 0)
+            if (result.Saving > 0 && File.Exists(result.ResultFileName))
             {
                 if (_dte.SourceControl.IsItemUnderSCC(result.OriginalFileName) && !_dte.SourceControl.IsItemCheckedOut(result.OriginalFileName))
                     _dte.SourceControl.CheckOutItem(result.OriginalFileName);
