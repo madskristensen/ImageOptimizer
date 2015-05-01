@@ -114,6 +114,11 @@ namespace MadsKristensen.ImageOptimizer
                 _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count);
             }
 
+            if (!string.IsNullOrEmpty(result.ResultFileName) && File.Exists(result.ResultFileName))
+            {
+                File.Delete(result.ResultFileName);
+            }
+
             Logger.Log(result.ToString());
         }
 

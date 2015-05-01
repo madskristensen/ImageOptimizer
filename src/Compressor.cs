@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 
 namespace MadsKristensen.ImageOptimizer
 {
-    class Compressor
+    public class Compressor
     {
         private static string[] _supported = new[] { ".png", ".jpg", ".jpeg", ".gif" };
 
         public CompressionResult CompressFile(string fileName)
         {
-            string targetFile = Path.ChangeExtension(Path.GetTempFileName(), Path.GetExtension(fileName));
+            string targetFile = CreateTempFileName(Path.GetExtension(fileName));
 
             ProcessStartInfo start = new ProcessStartInfo("cmd")
             {
@@ -26,12 +26,29 @@ namespace MadsKristensen.ImageOptimizer
                 CreateNoWindow = true,
             };
 
-            var process = new Process();
-            process.StartInfo = start;
-            process.Start();
-            process.WaitForExit();
+            if (!string.IsNullOrEmpty(start.Arguments))
+            {
+                var process = new Process();
+                process.StartInfo = start;
+                process.Start();
+                process.WaitForExit();
+            }
 
             return new CompressionResult(fileName, targetFile);
+        }
+
+        private static string CreateTempFileName(string extension)
+        {
+            switch(extension)
+            {
+                case ".png":
+                    string tempFileName = Path.GetTempFileName();
+                    string tempFileNameWithExt = Path.ChangeExtension(tempFileName, extension);
+                    File.Delete(tempFileName);
+                    return tempFileNameWithExt;
+                default:
+                    return Path.GetTempFileName();
+            }
         }
 
         private static string GetArguments(string sourceFile, string targetFile)

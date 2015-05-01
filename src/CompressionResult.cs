@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MadsKristensen.ImageOptimizer
 {
-    class CompressionResult
+    public class CompressionResult
     {
         public CompressionResult(string originalFileName, string resultFileName)
         {
@@ -17,10 +17,14 @@ namespace MadsKristensen.ImageOptimizer
                 OriginalFileSize = original.Length;
             }
 
-            if (result.Exists)
+            if (result.Exists && result.Length > 0)
             {
                 ResultFileName = result.FullName;
                 ResultFileSize = result.Length;
+            }
+            else
+            {
+                ResultFileSize = OriginalFileSize;
             }
         }
 
