@@ -65,6 +65,9 @@ namespace MadsKristensen.ImageOptimizer
                     var result = compressor.CompressFile(file);
                     HandleResult(result, i + 1);
 
+                    if (File.Exists(result.ResultFileName))
+                        File.Delete(result.ResultFileName);
+
                     if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
                         list.Add(result);
                 }
@@ -114,7 +117,8 @@ namespace MadsKristensen.ImageOptimizer
                 _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count);
             }
 
-            Logger.Log(result.ToString());
+            if (result.Saving > 0)
+                Logger.Log(result.ToString());
         }
 
         private void DisplayEndResult(List<CompressionResult> list)
