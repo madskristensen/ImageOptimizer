@@ -20,12 +20,15 @@ and other metadata.
 - Optimizes animated GIFs
 - Optimizes JPGs
 - Works on single images files or entire folders
+- Copy any image as base64 dataURI to clipboard
 
 ### Context menu
 Simply right-click any file or folder containing images and click the
 *Optimize Image* button.
 
 ![Context menu](art/context-menu.png)
+
+You can also right-click a folder to optimize all images inside it.
 
 ### Output window
 The Output Window shows the detailed output from the optimization process.
