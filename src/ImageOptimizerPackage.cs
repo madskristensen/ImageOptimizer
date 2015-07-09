@@ -46,11 +46,10 @@ namespace MadsKristensen.ImageOptimizer
 
         void CopyBeforeQueryStatus(object sender, EventArgs e)
         {
+            OleMenuCommand button = (OleMenuCommand)sender;
             _copyPath = GetSelectedFilePaths().FirstOrDefault();
 
-            if (string.IsNullOrEmpty(_copyPath) || !Compressor.IsFileSupported(_copyPath))
-                return;
-
+            button.Visible = !string.IsNullOrEmpty(_copyPath) && Compressor.IsFileSupported(_copyPath);
         }
 
         private void CopyAsBase64(object sender, EventArgs e)
@@ -108,7 +107,7 @@ namespace MadsKristensen.ImageOptimizer
             int items = _selectedPaths.Count;
 
             button.Text = items == 1 ? "Optimize image" : "Optimize images";
-            button.Enabled = items > 0;
+            button.Visible = items > 0;
         }
 
         private void OptimizeImage(object sender, EventArgs e)
