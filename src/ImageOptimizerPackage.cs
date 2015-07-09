@@ -4,6 +4,7 @@ using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
@@ -23,6 +24,7 @@ namespace MadsKristensen.ImageOptimizer
         public DTE2 _dte;
         public static ImageOptimizerPackage Instance;
         private List<string> _selectedPaths;
+        private string _copyPath;
 
         protected override void Initialize()
         {
@@ -35,6 +37,67 @@ namespace MadsKristensen.ImageOptimizer
             OleMenuCommand menuOptimize = new OleMenuCommand(OptimizeImage, cmdOptimize);
             menuOptimize.BeforeQueryStatus += MenuOptimizeBeforeQueryStatus;
             mcs.AddCommand(menuOptimize);
+
+            CommandID cmdCopy = new CommandID(GuidList.guidImageOptimizerCmdSet, (int)PackageCommands.cmdCopyDataUri);
+            OleMenuCommand menuCopy = new OleMenuCommand(CopyAsBase64, cmdCopy);
+            menuCopy.BeforeQueryStatus += CopyBeforeQueryStatus;
+            mcs.AddCommand(menuCopy);
+        }
+
+        void CopyBeforeQueryStatus(object sender, EventArgs e)
+        {
+            _copyPath = GetSelectedFilePaths().FirstOrDefault();
+
+            if (string.IsNullOrEmpty(_copyPath) || !Compressor.IsFileSupported(_copyPath))
+                return;
+
+        }
+
+        private void CopyAsBase64(object sender, EventArgs e)
+        {
+            string base64 = "data:"
+                        + GetMimeTypeFromFileExtension(_copyPath)
+                        + ";base64,"
+                        + Convert.ToBase64String(File.ReadAllBytes(_copyPath));
+
+            Clipboard.SetText(base64);
+
+            _dte.StatusBar.Text = "DataURI copied to clipboard (" + base64.Length + " characters)";
+        }
+
+        private static string GetMimeTypeFromFileExtension(string file)
+        {
+            string ext = Path.GetExtension(file).TrimStart('.');
+
+            switch (ext)
+            {
+                case "jpg":
+                case "jpeg":
+                    return "image/jpeg";
+                case "svg":
+                    return "image/svg+xml";
+                case "png":
+                case "gif":
+                case "tiff":
+                case "webp":
+                case "bmp":
+                    return "image/" + ext;
+
+                case "woff":
+                    return "font/x-woff";
+
+                case "otf":
+                    return "font/otf";
+
+                case "eot":
+                    return "application/vnd.ms-fontobject";
+
+                case "ttf":
+                    return "application/octet-stream";
+
+                default:
+                    return "text/plain";
+            }
         }
 
         void MenuOptimizeBeforeQueryStatus(object sender, EventArgs e)

@@ -21,6 +21,8 @@ namespace MadsKristensen.ImageOptimizer
     {
         public const int MyMenuGroup = 0x1020;
         public const int cmdOptimizeImage = 0x0100;
-        public const int logo = 0x0001;
+        public const int cmdCopyDataUri = 0x0200;
+        public const int optimize = 0x0001;
+        public const int copy = 0x0002;
     }
 }
