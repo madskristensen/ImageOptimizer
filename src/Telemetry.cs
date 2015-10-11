@@ -14,9 +14,6 @@ namespace MadsKristensen.ImageOptimizer
         private const string TELEMETRY_KEY = "367cd134-ade0-4111-a928-c7a1e3b0bb00";
         private static DTEEvents _events;
 
-        /// <summary>Determines if telemetry should be reported.</summary>
-        public static bool Enabled { get; set; } = true;
-
         private static TelemetryClient GetAppInsightsClient()
         {
             TelemetryClient client = new TelemetryClient();
@@ -46,10 +43,7 @@ namespace MadsKristensen.ImageOptimizer
         public static void TrackEvent(string key)
         {
 #if !DEBUG
-            if (Enabled)
-            {
-                _telemetry.TrackEvent(key);
-            }
+            _telemetry.TrackEvent(key);
 #endif
         }
 
@@ -57,12 +51,9 @@ namespace MadsKristensen.ImageOptimizer
         public static void TrackException(Exception ex)
         {
 #if !DEBUG
-            if (Enabled)
-            {
-                var telex = new Microsoft.ApplicationInsights.DataContracts.ExceptionTelemetry(ex);
-                telex.HandledAt = Microsoft.ApplicationInsights.DataContracts.ExceptionHandledAt.UserCode;
-                _telemetry.TrackException(telex);
-            }
+            var telex = new Microsoft.ApplicationInsights.DataContracts.ExceptionTelemetry(ex);
+            telex.HandledAt = Microsoft.ApplicationInsights.DataContracts.ExceptionHandledAt.UserCode;
+            _telemetry.TrackException(telex);
 #endif
         }
     }
