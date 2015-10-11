@@ -31,6 +31,7 @@ namespace MadsKristensen.ImageOptimizer
             base.Initialize();
             _dte = GetService(typeof(DTE)) as DTE2;
             Instance = this;
+            Telemetry.Initialize(_dte);
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             CommandID cmdOptimize = new CommandID(GuidList.guidImageOptimizerCmdSet, (int)PackageCommands.cmdOptimizeImage);
@@ -60,6 +61,7 @@ namespace MadsKristensen.ImageOptimizer
                         + Convert.ToBase64String(File.ReadAllBytes(_copyPath));
 
             Clipboard.SetText(base64);
+            Telemetry.TrackEvent("Copy as DataURI");
 
             _dte.StatusBar.Text = "DataURI copied to clipboard (" + base64.Length + " characters)";
         }
@@ -131,7 +133,14 @@ namespace MadsKristensen.ImageOptimizer
                         File.Delete(result.ResultFileName);
 
                     if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
+                    {
                         list.Add(result);
+                        Telemetry.TrackEvent(Path.GetExtension(file).ToLowerInvariant());
+                    }
+                    else
+                    {
+                        Telemetry.TrackEvent("Already optimized");
+                    }
                 }
 
                 _dte.StatusBar.Progress(false);

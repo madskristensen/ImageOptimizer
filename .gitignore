@@ -1,5 +1,6 @@
 *.suo
 *.user
+packages
 
 .vs
 bin

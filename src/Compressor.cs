@@ -45,8 +45,9 @@ namespace MadsKristensen.ImageOptimizer
             {
                 ext = Path.GetExtension(sourceFile).ToLowerInvariant();
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
+                Logger.Log(ex);
                 return null;
             }
 

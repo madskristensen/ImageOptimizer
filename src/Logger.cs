@@ -36,6 +36,7 @@ namespace MadsKristensen.ImageOptimizer
             if (ex != null)
             {
                 Log(ex.ToString());
+                Telemetry.TrackException(ex);
             }
         }
 
