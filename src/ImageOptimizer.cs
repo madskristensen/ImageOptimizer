@@ -5,7 +5,7 @@ namespace MadsKristensen.ImageOptimizer
     /// <summary>
     /// Helper class that exposes all GUIDs used across VS Package.
     /// </summary>
-    internal sealed partial class GuidList
+    internal sealed partial class PackageGuids
     {
         public const string guidImageOptimizerPkgString = "bf95754f-93d3-42ff-bfe3-e05d23188b08";
         public const string guidImageOptimizerCmdSetString = "d3662d85-2693-4ff5-97aa-3878453c787b";
@@ -17,7 +17,7 @@ namespace MadsKristensen.ImageOptimizer
     /// <summary>
     /// Helper class that encapsulates all CommandIDs uses across VS Package.
     /// </summary>
-    internal sealed partial class PackageCommands
+    internal sealed partial class PackageIds
     {
         public const int MyMenuGroup = 0x1020;
         public const int cmdOptimizeImage = 0x0100;

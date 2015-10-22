@@ -17,7 +17,7 @@ namespace MadsKristensen.ImageOptimizer
     [InstalledProductRegistration("#110", "#112", Version, IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
-    [Guid(GuidList.guidImageOptimizerPkgString)]
+    [Guid(PackageGuids.guidImageOptimizerPkgString)]
     public sealed class ImageOptimizerPackage : Package
     {
         public const string Version = "1.0";
@@ -34,12 +34,12 @@ namespace MadsKristensen.ImageOptimizer
             Telemetry.Initialize(_dte);
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            CommandID cmdOptimize = new CommandID(GuidList.guidImageOptimizerCmdSet, (int)PackageCommands.cmdOptimizeImage);
+            CommandID cmdOptimize = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizeImage);
             OleMenuCommand menuOptimize = new OleMenuCommand(OptimizeImage, cmdOptimize);
             menuOptimize.BeforeQueryStatus += MenuOptimizeBeforeQueryStatus;
             mcs.AddCommand(menuOptimize);
 
-            CommandID cmdCopy = new CommandID(GuidList.guidImageOptimizerCmdSet, (int)PackageCommands.cmdCopyDataUri);
+            CommandID cmdCopy = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdCopyDataUri);
             OleMenuCommand menuCopy = new OleMenuCommand(CopyAsBase64, cmdCopy);
             menuCopy.BeforeQueryStatus += CopyBeforeQueryStatus;
             mcs.AddCommand(menuCopy);
@@ -48,7 +48,7 @@ namespace MadsKristensen.ImageOptimizer
         void CopyBeforeQueryStatus(object sender, EventArgs e)
         {
             OleMenuCommand button = (OleMenuCommand)sender;
-            _copyPath = GetSelectedFilePaths().FirstOrDefault();
+            _copyPath = ProjectHelpers.GetSelectedFilePaths().FirstOrDefault();
 
             button.Visible = !string.IsNullOrEmpty(_copyPath) && Compressor.IsFileSupported(_copyPath);
         }
@@ -104,7 +104,7 @@ namespace MadsKristensen.ImageOptimizer
         void MenuOptimizeBeforeQueryStatus(object sender, EventArgs e)
         {
             OleMenuCommand button = (OleMenuCommand)sender;
-            _selectedPaths = GetSelectedFilePaths().Where(file => Compressor.IsFileSupported(file)).ToList();
+            _selectedPaths = ProjectHelpers.GetSelectedFilePaths().Where(file => Compressor.IsFileSupported(file)).ToList();
 
             int items = _selectedPaths.Count;
 
@@ -146,27 +146,6 @@ namespace MadsKristensen.ImageOptimizer
                 _dte.StatusBar.Progress(false);
                 DisplayEndResult(list);
             });
-        }
-
-        public IEnumerable<string> GetSelectedFilePaths()
-        {
-            return GetSelectedItemPaths()
-                .SelectMany(p => Directory.Exists(p)
-                                 ? Directory.EnumerateFiles(p, "*", SearchOption.AllDirectories)
-                                 : new[] { p }
-                           );
-        }
-
-        public IEnumerable<string> GetSelectedItemPaths(DTE2 dte = null)
-        {
-            var items = (Array)_dte.ToolWindows.SolutionExplorer.SelectedItems;
-            foreach (UIHierarchyItem selItem in items)
-            {
-                var item = selItem.Object as ProjectItem;
-
-                if (item != null && item.Properties != null)
-                    yield return item.Properties.Item("FullPath").Value.ToString();
-            }
         }
 
         private void HandleResult(CompressionResult result, int count)

@@ -125,6 +125,7 @@
   <ItemGroup>
     <Compile Include="CompressionResult.cs" />
     <Compile Include="Compressor.cs" />
+    <Compile Include="Helpers\ProjectHelpers.cs" />
     <Compile Include="ImageOptimizer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -153,6 +154,9 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <None Include="packages.config" />
+    <Content Include="Resources\Tools\png.cmd">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -173,6 +177,9 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\Tools\jpegtran.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\Tools\optipng.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\Tools\pngout.exe">
