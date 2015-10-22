@@ -115,7 +115,7 @@ namespace MadsKristensen.ImageOptimizer
         private async System.Threading.Tasks.Task OptimizeImage(object sender, EventArgs e)
         {
             string text = _selectedPaths.Count == 1 ? " image" : " images";
-            _dte.StatusBar.Progress(true, "Optimizing " + _selectedPaths.Count + text + "...", AmountCompleted: 0, Total: _selectedPaths.Count);
+            _dte.StatusBar.Progress(true, "Optimizing " + _selectedPaths.Count + text + "...", AmountCompleted: 1, Total: _selectedPaths.Count + 1);
 
             Compressor compressor = new Compressor();
             List<CompressionResult> list = new List<CompressionResult>();
@@ -157,11 +157,11 @@ namespace MadsKristensen.ImageOptimizer
                 File.Copy(result.ResultFileName, result.OriginalFileName, true);
 
                 string text = "Compressed " + name + " by " + result.Saving + " bytes / " + result.Percent + "%";
-                _dte.StatusBar.Progress(true, text, AmountCompleted: count, Total: _selectedPaths.Count);
+                _dte.StatusBar.Progress(true, text, AmountCompleted: count, Total: _selectedPaths.Count + 1);
             }
             else
             {
-                _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count);
+                _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count + 1);
             }
 
             if (result.Saving > 0)
