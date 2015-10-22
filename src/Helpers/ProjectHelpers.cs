@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using EnvDTE;
 using EnvDTE80;
 
@@ -39,7 +41,7 @@ namespace MadsKristensen.ImageOptimizer
                 {
                     yield return proj.GetRootFolder();
                 }
-                else if (sol  != null && !string.IsNullOrEmpty(sol.FullName))
+                else if (sol != null && !string.IsNullOrEmpty(sol.FullName))
                 {
                     yield return Path.GetDirectoryName(sol.FullName);
                 }
@@ -81,6 +83,18 @@ namespace MadsKristensen.ImageOptimizer
                 return Path.GetDirectoryName(fullPath);
 
             return null;
+        }
+
+        public static Task WaitForExitAsync(this System.Diagnostics.Process process, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var tcs = new TaskCompletionSource<object>();
+            process.EnableRaisingEvents = true;
+            process.Exited += (sender, args) => tcs.TrySetResult(null);
+
+            if (cancellationToken != default(CancellationToken))
+                cancellationToken.Register(tcs.SetCanceled);
+
+            return tcs.Task;
         }
     }
 }

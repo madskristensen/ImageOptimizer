@@ -35,7 +35,7 @@ namespace MadsKristensen.ImageOptimizer
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             CommandID cmdOptimize = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizeImage);
-            OleMenuCommand menuOptimize = new OleMenuCommand(OptimizeImage, cmdOptimize);
+            OleMenuCommand menuOptimize = new OleMenuCommand(async (s, e) => { await OptimizeImage(s, e); }, cmdOptimize);
             menuOptimize.BeforeQueryStatus += MenuOptimizeBeforeQueryStatus;
             mcs.AddCommand(menuOptimize);
 
@@ -112,7 +112,7 @@ namespace MadsKristensen.ImageOptimizer
             button.Visible = items > 0;
         }
 
-        private void OptimizeImage(object sender, EventArgs e)
+        private async System.Threading.Tasks.Task OptimizeImage(object sender, EventArgs e)
         {
             string text = _selectedPaths.Count == 1 ? " image" : " images";
             _dte.StatusBar.Progress(true, "Optimizing " + _selectedPaths.Count + text + "...", AmountCompleted: 0, Total: _selectedPaths.Count);
@@ -120,32 +120,29 @@ namespace MadsKristensen.ImageOptimizer
             Compressor compressor = new Compressor();
             List<CompressionResult> list = new List<CompressionResult>();
 
-            System.Threading.ThreadPool.QueueUserWorkItem((o) =>
+            for (int i = 0; i < _selectedPaths.Count; i++)
             {
-                for (int i = 0; i < _selectedPaths.Count; i++)
+                string file = _selectedPaths[i];
+
+                var result = await compressor.CompressFileAsync(file);
+                HandleResult(result, i + 1);
+
+                if (File.Exists(result.ResultFileName))
+                    File.Delete(result.ResultFileName);
+
+                if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
                 {
-                    string file = _selectedPaths[i];
-
-                    var result = compressor.CompressFile(file);
-                    HandleResult(result, i + 1);
-
-                    if (File.Exists(result.ResultFileName))
-                        File.Delete(result.ResultFileName);
-
-                    if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
-                    {
-                        list.Add(result);
-                        Telemetry.TrackEvent(Path.GetExtension(file).ToLowerInvariant().Replace(".jpeg", ".jpg"));
-                    }
-                    else
-                    {
-                        Telemetry.TrackEvent("Already optimized");
-                    }
+                    list.Add(result);
+                    Telemetry.TrackEvent(Path.GetExtension(file).ToLowerInvariant().Replace(".jpeg", ".jpg"));
                 }
+                else
+                {
+                    Telemetry.TrackEvent("Already optimized");
+                }
+            }
 
-                _dte.StatusBar.Progress(false);
-                DisplayEndResult(list);
-            });
+            _dte.StatusBar.Progress(false);
+            DisplayEndResult(list);
         }
 
         private void HandleResult(CompressionResult result, int count)

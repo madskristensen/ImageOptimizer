@@ -13,7 +13,7 @@ namespace MadsKristensen.ImageOptimizer
     {
         private static string[] _supported = new[] { ".png", ".jpg", ".jpeg", ".gif" };
 
-        public CompressionResult CompressFile(string fileName)
+        public async Task<CompressionResult> CompressFileAsync(string fileName)
         {
             string targetFile = Path.ChangeExtension(Path.GetTempFileName(), Path.GetExtension(fileName));
 
@@ -29,7 +29,7 @@ namespace MadsKristensen.ImageOptimizer
             var process = new Process();
             process.StartInfo = start;
             process.Start();
-            process.WaitForExit();
+            await process.WaitForExitAsync();
 
             return new CompressionResult(fileName, targetFile);
         }
