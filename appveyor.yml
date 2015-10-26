@@ -15,7 +15,7 @@ after_test:
   - ps: Vsix-PushArtifacts | Vsix-PublishToGallery
 
 before_deploy:
-  - ps: Vsix-CreateChocolatyPackage
+  - ps: Vsix-CreateChocolatyPackage -packageId imageoptimizer
 
 deploy:
   - provider: Environment
