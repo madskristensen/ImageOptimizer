@@ -32,7 +32,8 @@ namespace MadsKristensen.ImageOptimizer
             base.Initialize();
             _dte = GetService(typeof(DTE)) as DTE2;
             Instance = this;
-            Telemetry.Initialize(_dte);
+            Telemetry.Initialize(_dte, Version, "367cd134-ade0-4111-a928-c7a1e3b0bb00");
+            Logger.Initialize(this, "Image Optimizer");
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             CommandID cmdOptimize = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizeImage);
