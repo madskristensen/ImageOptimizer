@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="bf95754f-93d3-42ff-bfe3-e05d23188b08" Version="3.2" Language="en-US" Publisher="Mads Kristensen" />
+        <Identity Id="bf95754f-93d3-42ff-bfe3-e05d23188b08" Version="3.3" Language="en-US" Publisher="Mads Kristensen" />
         <DisplayName>Image Optimizer</DisplayName>
         <Description xml:space="preserve">Lossless optimization of JPEG, PNG and Gifs - including animated Gifs</Description>
+        <MoreInfo>https://github.com/madskristensen/ImageOptimizer</MoreInfo>
         <License>Resources\LICENSE</License>
         <Icon>Resources\icon.png</Icon>
         <PreviewImage>Resources\preview.png</PreviewImage>

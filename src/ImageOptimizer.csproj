@@ -153,6 +153,9 @@
       <Link>Resources\LICENSE</Link>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\Tools\pngquant.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="packages.config" />
     <Content Include="Resources\Tools\png.cmd">
       <IncludeInVSIX>true</IncludeInVSIX>
