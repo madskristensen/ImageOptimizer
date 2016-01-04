@@ -15,7 +15,7 @@ in that folder. The optimization doesn't effect the quality of the images,
 but optimizes them using industry proven algorithms for removing EXIF
 and other metadata.
 
-- Optimizes PNGs
+- Optimizes PNGs (uses Zopfli compression)
 - Optimizes GIFs
 - Optimizes animated GIFs
 - Optimizes JPGs
