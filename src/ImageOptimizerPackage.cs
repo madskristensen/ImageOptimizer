@@ -23,15 +23,17 @@ namespace MadsKristensen.ImageOptimizer
         public const string Version = "1.0";
         public DTE2 _dte;
         public static ImageOptimizerPackage Instance;
-        private List<string> _selectedPaths;
-        private string _copyPath;
-        private static bool _isProcessing;
+
+        List<string> _selectedPaths;
+        string _copyPath;
+        static bool _isProcessing;
 
         protected override void Initialize()
         {
             base.Initialize();
             _dte = GetService(typeof(DTE)) as DTE2;
             Instance = this;
+
             Telemetry.Initialize(_dte, Version, "367cd134-ade0-4111-a928-c7a1e3b0bb00");
             Logger.Initialize(this, "Image Optimizer");
 
@@ -55,7 +57,7 @@ namespace MadsKristensen.ImageOptimizer
             button.Visible = !string.IsNullOrEmpty(_copyPath) && Compressor.IsFileSupported(_copyPath);
         }
 
-        private void CopyAsBase64(object sender, EventArgs e)
+        void CopyAsBase64(object sender, EventArgs e)
         {
             string base64 = "data:"
                         + GetMimeTypeFromFileExtension(_copyPath)
@@ -68,7 +70,7 @@ namespace MadsKristensen.ImageOptimizer
             _dte.StatusBar.Text = "DataURI copied to clipboard (" + base64.Length + " characters)";
         }
 
-        private static string GetMimeTypeFromFileExtension(string file)
+        static string GetMimeTypeFromFileExtension(string file)
         {
             string ext = Path.GetExtension(file).TrimStart('.');
 
@@ -121,7 +123,7 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private async System.Threading.Tasks.Task OptimizeImage(object sender, EventArgs e)
+        async System.Threading.Tasks.Task OptimizeImage(object sender, EventArgs e)
         {
             _isProcessing = true;
             List<CompressionResult> list = new List<CompressionResult>();
@@ -162,7 +164,7 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private void HandleResult(CompressionResult result, int count)
+        void HandleResult(CompressionResult result, int count)
         {
             string name = Path.GetFileName(result.OriginalFileName);
 
@@ -185,7 +187,7 @@ namespace MadsKristensen.ImageOptimizer
                 Logger.Log(result.ToString());
         }
 
-        private void DisplayEndResult(List<CompressionResult> list)
+        void DisplayEndResult(List<CompressionResult> list)
         {
             long savings = list.Sum(r => r.Saving);
             long originals = list.Sum(r => r.OriginalFileSize);

@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MadsKristensen.ImageOptimizer
 {
     class Compressor
     {
-        private static string[] _supported = new[] { ".png", ".jpg", ".jpeg", ".gif" };
+        private static string[] _supported = { ".png", ".jpg", ".jpeg", ".gif" };
 
         public async Task<CompressionResult> CompressFileAsync(string fileName)
         {
