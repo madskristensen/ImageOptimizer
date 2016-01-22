@@ -9,7 +9,7 @@ namespace MadsKristensen.ImageOptimizer
 {
     class Compressor
     {
-        private static string[] _supported = { ".png", ".jpg", ".jpeg", ".gif" };
+        private static readonly string[] _supported = { ".png", ".jpg", ".jpeg", ".gif" };
 
         public async Task<CompressionResult> CompressFileAsync(string fileName)
         {

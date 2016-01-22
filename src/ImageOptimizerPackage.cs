@@ -197,7 +197,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 double percent = Math.Round(100 - ((double)results / (double)originals * 100), 1, MidpointRounding.AwayFromZero);
                 string image = list.Count == 1 ? "image" : "images";
-                _dte.StatusBar.Text = list.Count + " " + image + " optimized. Total saving of " + savings + " bytes / " + percent + "%"; ;
+                _dte.StatusBar.Text = list.Count + " " + image + " optimized. Total saving of " + savings + " bytes / " + percent + "%";
             }
             else
             {
