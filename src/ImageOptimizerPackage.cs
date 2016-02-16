@@ -14,13 +14,12 @@ namespace MadsKristensen.ImageOptimizer
 {
 
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    [InstalledProductRegistration("#110", "#112", Version, IconResourceID = 400)]
+    [InstalledProductRegistration("#110", "#112", Vsix.Version, IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     [Guid(PackageGuids.guidImageOptimizerPkgString)]
     public sealed class ImageOptimizerPackage : Package
     {
-        public const string Version = "1.0";
         public DTE2 _dte;
         public static ImageOptimizerPackage Instance;
 
@@ -34,7 +33,7 @@ namespace MadsKristensen.ImageOptimizer
             _dte = GetService(typeof(DTE)) as DTE2;
             Instance = this;
 
-            Telemetry.Initialize(_dte, Version, "367cd134-ade0-4111-a928-c7a1e3b0bb00");
+            Telemetry.Initialize(_dte, Vsix.Version, "367cd134-ade0-4111-a928-c7a1e3b0bb00");
             Logger.Initialize(this, "Image Optimizer");
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
