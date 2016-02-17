@@ -147,7 +147,9 @@ namespace MadsKristensen.ImageOptimizer
                     if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
                     {
                         list.Add(result);
-                        Telemetry.TrackEvent(Path.GetExtension(file).ToLowerInvariant().Replace(".jpeg", ".jpg"));
+                        string ext = Path.GetExtension(file).ToLowerInvariant().Replace(".jpeg", ".jpg");
+                        var metrics = new Dictionary<string, double> { { "saving", result.Saving } };
+                        Telemetry.TrackEvent(ext, metrics: metrics);
                     }
                     else
                     {

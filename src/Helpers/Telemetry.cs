@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using EnvDTE;
@@ -43,12 +44,12 @@ public static class Telemetry
     public static bool Enabled { get; set; }
 
     /// <summary>Tracks an event to ApplicationInsights.</summary>
-    public static void TrackEvent(string key)
+    public static void TrackEvent(string key, IDictionary<string, string> properties = null, IDictionary<string, double> metrics = null)
     {
 #if !DEBUG
             if (Enabled)
             {
-                _telemetry.TrackEvent(key);
+                _telemetry.TrackEvent(key, properties, metrics);
             }
 #endif
     }
