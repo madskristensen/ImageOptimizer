@@ -148,8 +148,10 @@ namespace MadsKristensen.ImageOptimizer
                     {
                         list.Add(result);
                         string ext = Path.GetExtension(file).ToLowerInvariant().Replace(".jpeg", ".jpg");
+                        var props = new Dictionary<string, string> { { "extension", ext } };
                         var metrics = new Dictionary<string, double> { { "saving", result.Saving } };
-                        Telemetry.TrackEvent(ext, metrics: metrics);
+                        Telemetry.TrackEvent("Optimized", props, metrics);
+                        Telemetry.TrackEvent(ext);
                     }
                     else
                     {
