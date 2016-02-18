@@ -26,6 +26,7 @@ namespace MadsKristensen.ImageOptimizer
         List<string> _selectedPaths;
         string _copyPath;
         static bool _isProcessing;
+        static Dictionary<string, DateTime> _fullyOptimized = new Dictionary<string, DateTime>();
 
         protected override void Initialize()
         {
@@ -38,7 +39,7 @@ namespace MadsKristensen.ImageOptimizer
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             CommandID cmdOptimize = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizeImage);
-            OleMenuCommand menuOptimize = new OleMenuCommand(async (s, e) => { await OptimizeImage(s, e); }, cmdOptimize);
+            OleMenuCommand menuOptimize = new OleMenuCommand(async (s, e) => { await OptimizeImage(); }, cmdOptimize);
             menuOptimize.BeforeQueryStatus += MenuOptimizeBeforeQueryStatus;
             mcs.AddCommand(menuOptimize);
 
@@ -122,7 +123,7 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        async System.Threading.Tasks.Task OptimizeImage(object sender, EventArgs e)
+        async System.Threading.Tasks.Task OptimizeImage()
         {
             _isProcessing = true;
             List<CompressionResult> list = new List<CompressionResult>();
@@ -137,23 +138,23 @@ namespace MadsKristensen.ImageOptimizer
                 for (int i = 0; i < _selectedPaths.Count; i++)
                 {
                     string file = _selectedPaths[i];
+                    DateTime lastWrite = File.GetLastWriteTime(file);
 
-                    var result = await compressor.CompressFileAsync(file);
-                    HandleResult(result, i + 1);
-
-                    if (File.Exists(result.ResultFileName))
-                        File.Delete(result.ResultFileName);
-
-                    if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
+                    // Don't process if file has been fully optimized already
+                    if (_fullyOptimized.ContainsKey(file) && _fullyOptimized[file] == lastWrite)
                     {
-                        list.Add(result);
-                        string ext = Path.GetExtension(file).ToLowerInvariant().Replace(".jpeg", ".jpg");
-                        var metrics = new Dictionary<string, double> { { "saving", result.Saving } };
-                        Telemetry.TrackEvent(ext, metrics: metrics);
+                        var bogus = new CompressionResult(file, file) { OriginalFileSize = 0, ResultFileSize = 0 };
+                        HandleResult(bogus, i + 1);
                     }
                     else
                     {
-                        Telemetry.TrackEvent("Already optimized");
+                        var result = await compressor.CompressFileAsync(file);
+                        HandleResult(result, i + 1);
+
+                        if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
+                            list.Add(result);
+                        else
+                            _fullyOptimized.Add(file, lastWrite);
                     }
                 }
             }
@@ -175,17 +176,22 @@ namespace MadsKristensen.ImageOptimizer
                     _dte.SourceControl.CheckOutItem(result.OriginalFileName);
 
                 File.Copy(result.ResultFileName, result.OriginalFileName, true);
+                File.Delete(result.ResultFileName);
 
                 string text = "Compressed " + name + " by " + result.Saving + " bytes / " + result.Percent + "%";
-                _dte.StatusBar.Progress(true, text, AmountCompleted: count, Total: _selectedPaths.Count + 1);
+                _dte.StatusBar.Progress(true, text, count, _selectedPaths.Count + 1);
+
+                Logger.Log(result.ToString());
+                string ext = Path.GetExtension(result.OriginalFileName).ToLowerInvariant().Replace(".jpeg", ".jpg");
+                var metrics = new Dictionary<string, double> { { "saving", result.Saving } };
+                Telemetry.TrackEvent(ext, metrics: metrics);
             }
             else
             {
                 _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count + 1);
+                Logger.Log(name + " is already optimized");
+                Telemetry.TrackEvent("Already optimized");
             }
-
-            if (result.Saving > 0)
-                Logger.Log(result.ToString());
         }
 
         void DisplayEndResult(List<CompressionResult> list)
