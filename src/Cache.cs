@@ -35,7 +35,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 foreach (var key in _cache.Keys)
                 {
-                    await writer.WriteLineAsync($"{key}|{_cache[key]}");
+                    await writer.WriteLineAsync(key + "|" + _cache[key]);
                 }
             }
         }
