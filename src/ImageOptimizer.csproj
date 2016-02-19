@@ -123,6 +123,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cache.cs" />
     <Compile Include="CompressionResult.cs" />
     <Compile Include="Compressor.cs" />
     <Compile Include="Helpers\ProjectHelpers.cs" />

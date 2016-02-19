@@ -28,6 +28,7 @@ namespace MadsKristensen.ImageOptimizer
         public string OriginalFileName { get; set; }
         public long ResultFileSize { get; set; }
         public string ResultFileName { get; set; }
+        public bool Processed { get; set; } = true;
 
         public long Saving
         {

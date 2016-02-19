@@ -134,16 +134,16 @@ namespace MadsKristensen.ImageOptimizer
                 _dte.StatusBar.Progress(true, "Optimizing " + _selectedPaths.Count + text + "...", AmountCompleted: 1, Total: _selectedPaths.Count + 1);
 
                 Compressor compressor = new Compressor();
+                Cache cache = new Cache(_dte.Solution);
 
                 for (int i = 0; i < _selectedPaths.Count; i++)
                 {
                     string file = _selectedPaths[i];
-                    DateTime lastWrite = File.GetLastWriteTime(file);
 
                     // Don't process if file has been fully optimized already
-                    if (_fullyOptimized.ContainsKey(file) && _fullyOptimized[file] == lastWrite)
+                    if (cache.IsFullyOptimized(file))
                     {
-                        var bogus = new CompressionResult(file, file) { OriginalFileSize = 0, ResultFileSize = 0 };
+                        var bogus = new CompressionResult(file, file) { Processed = false };
                         HandleResult(bogus, i + 1);
                     }
                     else
@@ -154,7 +154,7 @@ namespace MadsKristensen.ImageOptimizer
                         if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
                             list.Add(result);
                         else
-                            _fullyOptimized.Add(file, lastWrite);
+                            await cache.AddToCache(file);
                     }
                 }
             }
@@ -190,7 +190,9 @@ namespace MadsKristensen.ImageOptimizer
             {
                 _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count + 1);
                 Logger.Log(name + " is already optimized");
-                Telemetry.TrackEvent("Already optimized");
+
+                if (result.Processed)
+                    Telemetry.TrackEvent("Already optimized");
             }
         }
 

@@ -1,4 +1,4 @@
-## Image Optimizer for Visual Studio
+# Image Optimizer for Visual Studio
 
 [![Build status](https://ci.appveyor.com/api/projects/status/26hxodkud0i54rv5?svg=true)](https://ci.appveyor.com/project/madskristensen/imageoptimizer)
 
@@ -34,3 +34,16 @@ You can also right-click a folder to optimize all images inside it.
 The Output Window shows the detailed output from the optimization process.
 
 ![Output window](art/output-window.png)
+
+## Contribute
+Check out the [contribution guidelines](.github/CONTRIBUTING.md)
+if you want to contribute to this project.
+
+For cloning and building this project yourself, make sure 
+to install the
+[Extensibility Tools 2015](https://visualstudiogallery.msdn.microsoft.com/ab39a092-1343-46e2-b0f1-6a3f91155aa6)
+extension for Visual Studio which enables some features
+used by this project.
+
+## License
+[Apache 2.0](LICENSE) 
