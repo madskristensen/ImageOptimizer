@@ -22,13 +22,15 @@ namespace MadsKristensen.ImageOptimizer
                 ResultFileName = result.FullName;
                 ResultFileSize = result.Length;
             }
+
+            Processed = true;
         }
 
         public long OriginalFileSize { get; set; }
         public string OriginalFileName { get; set; }
         public long ResultFileSize { get; set; }
         public string ResultFileName { get; set; }
-        public bool Processed { get; set; } = true;
+        public bool Processed { get; set; }
 
         public long Saving
         {
