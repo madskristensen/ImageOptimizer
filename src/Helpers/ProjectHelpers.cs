@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using EnvDTE;
 using EnvDTE80;
 
@@ -12,7 +9,7 @@ namespace MadsKristensen.ImageOptimizer
 {
     public static class ProjectHelpers
     {
-        private static DTE2 _dte = ImageOptimizerPackage.Instance?._dte;
+        private static DTE2 _dte = ImageOptimizerPackage.Instance._dte;
 
         public static IEnumerable<string> GetSelectedFilePaths()
         {
@@ -83,18 +80,6 @@ namespace MadsKristensen.ImageOptimizer
                 return Path.GetDirectoryName(fullPath);
 
             return null;
-        }
-
-        public static Task WaitForExitAsync(this System.Diagnostics.Process process, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var tcs = new TaskCompletionSource<object>();
-            process.EnableRaisingEvents = true;
-            process.Exited += (sender, args) => tcs.TrySetResult(null);
-
-            if (cancellationToken != default(CancellationToken))
-                cancellationToken.Register(tcs.SetCanceled);
-
-            return tcs.Task;
         }
     }
 }
