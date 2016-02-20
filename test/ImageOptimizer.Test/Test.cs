@@ -79,7 +79,7 @@ namespace ImageOptimizer.Test
             sb.AppendLine();
             sb.AppendLine("Total\t" + grouped.Sum(g => g.Count()) + "\t" + total);
 
-            File.WriteAllText("../../report.txt", sb.ToString());
+            File.WriteAllText("../../" + (lossy ? "lossy":  "lossless") + ".txt", sb.ToString());
 
             return list.Sum(r => r.Saving);
         }

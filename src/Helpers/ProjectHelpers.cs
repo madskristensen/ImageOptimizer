@@ -20,7 +20,7 @@ namespace MadsKristensen.ImageOptimizer
                            );
         }
 
-        public static IEnumerable<string> GetSelectedItemPaths(DTE2 dte = null)
+        public static IEnumerable<string> GetSelectedItemPaths()
         {
             var items = (Array)_dte.ToolWindows.SolutionExplorer.SelectedItems;
 
