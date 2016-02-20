@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -8,9 +7,20 @@ using System.Threading.Tasks;
 
 namespace MadsKristensen.ImageOptimizer
 {
-    class Compressor
+    public class Compressor
     {
         private static readonly string[] _supported = { ".png", ".jpg", ".jpeg", ".gif" };
+        string _cwd;
+
+        public Compressor()
+        {
+            _cwd = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), @"Resources\Tools\");
+        }
+
+        public Compressor(string cwd)
+        {
+            _cwd = cwd;
+        }
 
         public async Task<CompressionResult> CompressFileAsync(string fileName, bool lossy)
         {
@@ -19,7 +29,7 @@ namespace MadsKristensen.ImageOptimizer
             ProcessStartInfo start = new ProcessStartInfo("cmd")
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
-                WorkingDirectory = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), @"Resources\Tools\"),
+                WorkingDirectory = _cwd,
                 Arguments = GetArguments(fileName, targetFile, lossy),
                 UseShellExecute = false,
                 CreateNoWindow = true,

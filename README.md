@@ -24,7 +24,7 @@ in that folder.
 - Works on single images files or entire folders
 - Copy any image as base64 dataURI to clipboard
 
-### Context menu
+## Optimize images
 Simply right-click any file or folder containing images and click 
 one of the image optimization buttons.
 
@@ -32,13 +32,18 @@ one of the image optimization buttons.
 
 You can also right-click a folder to optimize all images inside it.
 
-If you chose **lossless** optimization, the tool will
+### Lossless optimization
+If you chose lossless optimization, the tool will
 do its optimizations without changing the quality of the image.
 
-The **lossy** optimization option can make the images a whole lot
-smaller and almost keep the same quality level as the original.
+### Lossy optimizations
+If you decide to sacrifice just a small amount of image quality
+(which in most cases is unnoticeable to the human eye), you will
+be able to save up to 90% of the initial file weight. Lossy
+optimization will give you outstanding results with just a
+fraction of image quality loss.
 
-### Output window
+## Output window
 The Output Window shows the detailed output from the optimization process.
 
 ![Output window](art/output-window.png)

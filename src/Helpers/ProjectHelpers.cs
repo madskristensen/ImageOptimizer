@@ -12,7 +12,7 @@ namespace MadsKristensen.ImageOptimizer
 {
     public static class ProjectHelpers
     {
-        private static DTE2 _dte = ImageOptimizerPackage.Instance._dte;
+        private static DTE2 _dte = ImageOptimizerPackage.Instance?._dte;
 
         public static IEnumerable<string> GetSelectedFilePaths()
         {
