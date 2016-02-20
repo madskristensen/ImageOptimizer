@@ -12,7 +12,7 @@ namespace MadsKristensen.ImageOptimizer
     {
         private static readonly string[] _supported = { ".png", ".jpg", ".jpeg", ".gif" };
 
-        public async Task<CompressionResult> CompressFileAsync(string fileName)
+        public async Task<CompressionResult> CompressFileAsync(string fileName, bool lossy)
         {
             string targetFile = Path.ChangeExtension(Path.GetTempFileName(), Path.GetExtension(fileName));
 
@@ -20,7 +20,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), @"Resources\Tools\"),
-                Arguments = GetArguments(fileName, targetFile),
+                Arguments = GetArguments(fileName, targetFile, lossy),
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
@@ -33,7 +33,7 @@ namespace MadsKristensen.ImageOptimizer
             return new CompressionResult(fileName, targetFile);
         }
 
-        private static string GetArguments(string sourceFile, string targetFile)
+        private static string GetArguments(string sourceFile, string targetFile, bool lossy)
         {
             if (!Uri.IsWellFormedUriString(sourceFile, UriKind.RelativeOrAbsolute) && !File.Exists(sourceFile))
                 return null;
@@ -53,12 +53,17 @@ namespace MadsKristensen.ImageOptimizer
             switch (ext)
             {
                 case ".png":
-                    return string.Format(CultureInfo.CurrentCulture, "/c png.cmd \"{0}\" \"{1}\"", sourceFile, targetFile);
-                //return string.Format(CultureInfo.CurrentCulture, "/c pngout \"{0}\" \"{1}\" /s0 /y /v /kpHYs /force", sourceFile, targetFile);
+                    if (lossy)
+                        return string.Format(CultureInfo.CurrentCulture, "/c png-lossy.cmd \"{0}\" \"{1}\"", sourceFile, targetFile);
+
+                    return string.Format(CultureInfo.CurrentCulture, "/c png-lossless.cmd \"{0}\" \"{1}\"", sourceFile, targetFile);
 
                 case ".jpg":
                 case ".jpeg":
-                    return string.Format(CultureInfo.CurrentCulture, "/c jpegtran -copy none -optimize -progressive \"{0}\" \"{1}\"", sourceFile, targetFile);
+                    if (lossy)
+                        return string.Format(CultureInfo.CurrentCulture, "/c cjpeg -quality 80,60 -dct float -restart 5 -smooth 5 -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
+
+                    return string.Format(CultureInfo.CurrentCulture, "/c jpegtran -copy none -optimize -progressive -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
 
                 case ".gif":
                     return string.Format(CultureInfo.CurrentCulture, "/c gifsicle --no-comments --no-extensions --no-names --optimize=3 --batch \"{0}\" --output=\"{1}\"", sourceFile, targetFile);

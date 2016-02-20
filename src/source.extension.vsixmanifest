@@ -3,7 +3,7 @@
     <Metadata>
         <Identity Id="bf95754f-93d3-42ff-bfe3-e05d23188b08" Version="3.4" Language="en-US" Publisher="Mads Kristensen" />
         <DisplayName>Image Optimizer</DisplayName>
-        <Description xml:space="preserve">Uses industry standard tools to optimize any JPEG, PNG and Gifs - including animated Gifs</Description>
+        <Description xml:space="preserve">Uses industry standard tools to optimize any JPEG, PNG and Gifs - including animated Gifs. Can do both lossy and lossless optimization.</Description>
         <MoreInfo>https://github.com/madskristensen/ImageOptimizer</MoreInfo>
         <License>Resources\LICENSE</License>
         <Icon>Resources\icon.png</Icon>

@@ -38,10 +38,16 @@ namespace MadsKristensen.ImageOptimizer
             Logger.Initialize(this, "Image Optimizer");
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            CommandID cmdOptimize = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizeImage);
-            OleMenuCommand menuOptimize = new OleMenuCommand(async (s, e) => { await OptimizeImage(); }, cmdOptimize);
-            menuOptimize.BeforeQueryStatus += MenuOptimizeBeforeQueryStatus;
-            mcs.AddCommand(menuOptimize);
+
+            CommandID cmdLossless = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizelossless);
+            OleMenuCommand menuLossless = new OleMenuCommand(async (s, e) => { await OptimizeImage(false); }, cmdLossless);
+            menuLossless.BeforeQueryStatus += (s, e) => { OptimizeBeforeQueryStatus(s, false); };
+            mcs.AddCommand(menuLossless);
+
+            CommandID cmdLossy = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizelossy);
+            OleMenuCommand menuLossy = new OleMenuCommand(async (s, e) => { await OptimizeImage(true); }, cmdLossy);
+            menuLossy.BeforeQueryStatus += (s, e) => { OptimizeBeforeQueryStatus(s, true); };
+            mcs.AddCommand(menuLossy);
 
             CommandID cmdCopy = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdCopyDataUri);
             OleMenuCommand menuCopy = new OleMenuCommand(CopyAsBase64, cmdCopy);
@@ -105,7 +111,7 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        void MenuOptimizeBeforeQueryStatus(object sender, EventArgs e)
+        void OptimizeBeforeQueryStatus(object sender, bool lossy)
         {
             OleMenuCommand button = (OleMenuCommand)sender;
             _selectedPaths = ProjectHelpers.GetSelectedFilePaths().Where(file => Compressor.IsFileSupported(file)).ToList();
@@ -113,17 +119,17 @@ namespace MadsKristensen.ImageOptimizer
             int items = _selectedPaths.Count;
 
             button.Text = items == 1 ? "Optimize image" : "Optimize images";
+            button.Text += lossy ? " (lossy)" : " (lossless)";
             button.Visible = items > 0;
             button.Enabled = true;
 
             if (button.Visible && _isProcessing)
             {
                 button.Enabled = false;
-                button.Text += " (running)";
             }
         }
 
-        async System.Threading.Tasks.Task OptimizeImage()
+        async System.Threading.Tasks.Task OptimizeImage(bool lossy)
         {
             _isProcessing = true;
             List<CompressionResult> list = new List<CompressionResult>();
@@ -134,7 +140,7 @@ namespace MadsKristensen.ImageOptimizer
                 _dte.StatusBar.Progress(true, "Optimizing " + _selectedPaths.Count + text + "...", AmountCompleted: 1, Total: _selectedPaths.Count + 1);
 
                 Compressor compressor = new Compressor();
-                Cache cache = new Cache(_dte.Solution);
+                Cache cache = new Cache(_dte.Solution, lossy);
 
                 for (int i = 0; i < _selectedPaths.Count; i++)
                 {
@@ -148,7 +154,7 @@ namespace MadsKristensen.ImageOptimizer
                     }
                     else
                     {
-                        var result = await compressor.CompressFileAsync(file);
+                        var result = await compressor.CompressFileAsync(file, lossy);
                         HandleResult(result, i + 1);
 
                         if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))

@@ -1,75 +1,105 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-  <Extern href="stdidcmd.h"/>
-  <Extern href="vsshlids.h"/>
+    <Extern href="stdidcmd.h"/>
+    <Extern href="vsshlids.h"/>
 
-  <Commands package="guidImageOptimizerPkg">
-    <Groups>
-      <Group guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
-      </Group>
-    </Groups>
+    <Commands package="guidImageOptimizerPkg">
+        <Groups>
+            <Group guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0600">
+                <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
+            </Group>
 
-    <Buttons>
-      <Button guid="guidImageOptimizerCmdSet" id="cmdOptimizeImage" priority="0x0100" type="Button">
-        <Parent guid="guidImageOptimizerCmdSet" id="MyMenuGroup" />
-        <Icon guid="guidImages" id="optimize" />
-        <CommandFlag>TextChanges</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Optimze Image</ButtonText>
-        </Strings>
-      </Button>
+            <Group guid="guidImageOptimizerCmdSet" id="OptimizeGroup" priority="0x0100">
+                <Parent guid="guidImageOptimizerCmdSet" id="MyMenu"/>
+            </Group>
+            <Group guid="guidImageOptimizerCmdSet" id="ClipboardGroup" priority="0x0200">
+                <Parent guid="guidImageOptimizerCmdSet" id="MyMenu"/>
+            </Group>
+        </Groups>
 
-      <Button guid="guidImageOptimizerCmdSet" id="cmdCopyDataUri" priority="0x0100" type="Button">
-        <Parent guid="guidImageOptimizerCmdSet" id="MyMenuGroup" />
-        <Icon guid="guidImages" id="copy" />
-        <CommandFlag>TextChanges</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Copy base64 DataURI to clipboard</ButtonText>
-        </Strings>
-      </Button>
-    </Buttons>
+        <Menus>
+            <Menu guid="guidImageOptimizerCmdSet" id="MyMenu" priority="0x0200" type="Menu">
+                <Parent guid="guidImageOptimizerCmdSet" id="MyMenuGroup" />
+                <Strings>
+                    <ButtonText>Image Optimizer</ButtonText>
+                </Strings>
+            </Menu>
+        </Menus>
 
-    <Bitmaps>
-      <Bitmap guid="guidImages" href="Resources\Images.png" usedList="optimize, copy"/>
-    </Bitmaps>
-  </Commands>
+        <Buttons>
+            <Button guid="guidImageOptimizerCmdSet" id="cmdOptimizelossless" priority="0x0100" type="Button">
+                <Parent guid="guidImageOptimizerCmdSet" id="OptimizeGroup" />
+                <Icon guid="guidImages" id="optimize" />
+                <CommandFlag>TextChanges</CommandFlag>
+                <CommandFlag>DynamicVisibility</CommandFlag>
+                <Strings>
+                    <ButtonText>Optimze Image (lossless)</ButtonText>
+                </Strings>
+            </Button>
 
-  <CommandPlacements>
-    <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0600">
-      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBITEMNODE"/>
-    </CommandPlacement>
-    <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x1600">
-      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBFOLDER"/>
-    </CommandPlacement>
-    <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0599">
-      <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
-    </CommandPlacement>
-      <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0799">
-          <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
-      </CommandPlacement>
-      <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0899">
-          <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLNNODE"/>
-      </CommandPlacement>
-  </CommandPlacements>
+            <Button guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" priority="0x0110" type="Button">
+                <Parent guid="guidImageOptimizerCmdSet" id="OptimizeGroup" />
+                <Icon guid="guidImages" id="optimize" />
+                <CommandFlag>TextChanges</CommandFlag>
+                <CommandFlag>DynamicVisibility</CommandFlag>
+                <Strings>
+                    <ButtonText>Optimze Image (lossy)</ButtonText>
+                </Strings>
+            </Button>
 
-  <Symbols>
-    <!-- This is the package guid. -->
-    <GuidSymbol name="guidImageOptimizerPkg" value="{bf95754f-93d3-42ff-bfe3-e05d23188b08}" />
+            <Button guid="guidImageOptimizerCmdSet" id="cmdCopyDataUri" priority="0x0100" type="Button">
+                <Parent guid="guidImageOptimizerCmdSet" id="ClipboardGroup" />
+                <Icon guid="guidImages" id="copy" />
+                <CommandFlag>TextChanges</CommandFlag>
+                <CommandFlag>DynamicVisibility</CommandFlag>
+                <Strings>
+                    <ButtonText>Copy base64 DataURI to clipboard</ButtonText>
+                </Strings>
+            </Button>
+        </Buttons>
 
-    <!-- This is the guid used to group the menu commands together -->
-    <GuidSymbol name="guidImageOptimizerCmdSet" value="{d3662d85-2693-4ff5-97aa-3878453c787b}">
-      <IDSymbol name="MyMenuGroup" value="0x1020" />
-      <IDSymbol name="cmdOptimizeImage" value="0x0100" />
-      <IDSymbol name="cmdCopyDataUri" value="0x0200" />
-    </GuidSymbol>
+        <Bitmaps>
+            <Bitmap guid="guidImages" href="Resources\Images.png" usedList="optimize, copy"/>
+        </Bitmaps>
+    </Commands>
 
-    <GuidSymbol name="guidImages" value="{e0d8d968-5115-44d4-be14-c7c68d469d27}" >
-      <IDSymbol name="optimize" value="1" />
-      <IDSymbol name="copy" value="2" />
-    </GuidSymbol>
-  </Symbols>
+    <CommandPlacements>
+        <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0600">
+            <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBITEMNODE"/>
+        </CommandPlacement>
+        <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x1600">
+            <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_WEBFOLDER"/>
+        </CommandPlacement>
+        <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0599">
+            <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
+        </CommandPlacement>
+        <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0799">
+            <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
+        </CommandPlacement>
+        <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0899">
+            <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLNNODE"/>
+        </CommandPlacement>
+    </CommandPlacements>
+
+    <Symbols>
+        <!-- This is the package guid. -->
+        <GuidSymbol name="guidImageOptimizerPkg" value="{bf95754f-93d3-42ff-bfe3-e05d23188b08}" />
+
+        <!-- This is the guid used to group the menu commands together -->
+        <GuidSymbol name="guidImageOptimizerCmdSet" value="{d3662d85-2693-4ff5-97aa-3878453c787b}">
+            <IDSymbol name="MyMenu" value="0x1010" />
+            <IDSymbol name="MyMenuGroup" value="0x1020" />
+            <IDSymbol name="OptimizeGroup" value="0x2000" />
+            <IDSymbol name="ClipboardGroup" value="0x2100" />
+            <IDSymbol name="cmdOptimizelossy" value="0x0100" />
+            <IDSymbol name="cmdOptimizelossless" value="0x0150" />
+            <IDSymbol name="cmdCopyDataUri" value="0x0200" />
+        </GuidSymbol>
+
+        <GuidSymbol name="guidImages" value="{e0d8d968-5115-44d4-be14-c7c68d469d27}" >
+            <IDSymbol name="optimize" value="1" />
+            <IDSymbol name="copy" value="2" />
+        </GuidSymbol>
+    </Symbols>
 </CommandTable>

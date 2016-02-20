@@ -8,11 +8,13 @@ namespace MadsKristensen.ImageOptimizer
     internal class Cache
     {
         public Dictionary<string, long> _cache;
+        bool _lossy;
         Solution _solution;
 
-        public Cache(Solution solution)
+        public Cache(Solution solution, bool lossy)
         {
             _solution = solution;
+            _lossy = lossy;
             _cache = GetCacheFromDisk();
         }
 
@@ -25,6 +27,9 @@ namespace MadsKristensen.ImageOptimizer
 
         public async Task AddToCache(string file)
         {
+            if (string.IsNullOrEmpty(_solution.FullName))
+                return;
+
             var info = new FileInfo(file);
             _cache[file] = info.Length;
 
@@ -42,6 +47,9 @@ namespace MadsKristensen.ImageOptimizer
 
         Dictionary<string, long> GetCacheFromDisk()
         {
+            if (string.IsNullOrEmpty(_solution.FullName))
+                return new Dictionary<string, long>();
+
             var file = GetCacheFileName();
             var dic = new Dictionary<string, long>();
 
@@ -84,7 +92,9 @@ namespace MadsKristensen.ImageOptimizer
                 info.Attributes = FileAttributes.Hidden;
             }
 
-            return new FileInfo(Path.Combine(vsDir, Vsix.Name, "cache.txt"));
+            string fileName = _lossy ? "cache-lossy.txt" : "cache-lossless.txt";
+
+            return new FileInfo(Path.Combine(vsDir, Vsix.Name, fileName));
         }
     }
 }

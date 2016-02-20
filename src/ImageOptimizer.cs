@@ -19,8 +19,12 @@ namespace MadsKristensen.ImageOptimizer
     /// </summary>
     internal sealed partial class PackageIds
     {
+        public const int MyMenu = 0x1010;
         public const int MyMenuGroup = 0x1020;
-        public const int cmdOptimizeImage = 0x0100;
+        public const int OptimizeGroup = 0x2000;
+        public const int ClipboardGroup = 0x2100;
+        public const int cmdOptimizelossy = 0x0100;
+        public const int cmdOptimizelossless = 0x0150;
         public const int cmdCopyDataUri = 0x0200;
         public const int optimize = 0x0001;
         public const int copy = 0x0002;
