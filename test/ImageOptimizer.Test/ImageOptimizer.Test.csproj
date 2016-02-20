@@ -69,6 +69,8 @@
     <Content Include="Artifacts\jpg\dog4.jpg" />
     <Content Include="Artifacts\jpg\dog5.jpg" />
     <Content Include="Artifacts\gif\logo.gif" />
+    <Content Include="Artifacts\jpg\lake.jpg" />
+    <Content Include="Artifacts\png\grunt.png" />
     <Content Include="Artifacts\png\logo.png" />
   </ItemGroup>
   <Choose>

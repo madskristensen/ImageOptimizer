@@ -30,7 +30,7 @@
         <Buttons>
             <Button guid="guidImageOptimizerCmdSet" id="cmdOptimizelossless" priority="0x0100" type="Button">
                 <Parent guid="guidImageOptimizerCmdSet" id="OptimizeGroup" />
-                <Icon guid="guidImages" id="optimize" />
+                <Icon guid="guidImages" id="lossless" />
                 <CommandFlag>TextChanges</CommandFlag>
                 <CommandFlag>DynamicVisibility</CommandFlag>
                 <Strings>
@@ -40,7 +40,7 @@
 
             <Button guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" priority="0x0110" type="Button">
                 <Parent guid="guidImageOptimizerCmdSet" id="OptimizeGroup" />
-                <Icon guid="guidImages" id="optimize" />
+                <Icon guid="guidImages" id="lossy" />
                 <CommandFlag>TextChanges</CommandFlag>
                 <CommandFlag>DynamicVisibility</CommandFlag>
                 <Strings>
@@ -60,7 +60,7 @@
         </Buttons>
 
         <Bitmaps>
-            <Bitmap guid="guidImages" href="Resources\Images.png" usedList="optimize, copy"/>
+            <Bitmap guid="guidImages" href="Resources\Images.png" usedList="lossless, lossy, copy"/>
         </Bitmaps>
     </Commands>
 
@@ -98,8 +98,9 @@
         </GuidSymbol>
 
         <GuidSymbol name="guidImages" value="{e0d8d968-5115-44d4-be14-c7c68d469d27}" >
-            <IDSymbol name="optimize" value="1" />
-            <IDSymbol name="copy" value="2" />
+            <IDSymbol name="lossless" value="1" />
+            <IDSymbol name="lossy" value="2" />
+            <IDSymbol name="copy" value="3" />
         </GuidSymbol>
     </Symbols>
 </CommandTable>

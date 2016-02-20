@@ -26,7 +26,8 @@ namespace MadsKristensen.ImageOptimizer
         public const int cmdOptimizelossy = 0x0100;
         public const int cmdOptimizelossless = 0x0150;
         public const int cmdCopyDataUri = 0x0200;
-        public const int optimize = 0x0001;
-        public const int copy = 0x0002;
+        public const int lossless = 0x0001;
+        public const int lossy = 0x0002;
+        public const int copy = 0x0003;
     }
 }

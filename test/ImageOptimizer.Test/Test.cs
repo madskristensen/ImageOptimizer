@@ -33,7 +33,7 @@ namespace ImageOptimizer.Test
             var tempFiles = Directory.GetFiles(_temp, "*.*");
             var savings = await RunCompression(tempFiles, false);
 
-            Assert.IsTrue(savings >= 46686);
+            Assert.IsTrue(savings >= 61903);
         }
 
         [TestMethod]
@@ -46,7 +46,7 @@ namespace ImageOptimizer.Test
 
             var savings = await RunCompression(tempFiles, true);
 
-            Assert.IsTrue(savings >= 135226);
+            Assert.IsTrue(savings >= 219592);
         }
 
         private async Task<long> RunCompression(IEnumerable<string> files, bool lossy)
@@ -64,7 +64,7 @@ namespace ImageOptimizer.Test
             var grouped = list.GroupBy(r => Path.GetExtension(r.OriginalFileName).ToLowerInvariant());
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Type\tCount\tSavings");
+            sb.AppendLine("Type\t#\tSavings");
             sb.AppendLine();
 
             long total = 0;

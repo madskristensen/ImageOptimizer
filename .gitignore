@@ -1,6 +1,7 @@
 *.suo
 *.user
 packages
+test/**/*.txt
 
 .vs
 bin

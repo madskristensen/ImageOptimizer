@@ -118,14 +118,15 @@ namespace MadsKristensen.ImageOptimizer
 
             int items = _selectedPaths.Count;
 
-            button.Text = items == 1 ? "Optimize image" : "Optimize images";
-            button.Text += lossy ? " (lossy)" : " (lossless)";
+            var text = items == 1 ? " Optimize Image" : " Optimize Images";
+            button.Text = (lossy ? "Lossy" : "Lossless") + text;
             button.Visible = items > 0;
             button.Enabled = true;
 
             if (button.Visible && _isProcessing)
             {
                 button.Enabled = false;
+                button.Text += " (running)";
             }
         }
 
