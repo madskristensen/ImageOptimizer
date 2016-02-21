@@ -6,8 +6,9 @@ namespace MadsKristensen.ImageOptimizer
 {
     public class CompressionResult
     {
-        public CompressionResult(string originalFileName, string resultFileName)
+        public CompressionResult(string originalFileName, string resultFileName, TimeSpan elapsed)
         {
+            Elapsed = elapsed;
             FileInfo original = new FileInfo(originalFileName);
             FileInfo result = new FileInfo(resultFileName);
 
@@ -31,10 +32,11 @@ namespace MadsKristensen.ImageOptimizer
         public long ResultFileSize { get; set; }
         public string ResultFileName { get; set; }
         public bool Processed { get; set; }
+        public TimeSpan Elapsed { get; set; }
 
         public long Saving
         {
-            get { return OriginalFileSize - ResultFileSize; }
+            get { return Math.Max(OriginalFileSize - ResultFileSize, 0); }
         }
 
         public double Percent
@@ -48,7 +50,7 @@ namespace MadsKristensen.ImageOptimizer
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Optimized " + Path.GetFileName(OriginalFileName));
+            sb.AppendLine("Optimized " + Path.GetFileName(OriginalFileName) + " in " + Math.Round(Elapsed.TotalMilliseconds / 1000, 2) + " seconds");
             sb.AppendLine("Before: " + OriginalFileSize + " bytes");
             sb.AppendLine("After: " + ResultFileSize + " bytes");
             sb.AppendLine("Saving: " + Saving + " bytes / " + Percent + "%");

@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using MadsKristensen.ImageOptimizer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
-using System.Text;
 
 namespace ImageOptimizer.Test
 {
@@ -25,71 +24,99 @@ namespace ImageOptimizer.Test
         }
 
         [TestMethod]
-        public async Task LossLess()
+        public void All_LossLess()
         {
-            var files = _folder.GetFiles("*.*", SearchOption.AllDirectories);
-            CopyFiles(files);
+            long savings = ExecuteTest("*.*", false);
 
-            var tempFiles = Directory.GetFiles(_temp, "*.*");
-            var savings = await RunCompression(tempFiles, false);
-
-            Assert.IsTrue(savings >= 61903);
+            Assert.IsTrue(savings == 61384, "Don't compress enough");
         }
 
         [TestMethod]
-        public async Task Lossy()
+        public void All_Lossy()
         {
-            var files = _folder.GetFiles("*.*", SearchOption.AllDirectories);
-            CopyFiles(files);
+            long savings = ExecuteTest("*.*", true);
 
-            var tempFiles = Directory.GetFiles(_temp, "*.*");
-
-            var savings = await RunCompression(tempFiles, true);
-
-            Assert.IsTrue(savings >= 219592);
+            Assert.IsTrue(savings == 221957, "Don't compress enough");
         }
 
-        private async Task<long> RunCompression(IEnumerable<string> files, bool lossy)
+        [TestMethod, TestCategory("PNG")]
+        public void Png_LossLess()
         {
+            long savings = ExecuteTest("*.png", false);
+
+            Assert.IsTrue(savings == 17362, "Don't compress enough");
+        }
+
+        [TestMethod, TestCategory("PNG")]
+        public void Png_Lossy()
+        {
+            long savings = ExecuteTest("*.png", true);
+
+            Assert.IsTrue(savings == 69282, "Don't compress enough");
+        }
+
+        private long ExecuteTest(string searchFilter, bool lossy)
+        {
+            var files = _folder.GetFiles(searchFilter, SearchOption.AllDirectories);
+            CopyFiles(files);
+
+            var savings = RunCompression(searchFilter, lossy);
+            return savings;
+        }
+
+        private long RunCompression(string searchFilter, bool lossy)
+        {
+            var files = Directory.GetFiles(_temp, searchFilter);
             var list = new List<CompressionResult>();
 
             foreach (var file in files)
             {
-                var result = await _compressor.CompressFileAsync(file, lossy);
+                var result = _compressor.CompressFileAsync(file, lossy).Result;
 
-                if (result.Saving > 0)
-                    list.Add(result);
+                list.Add(result);
+
+                if (File.Exists(result.ResultFileName))
+                {
+                    File.Copy(result.ResultFileName, result.OriginalFileName, true);
+                    File.Delete(result.ResultFileName);
+                }
             }
 
             var grouped = list.GroupBy(r => Path.GetExtension(r.OriginalFileName).ToLowerInvariant());
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Type\t#\tSavings");
+            sb.AppendLine("Type\t#\tSavings\tTime");
             sb.AppendLine();
 
             long total = 0;
 
             foreach (var group in grouped)
             {
-                var sum = group.Sum(g => g.Saving);
+                var sum = group.Sum(g =>  g.Saving);
+                var time = group.Average(g => g.Elapsed.TotalSeconds);
                 total += sum;
-                sb.AppendLine(group.Key + "\t" + group.Count() + "\t" + sum);
+                sb.AppendLine(group.Key + "\t" + group.Count() + "\t" + sum + "\t" + Math.Round(time, 2));
             }
 
             sb.AppendLine();
             sb.AppendLine("Total\t" + grouped.Sum(g => g.Count()) + "\t" + total);
 
-            File.WriteAllText("../../" + (lossy ? "lossy":  "lossless") + ".txt", sb.ToString());
+            string testName = searchFilter.Replace("*.*", "all").Trim('.', '*');
+
+            File.WriteAllText("../../" + testName + "-" + (lossy ? "lossy" : "lossless") + ".txt", sb.ToString());
 
             return list.Sum(r => r.Saving);
         }
 
         void CopyFiles(IEnumerable<FileInfo> files)
         {
-            if (Directory.Exists(_temp))
-                Directory.Delete(_temp, true);
-
             Directory.CreateDirectory(_temp);
+
+            var oldFiles = Directory.GetFiles(_temp, "*.*");
+            foreach (var file in oldFiles)
+            {
+                File.Delete(file);
+            }
 
             foreach (var file in files)
             {

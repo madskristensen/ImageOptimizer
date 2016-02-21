@@ -157,13 +157,7 @@
     <Content Include="Resources\Tools\libjpeg-62.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\Tools\optipng.exe">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
     <Content Include="Resources\Tools\pngquant.exe">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
-    <Content Include="Resources\Tools\PNGZopfli.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Resource Include="source.extension.ico">

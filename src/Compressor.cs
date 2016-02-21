@@ -36,12 +36,16 @@ namespace MadsKristensen.ImageOptimizer
                 CreateNoWindow = true,
             };
 
+            var stopwatch = Stopwatch.StartNew();
+
             var process = new Process();
             process.StartInfo = start;
             process.Start();
             await WaitForExitAsync(process);
 
-            return new CompressionResult(fileName, targetFile);
+            stopwatch.Stop();
+
+            return new CompressionResult(fileName, targetFile, stopwatch.Elapsed);
         }
 
         public static Task WaitForExitAsync(Process process, CancellationToken cancellationToken = default(CancellationToken))

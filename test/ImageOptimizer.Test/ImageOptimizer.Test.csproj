@@ -72,6 +72,7 @@
     <Content Include="Artifacts\jpg\lake.jpg" />
     <Content Include="Artifacts\png\grunt.png" />
     <Content Include="Artifacts\png\logo.png" />
+    <Content Include="Artifacts\png\screenshot.png" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

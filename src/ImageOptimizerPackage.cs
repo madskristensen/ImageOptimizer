@@ -150,7 +150,7 @@ namespace MadsKristensen.ImageOptimizer
                     // Don't process if file has been fully optimized already
                     if (cache.IsFullyOptimized(file))
                     {
-                        var bogus = new CompressionResult(file, file) { Processed = false };
+                        var bogus = new CompressionResult(file, file, TimeSpan.Zero) { Processed = false };
                         HandleResult(bogus, i + 1);
                     }
                     else
