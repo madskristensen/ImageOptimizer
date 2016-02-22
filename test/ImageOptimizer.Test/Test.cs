@@ -44,7 +44,7 @@ namespace ImageOptimizer.Test
         {
             long savings = ExecuteTest("*.png", false);
 
-            Assert.IsTrue(savings == 28619, "Don't compress enough");
+            Assert.IsTrue(savings == 28855, "Don't compress enough");
         }
 
         [TestMethod, TestCategory("PNG")]
@@ -52,7 +52,7 @@ namespace ImageOptimizer.Test
         {
             long savings = ExecuteTest("*.png", true);
 
-            Assert.IsTrue(savings == 78181, "Don't compress enough");
+            Assert.IsTrue(savings == 135289, "Don't compress enough");
         }
 
         [TestMethod, TestCategory("GIF")]
@@ -100,7 +100,7 @@ namespace ImageOptimizer.Test
 
             foreach (var group in grouped)
             {
-                var sum = group.Sum(g =>  g.Saving);
+                var sum = group.Sum(g => g.Saving);
                 var time = group.Average(g => g.Elapsed.TotalSeconds);
                 total += sum;
                 sb.AppendLine(group.Key + "\t" + group.Count() + "\t" + sum + "\t" + Math.Round(time, 2));

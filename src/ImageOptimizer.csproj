@@ -160,6 +160,9 @@
     <Content Include="Resources\Tools\pngquant.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\Tools\TruePNG.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Resources\Tools\zopfli.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>

@@ -76,6 +76,7 @@
     <Content Include="Artifacts\jpg\lake.jpg" />
     <Content Include="Artifacts\png\AddClass.png" />
     <Content Include="Artifacts\png\Bower.png" />
+    <Content Include="Artifacts\png\ducati.png" />
     <Content Include="Artifacts\png\grunt.png" />
     <Content Include="Artifacts\png\logo.png" />
     <Content Include="Artifacts\png\screenshot.png" />
