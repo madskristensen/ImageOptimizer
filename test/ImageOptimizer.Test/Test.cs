@@ -23,20 +23,20 @@ namespace ImageOptimizer.Test
             _compressor = new Compressor(cwd);
         }
 
-        [TestMethod]
-        public void All_LossLess()
+        [TestMethod, TestCategory("JPG")]
+        public void Jpg_LossLess()
         {
-            long savings = ExecuteTest("*.*", false);
+            long savings = ExecuteTest("*.jpg", false);
 
-            Assert.IsTrue(savings == 61384, "Don't compress enough");
+            Assert.IsTrue(savings == 43964, "Don't compress enough");
         }
 
-        [TestMethod]
-        public void All_Lossy()
+        [TestMethod, TestCategory("JPG")]
+        public void Jpg_Lossy()
         {
-            long savings = ExecuteTest("*.*", true);
+            long savings = ExecuteTest("*.jpg", true);
 
-            Assert.IsTrue(savings == 221957, "Don't compress enough");
+            Assert.IsTrue(savings == 152617, "Don't compress enough");
         }
 
         [TestMethod, TestCategory("PNG")]
