@@ -160,6 +160,12 @@
     <Content Include="Resources\Tools\pngquant.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\Tools\zopfli.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\Tools\zopflipng.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Resource Include="source.extension.ico">
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
     </Resource>

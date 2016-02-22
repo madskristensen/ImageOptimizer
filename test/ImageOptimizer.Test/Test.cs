@@ -44,7 +44,7 @@ namespace ImageOptimizer.Test
         {
             long savings = ExecuteTest("*.png", false);
 
-            Assert.IsTrue(savings == 17362, "Don't compress enough");
+            Assert.IsTrue(savings == 22413, "Don't compress enough");
         }
 
         [TestMethod, TestCategory("PNG")]
