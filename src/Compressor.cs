@@ -23,7 +23,7 @@ namespace MadsKristensen.ImageOptimizer
             _cwd = cwd;
         }
 
-        public async Task<CompressionResult> CompressFileAsync(string fileName, bool lossy)
+        public CompressionResult CompressFileAsync(string fileName, bool lossy)
         {
             string targetFile = Path.ChangeExtension(Path.GetTempFileName(), Path.GetExtension(fileName));
 
@@ -41,7 +41,9 @@ namespace MadsKristensen.ImageOptimizer
             var process = new Process();
             process.StartInfo = start;
             process.Start();
-            await WaitForExitAsync(process);
+            //await WaitForExitAsync(process);
+            process.WaitForExit();
+
 
             stopwatch.Stop();
 

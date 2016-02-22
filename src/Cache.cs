@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using EnvDTE;
 
 namespace MadsKristensen.ImageOptimizer
 {
-    internal class Cache
+    class Cache
     {
         public Dictionary<string, long> _cache;
         bool _lossy;
@@ -25,7 +24,7 @@ namespace MadsKristensen.ImageOptimizer
             return _cache.ContainsKey(file) && _cache[file] == info.Length;
         }
 
-        public async Task AddToCache(string file)
+        public void AddToCache(string file)
         {
             if (string.IsNullOrEmpty(_solution.FullName))
                 return;
@@ -40,7 +39,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 foreach (var key in _cache.Keys)
                 {
-                    await writer.WriteLineAsync(key + "|" + _cache[key]);
+                    writer.WriteLine(key + "|" + _cache[key]);
                 }
             }
         }

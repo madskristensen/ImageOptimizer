@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
@@ -40,12 +43,12 @@ namespace MadsKristensen.ImageOptimizer
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
 
             CommandID cmdLossless = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizelossless);
-            OleMenuCommand menuLossless = new OleMenuCommand(async (s, e) => { await OptimizeImage(false); }, cmdLossless);
+            OleMenuCommand menuLossless = new OleMenuCommand((s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(false)); }, cmdLossless);
             menuLossless.BeforeQueryStatus += (s, e) => { OptimizeBeforeQueryStatus(s, false); };
             mcs.AddCommand(menuLossless);
 
             CommandID cmdLossy = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizelossy);
-            OleMenuCommand menuLossy = new OleMenuCommand(async (s, e) => { await OptimizeImage(true); }, cmdLossy);
+            OleMenuCommand menuLossy = new OleMenuCommand((s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(true)); }, cmdLossy);
             menuLossy.BeforeQueryStatus += (s, e) => { OptimizeBeforeQueryStatus(s, true); };
             mcs.AddCommand(menuLossy);
 
@@ -130,10 +133,11 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        async System.Threading.Tasks.Task OptimizeImage(bool lossy)
+        void OptimizeImage(bool lossy)
         {
             _isProcessing = true;
-            List<CompressionResult> list = new List<CompressionResult>();
+            CompressionResult[] list = new CompressionResult[_selectedPaths.Count];
+            var stopwatch = Stopwatch.StartNew();
 
             try
             {
@@ -142,8 +146,10 @@ namespace MadsKristensen.ImageOptimizer
 
                 Compressor compressor = new Compressor();
                 Cache cache = new Cache(_dte.Solution, lossy);
+                int nCompleted = 0;
+                var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
-                for (int i = 0; i < _selectedPaths.Count; i++)
+                Parallel.For(0, _selectedPaths.Count, options, i =>
                 {
                     string file = _selectedPaths[i];
 
@@ -151,24 +157,27 @@ namespace MadsKristensen.ImageOptimizer
                     if (cache.IsFullyOptimized(file))
                     {
                         var bogus = new CompressionResult(file, file, TimeSpan.Zero) { Processed = false };
-                        HandleResult(bogus, i + 1);
+                        HandleResult(bogus, nCompleted + 1);
                     }
                     else
                     {
-                        var result = await compressor.CompressFileAsync(file, lossy);
-                        HandleResult(result, i + 1);
+                        var result = compressor.CompressFileAsync(file, lossy);
+                        HandleResult(result, nCompleted + 1);
 
                         if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
-                            list.Add(result);
+                            list[i] = result;
                         else
-                            await cache.AddToCache(file);
+                            cache.AddToCache(file);
                     }
-                }
+
+                    Interlocked.Increment(ref nCompleted);
+                });
             }
             finally
             {
                 _dte.StatusBar.Progress(false);
-                DisplayEndResult(list);
+                stopwatch.Stop();
+                DisplayEndResult(list, stopwatch.Elapsed);
                 _isProcessing = false;
             }
         }
@@ -203,17 +212,18 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        void DisplayEndResult(List<CompressionResult> list)
+        void DisplayEndResult(IList<CompressionResult> list, TimeSpan elapsed)
         {
-            long savings = list.Sum(r => r.Saving);
-            long originals = list.Sum(r => r.OriginalFileSize);
-            long results = list.Sum(r => r.ResultFileSize);
+            long savings = list.Sum(r => r?.Saving ?? 0);
+            long originals = list.Sum(r => r?.OriginalFileSize ?? 0);
+            long results = list.Sum(r => r?.ResultFileSize ?? 0);
 
             if (savings > 0)
             {
+                int successfulOptimizations = list.Count(x => x != null);
                 double percent = Math.Round(100 - ((double)results / (double)originals * 100), 1, MidpointRounding.AwayFromZero);
-                string image = list.Count == 1 ? "image" : "images";
-                _dte.StatusBar.Text = list.Count + " " + image + " optimized. Total saving of " + savings + " bytes / " + percent + "%";
+                string image = successfulOptimizations == 1 ? "image" : "images";
+                _dte.StatusBar.Text = successfulOptimizations + " " + image + " optimized in " + Math.Round(elapsed.TotalMilliseconds / 1000, 2) + " seconds. Total saving of " + savings + " bytes / " + percent + "%";
             }
             else
             {

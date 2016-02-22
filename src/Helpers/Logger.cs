@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
 public static class Logger
 {
-    private static IVsOutputWindowPane pane;
-    private static object _syncRoot = new object();
-    private static IServiceProvider _provider;
-    private static string _name;
+    static IVsOutputWindowPane pane;
+    static IServiceProvider _provider;
+    static string _name;
 
     public static void Initialize(IServiceProvider provider, string name)
     {
@@ -25,12 +25,15 @@ public static class Logger
         {
             if (EnsurePane())
             {
-                pane.OutputString(DateTime.Now.ToString() + ": " + message + Environment.NewLine);
+                ThreadHelper.Generic.BeginInvoke(() =>
+                {
+                    pane.OutputStringThreadSafe(DateTime.Now + ": " + message + Environment.NewLine);
+                });
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Do nothing
+            System.Diagnostics.Debug.Write(ex);
         }
     }
 
@@ -43,14 +46,20 @@ public static class Logger
         }
     }
 
-    private static bool EnsurePane()
+    static bool EnsurePane()
     {
         if (pane == null)
         {
-            Guid guid = Guid.NewGuid();
-            IVsOutputWindow output = (IVsOutputWindow)_provider.GetService(typeof(SVsOutputWindow));
-            output.CreatePane(ref guid, _name, 1, 1);
-            output.GetPane(ref guid, out pane);
+            ThreadHelper.Generic.Invoke(() =>
+            {
+                if (pane == null)
+                {
+                    Guid guid = Guid.NewGuid();
+                    IVsOutputWindow output = (IVsOutputWindow)_provider.GetService(typeof(SVsOutputWindow));
+                    output.CreatePane(ref guid, _name, 1, 1);
+                    output.GetPane(ref guid, out pane);
+                }
+            });
         }
 
         return pane != null;
