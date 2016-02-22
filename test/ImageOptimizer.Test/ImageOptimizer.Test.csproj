@@ -62,6 +62,10 @@
   <ItemGroup />
   <ItemGroup>
     <Content Include="Artifacts\gif\animation-cartoon.gif" />
+    <Content Include="Artifacts\gif\animation-road.gif" />
+    <Content Include="Artifacts\gif\animation-screenshot.gif" />
+    <Content Include="Artifacts\gif\colors.gif" />
+    <Content Include="Artifacts\gif\line-drawing.gif" />
     <Content Include="Artifacts\gif\screenshot-large.gif" />
     <Content Include="Artifacts\jpg\dog1.jpg" />
     <Content Include="Artifacts\jpg\dog2.jpg" />

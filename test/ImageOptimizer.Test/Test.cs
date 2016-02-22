@@ -55,6 +55,14 @@ namespace ImageOptimizer.Test
             Assert.IsTrue(savings == 69282, "Don't compress enough");
         }
 
+        [TestMethod, TestCategory("GIF")]
+        public void Gif_Lossless()
+        {
+            long savings = ExecuteTest("*.gif", false);
+
+            Assert.IsTrue(savings == 5455, "Don't compress enough");
+        }
+
         private long ExecuteTest(string searchFilter, bool lossy)
         {
             var files = _folder.GetFiles(searchFilter, SearchOption.AllDirectories);
