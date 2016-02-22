@@ -15,10 +15,7 @@ after_test:
   - ps: Vsix-PushArtifacts | Vsix-PublishToGallery
 
 artifacts:
-  - path: test/ImageOptimizer.Test/lossless.txt
-    name: Lossless
-  - path: test/ImageOptimizer.Test/lossy.txt
-    name: Lossy
+  - path: test/ImageOptimizer.Test/*.txt
 
 before_deploy:
   - ps: Vsix-CreateChocolatyPackage -packageId imageoptimizer
