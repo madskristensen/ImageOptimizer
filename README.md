@@ -48,6 +48,12 @@ The Output Window shows the detailed output from the optimization process.
 
 ![Output window](art/output-window.png)
 
+## Performance
+Optimizing an image can easily take several seconds which feels
+slow. This extension parallelizes the workload on each CPU core
+available on the machine. This speeds up the optimization
+significantly.
+
 ## Contribute
 Check out the [contribution guidelines](.github/CONTRIBUTING.md)
 if you want to contribute to this project.
