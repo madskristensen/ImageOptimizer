@@ -214,9 +214,9 @@ namespace MadsKristensen.ImageOptimizer
 
         void DisplayEndResult(IList<CompressionResult> list, TimeSpan elapsed)
         {
-            long savings = list.Sum(r => r?.Saving ?? 0);
-            long originals = list.Sum(r => r?.OriginalFileSize ?? 0);
-            long results = list.Sum(r => r?.ResultFileSize ?? 0);
+            long savings = list.Where(r => r != null).Sum(r => r.Saving);
+            long originals = list.Where(r => r != null).Sum(r => r.OriginalFileSize);
+            long results = list.Where(r => r != null).Sum(r => r.ResultFileSize);
 
             if (savings > 0)
             {
