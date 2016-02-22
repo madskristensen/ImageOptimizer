@@ -3,8 +3,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -38,28 +36,14 @@ namespace MadsKristensen.ImageOptimizer
 
             var stopwatch = Stopwatch.StartNew();
 
-            var process = new Process();
-            process.StartInfo = start;
-            process.Start();
-            //await WaitForExitAsync(process);
-            process.WaitForExit();
-
+            using (var process = Process.Start(start))
+            {
+                process.WaitForExit();
+            }
 
             stopwatch.Stop();
 
             return new CompressionResult(fileName, targetFile, stopwatch.Elapsed);
-        }
-
-        public static Task WaitForExitAsync(Process process, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            var tcs = new TaskCompletionSource<object>();
-            process.EnableRaisingEvents = true;
-            process.Exited += (sender, args) => tcs.TrySetResult(null);
-
-            if (cancellationToken != default(CancellationToken))
-                cancellationToken.Register(tcs.SetCanceled);
-
-            return tcs.Task;
         }
 
         private static string GetArguments(string sourceFile, string targetFile, bool lossy)
