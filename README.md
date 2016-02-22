@@ -44,7 +44,8 @@ optimization will give you outstanding results with just a
 fraction of image quality loss.
 
 ## Output window
-The Output Window shows the detailed output from the optimization process.
+The Output Window shows the detailed output from the optimization
+process and progress is displayed in the status bar.
 
 ![Output window](art/output-window.png)
 
