@@ -21,6 +21,7 @@ namespace ImageOptimizer.Test
             _temp = Path.Combine(Path.GetTempPath(), "image optimizer");
             string cwd = new DirectoryInfo("../../../../src/resources/tools").FullName;
             _compressor = new Compressor(cwd);
+            Telemetry.Enabled = false;
         }
 
         [TestMethod, TestCategory("JPG")]
