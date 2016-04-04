@@ -53,6 +53,7 @@
                 <Icon guid="guidImages" id="copy" />
                 <CommandFlag>TextChanges</CommandFlag>
                 <CommandFlag>DynamicVisibility</CommandFlag>
+                <CommandFlag>DefaultInvisible</CommandFlag>
                 <Strings>
                     <ButtonText>Copy base64 DataURI to clipboard</ButtonText>
                 </Strings>
