@@ -67,6 +67,7 @@
     <Content Include="Artifacts\gif\colors.gif" />
     <Content Include="Artifacts\gif\line-drawing.gif" />
     <Content Include="Artifacts\gif\screenshot-large.gif" />
+    <Content Include="Artifacts\jpg\clouds-original.jpg" />
     <Content Include="Artifacts\jpg\dog1.jpg" />
     <Content Include="Artifacts\jpg\dog2.jpg" />
     <Content Include="Artifacts\jpg\dog3.jpg" />

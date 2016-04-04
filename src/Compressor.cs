@@ -74,7 +74,7 @@ namespace MadsKristensen.ImageOptimizer
                 case ".jpg":
                 case ".jpeg":
                     if (lossy)
-                        return string.Format(CultureInfo.CurrentCulture, "/c cjpeg -quality 80,60 -dct float -restart 5 -smooth 5 -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
+                        return string.Format(CultureInfo.CurrentCulture, "/c cjpeg -quality 80,60 -dct float -smooth 5 -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
 
                     return string.Format(CultureInfo.CurrentCulture, "/c jpegtran -copy none -optimize -progressive -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
 
