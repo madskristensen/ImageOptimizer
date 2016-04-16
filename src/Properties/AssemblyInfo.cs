@@ -11,7 +11,7 @@ using MadsKristensen.ImageOptimizer;
 [assembly: AssemblyProduct(Vsix.Name)]
 [assembly: AssemblyCopyright(Vsix.Author)]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
+[assembly: AssemblyCulture(Vsix.Language)]
 [assembly: ComVisible(false)]
 [assembly: CLSCompliant(false)]
 [assembly: NeutralResourcesLanguage(Vsix.Language)]

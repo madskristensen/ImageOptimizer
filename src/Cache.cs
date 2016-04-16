@@ -9,6 +9,7 @@ namespace MadsKristensen.ImageOptimizer
         public Dictionary<string, long> _cache;
         bool _lossy;
         Solution _solution;
+        private static object _syncRoot = new object();
 
         public Cache(Solution solution, bool lossy)
         {
@@ -35,11 +36,14 @@ namespace MadsKristensen.ImageOptimizer
             var cacheFile = GetCacheFileName();
             cacheFile.Directory.Create();
 
-            using (var writer = new StreamWriter(cacheFile.FullName, false))
+            lock (_syncRoot)
             {
-                foreach (var key in _cache.Keys)
+                using (var writer = new StreamWriter(cacheFile.FullName, false))
                 {
-                    writer.WriteLine(key + "|" + _cache[key]);
+                    foreach (var key in _cache.Keys)
+                    {
+                        writer.WriteLine(key + "|" + _cache[key]);
+                    }
                 }
             }
         }

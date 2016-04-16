@@ -36,7 +36,7 @@ namespace MadsKristensen.ImageOptimizer
             base.Initialize();
             _dte = GetService(typeof(DTE)) as DTE2;
             Instance = this;
-            
+
             Logger.Initialize(this, Vsix.Name, Vsix.Version, "367cd134-ade0-4111-a928-c7a1e3b0bb00");
 
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
