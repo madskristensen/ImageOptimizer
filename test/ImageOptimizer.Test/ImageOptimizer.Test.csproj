@@ -59,7 +59,6 @@
       <Name>ImageOptimizer</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Content Include="Artifacts\gif\animation-cartoon.gif" />
     <Content Include="Artifacts\gif\animation-road.gif" />
