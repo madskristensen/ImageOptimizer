@@ -65,8 +65,8 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="VsixLogger, Version=1.0.33.0, Culture=neutral, PublicKeyToken=29d32695dc822296, processorArchitecture=MSIL">
-      <HintPath>..\packages\VsixLogger.1.0.33\lib\net45\VsixLogger.dll</HintPath>
+    <Reference Include="VsixLogger, Version=1.1.45.0, Culture=neutral, PublicKeyToken=29d32695dc822296, processorArchitecture=MSIL">
+      <HintPath>..\packages\VsixLogger.1.1.45.0\lib\net45\VsixLogger.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
