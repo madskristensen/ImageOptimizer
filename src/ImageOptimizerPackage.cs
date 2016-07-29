@@ -25,8 +25,6 @@ namespace MadsKristensen.ImageOptimizer
     {
         public DTE2 _dte;
         public static ImageOptimizerPackage Instance;
-
-        List<string> _selectedPaths;
         string _copyPath;
         static bool _isProcessing;
         static Dictionary<string, DateTime> _fullyOptimized = new Dictionary<string, DateTime>();
@@ -122,13 +120,13 @@ namespace MadsKristensen.ImageOptimizer
         void OptimizeBeforeQueryStatus(object sender, bool lossy)
         {
             OleMenuCommand button = (OleMenuCommand)sender;
-            _selectedPaths = ProjectHelpers.GetSelectedFilePaths().Where(file => Compressor.IsFileSupported(file)).ToList();
+            var paths = ProjectHelpers.GetSelectedItemPaths();
 
-            int items = _selectedPaths.Count;
+            bool isPlural = IsPlural(paths);
 
-            var text = items == 1 ? " Optimize Image" : " Optimize Images";
+            var text = isPlural ? " Optimize Images" : " Optimize Image";
             button.Text = (lossy ? "Lossy" : "Lossless") + text;
-            button.Visible = items > 0;
+            button.Visible = paths.Any();
             button.Enabled = true;
 
             if (button.Visible && _isProcessing)
@@ -138,25 +136,47 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
+        private static bool IsPlural(IEnumerable<string> entries)
+        {
+            if (!entries.Any())
+                return false;
+
+            if (entries.Count() > 1)
+                return true;
+
+            return Directory.Exists(entries.First());
+        }
+
         void OptimizeImage(bool lossy)
         {
             _isProcessing = true;
-            CompressionResult[] list = new CompressionResult[_selectedPaths.Count];
+
+            var files = ProjectHelpers.GetSelectedFilePaths().Where(f => Compressor.IsFileSupported(f));
+
+            if (!files.Any())
+            {
+                _dte.StatusBar.Text = "No images found to optimize";
+                _isProcessing = false;
+                return;
+            }
+
+            CompressionResult[] list = new CompressionResult[files.Count()];
             var stopwatch = Stopwatch.StartNew();
+            int count = files.Count();
 
             try
             {
-                string text = _selectedPaths.Count == 1 ? " image" : " images";
-                _dte.StatusBar.Progress(true, "Optimizing " + _selectedPaths.Count + text + "...", AmountCompleted: 1, Total: _selectedPaths.Count + 1);
+                string text = count == 1 ? " image" : " images";
+                _dte.StatusBar.Progress(true, "Optimizing " + count + text + "...", AmountCompleted: 1, Total: count + 1);
 
                 Compressor compressor = new Compressor();
                 Cache cache = new Cache(_dte.Solution, lossy);
                 int nCompleted = 0;
                 var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
-                Parallel.For(0, _selectedPaths.Count, options, i =>
+                Parallel.For(0, count, options, i =>
                 {
-                    string file = _selectedPaths[i];
+                    string file = files.ElementAt((int)i);
 
                     // Don't process if file has been fully optimized already
                     if (cache.IsFullyOptimized(file))
@@ -200,7 +220,7 @@ namespace MadsKristensen.ImageOptimizer
                 File.Delete(result.ResultFileName);
 
                 string text = "Compressed " + name + " by " + result.Saving + " bytes / " + result.Percent + "%";
-                _dte.StatusBar.Progress(true, text, count, _selectedPaths.Count + 1);
+                _dte.StatusBar.Progress(true, text, count, count + 1);
 
                 Logger.Log(result.ToString());
                 string ext = Path.GetExtension(result.OriginalFileName).ToLowerInvariant().Replace(".jpeg", ".jpg");
@@ -209,7 +229,7 @@ namespace MadsKristensen.ImageOptimizer
             }
             else
             {
-                _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: _selectedPaths.Count + 1);
+                _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: count + 1);
                 Logger.Log(name + " is already optimized");
 
                 if (result.Processed)
