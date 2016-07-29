@@ -15,11 +15,11 @@ using Microsoft.VisualStudio.Shell.Interop;
 
 namespace MadsKristensen.ImageOptimizer
 {
-
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", Vsix.Version, IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
+    [ProvideAutoLoad(UIContextGuids80.SolutionHasSingleProject)]
+    [ProvideAutoLoad(UIContextGuids80.SolutionHasMultipleProjects)]
     [Guid(PackageGuids.guidImageOptimizerPkgString)]
     public sealed class ImageOptimizerPackage : Package
     {
@@ -35,9 +35,9 @@ namespace MadsKristensen.ImageOptimizer
             _dte = GetService(typeof(DTE)) as DTE2;
             Instance = this;
 
-            Logger.Initialize(this, Vsix.Name, Vsix.Version, "367cd134-ade0-4111-a928-c7a1e3b0bb00");
+            Logger.Initialize(this, Vsix.Name);
 
-            OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+            var mcs = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
 
             CommandID cmdLossless = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizelossless);
             OleMenuCommand menuLossless = new OleMenuCommand((s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(false)); }, cmdLossless);
@@ -77,7 +77,6 @@ namespace MadsKristensen.ImageOptimizer
                         + Convert.ToBase64String(File.ReadAllBytes(_copyPath));
 
             Clipboard.SetText(base64);
-            Telemetry.TrackEvent("Copy as DataURI");
 
             _dte.StatusBar.Text = "DataURI copied to clipboard (" + base64.Length + " characters)";
         }
@@ -93,27 +92,8 @@ namespace MadsKristensen.ImageOptimizer
                     return "image/jpeg";
                 case "svg":
                     return "image/svg+xml";
-                case "png":
-                case "gif":
-                case "tiff":
-                case "webp":
-                case "bmp":
-                    return "image/" + ext;
-
-                case "woff":
-                    return "font/x-woff";
-
-                case "otf":
-                    return "font/otf";
-
-                case "eot":
-                    return "application/vnd.ms-fontobject";
-
-                case "ttf":
-                    return "application/octet-stream";
-
                 default:
-                    return "text/plain";
+                    return "image/" + ext;
             }
         }
 
@@ -225,15 +205,11 @@ namespace MadsKristensen.ImageOptimizer
                 Logger.Log(result.ToString());
                 string ext = Path.GetExtension(result.OriginalFileName).ToLowerInvariant().Replace(".jpeg", ".jpg");
                 var metrics = new Dictionary<string, double> { { "saving", result.Saving } };
-                Telemetry.TrackEvent(ext, metrics: metrics);
             }
             else
             {
                 _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: count + 1);
                 Logger.Log(name + " is already optimized");
-
-                if (result.Processed)
-                    Telemetry.TrackEvent("Already optimized");
             }
         }
 
