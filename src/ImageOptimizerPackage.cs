@@ -31,7 +31,6 @@ namespace MadsKristensen.ImageOptimizer
 
         protected override void Initialize()
         {
-            base.Initialize();
             _dte = GetService(typeof(DTE)) as DTE2;
             Instance = this;
 
