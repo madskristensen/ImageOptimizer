@@ -26,8 +26,9 @@ namespace MadsKristensen.ImageOptimizer
         public DTE2 _dte;
         public static ImageOptimizerPackage Instance;
         string _copyPath;
-        static bool _isProcessing;
-        static Dictionary<string, DateTime> _fullyOptimized = new Dictionary<string, DateTime>();
+        private static bool _isProcessing;
+        private static Dictionary<string, DateTime> _fullyOptimized = new Dictionary<string, DateTime>();
+        private OleMenuCommandService _commandService;
 
         protected override void Initialize()
         {
@@ -36,22 +37,19 @@ namespace MadsKristensen.ImageOptimizer
 
             Logger.Initialize(this, Vsix.Name);
 
-            var mcs = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
+            _commandService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
 
-            CommandID cmdLossless = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizelossless);
-            OleMenuCommand menuLossless = new OleMenuCommand((s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(false)); }, cmdLossless);
-            menuLossless.BeforeQueryStatus += (s, e) => { OptimizeBeforeQueryStatus(s, false); };
-            mcs.AddCommand(menuLossless);
+            AddCommand(PackageIds.cmdOptimizelossless, (s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(false)); }, (s, e) => { OptimizeBeforeQueryStatus(s, false); });
+            AddCommand(PackageIds.cmdOptimizelossy, (s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(true)); }, (s, e) => { OptimizeBeforeQueryStatus(s, true); });
+            AddCommand(PackageIds.cmdCopyDataUri, CopyAsBase64, CopyBeforeQueryStatus);
+        }
 
-            CommandID cmdLossy = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdOptimizelossy);
-            OleMenuCommand menuLossy = new OleMenuCommand((s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(true)); }, cmdLossy);
-            menuLossy.BeforeQueryStatus += (s, e) => { OptimizeBeforeQueryStatus(s, true); };
-            mcs.AddCommand(menuLossy);
-
-            CommandID cmdCopy = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdCopyDataUri);
-            OleMenuCommand menuCopy = new OleMenuCommand(CopyAsBase64, cmdCopy);
-            menuCopy.BeforeQueryStatus += CopyBeforeQueryStatus;
-            mcs.AddCommand(menuCopy);
+        private void AddCommand(int commandId, EventHandler invokeHandler, EventHandler beforeQueryStatus)
+        {
+            var cmdId = new CommandID(PackageGuids.guidImageOptimizerCmdSet, commandId);
+            var menuCmd = new OleMenuCommand(invokeHandler, cmdId);
+            menuCmd.BeforeQueryStatus += beforeQueryStatus;
+            _commandService.AddCommand(menuCmd);
         }
 
         void CopyBeforeQueryStatus(object sender, EventArgs e)

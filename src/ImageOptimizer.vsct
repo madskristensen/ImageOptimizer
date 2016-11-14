@@ -32,7 +32,7 @@
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Optimze Image (lossless)</ButtonText>
+          <ButtonText>Lossless Optimize Image</ButtonText>
         </Strings>
       </Button>
 
@@ -42,7 +42,7 @@
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Optimze Image (lossy)</ButtonText>
+          <ButtonText>Lossy Optimize Image</ButtonText>
         </Strings>
       </Button>
 
