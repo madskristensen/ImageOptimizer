@@ -28,7 +28,7 @@ namespace ImageOptimizer.Test
         {
             long savings = ExecuteTest("*.jpg", false);
 
-            Assert.IsTrue(savings == 104895, "Don't compress enough");
+            Assert.IsTrue(savings > 104895, "Don't compress enough");
         }
 
         [TestMethod, TestCategory("JPG")]

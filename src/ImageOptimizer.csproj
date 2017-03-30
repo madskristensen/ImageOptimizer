@@ -149,6 +149,9 @@
     <Content Include="Resources\Tools\cjpeg.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\Tools\guetzli_windows_x86-64.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Resources\Tools\libjpeg-62.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
