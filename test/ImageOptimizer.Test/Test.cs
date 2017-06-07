@@ -28,7 +28,7 @@ namespace ImageOptimizer.Test
         {
             long savings = ExecuteTest("*.jpg", false);
 
-            Assert.IsTrue(savings > 104895, "Don't compress enough");
+            Assert.IsTrue(savings >= 104895, "Don't compress enough");
         }
 
         [TestMethod, TestCategory("JPG")]
@@ -81,10 +81,9 @@ namespace ImageOptimizer.Test
             {
                 var result = _compressor.CompressFileAsync(file, lossy);
 
-                list.Add(result);
-
                 if (File.Exists(result.ResultFileName))
                 {
+                    list.Add(result);
                     File.Copy(result.ResultFileName, result.OriginalFileName, true);
                     File.Delete(result.ResultFileName);
                 }
