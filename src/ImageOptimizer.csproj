@@ -139,9 +139,7 @@
     <Content Include="Resources\Tools\TruePNG.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\Tools\zopfli.exe">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
+    <Content Include="Resources\Tools\zopfli.exe" />
     <Content Include="Resources\Tools\zopflipng.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
