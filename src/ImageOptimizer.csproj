@@ -133,14 +133,10 @@
     <Content Include="Resources\Tools\libjpeg-62.dll">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\Tools\pingo.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Resources\Tools\pngquant.exe">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
-    <Content Include="Resources\Tools\TruePNG.exe">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
-    <Content Include="Resources\Tools\zopfli.exe" />
-    <Content Include="Resources\Tools\zopflipng.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Resource Include="source.extension.ico">
@@ -174,9 +170,6 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\Tools\jpegtran.exe">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
-    <Content Include="Resources\Tools\pngout.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
   </ItemGroup>

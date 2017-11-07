@@ -1,9 +1,7 @@
-::optipng %1 -out %2 -o1
-::if not exist %2 copy %1 %2 /y
+if not exist %2 copy %1 %2 /y
+pingo -s6 -q %2
 
-::truepng /o4 %1 /out %2
-::if not exist %2 copy %1 %2 /y
-
+exit
 pngout %1 %2 /s2 /y /kpHYs
 if not exist %2 copy %1 %2 /y
 
