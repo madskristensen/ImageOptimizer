@@ -135,18 +135,9 @@
     <Content Include="Resources\Tools\pingo.exe">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\Tools\pngquant.exe">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
     <Resource Include="source.extension.ico">
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
     </Resource>
-    <Content Include="Resources\Tools\png-lossy.cmd">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
-    <Content Include="Resources\Tools\png-lossless.cmd">
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
     <None Include="packages.config" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>

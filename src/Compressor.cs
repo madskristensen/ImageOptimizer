@@ -66,18 +66,20 @@ namespace MadsKristensen.ImageOptimizer
             switch (ext)
             {
                 case ".png":
-                    if (lossy)
-                        return string.Format(CultureInfo.CurrentCulture, "/c png-lossy.cmd \"{0}\" \"{1}\"", sourceFile, targetFile);
+                    File.Copy(sourceFile, targetFile);
 
-                    return string.Format(CultureInfo.CurrentCulture, "/c png-lossless.cmd \"{0}\" \"{1}\"", sourceFile, targetFile);
+                    if (lossy)
+                        return string.Format(CultureInfo.CurrentCulture, "/c pingo -s8 -q -palette=79 \"{0}\"", targetFile);
+                    else
+                        return string.Format(CultureInfo.CurrentCulture, "/c pingo -s8 -q \"{0}\"", targetFile);
 
                 case ".jpg":
                 case ".jpeg":
                     if (lossy)
                         return string.Format(CultureInfo.CurrentCulture, "/c cjpeg -quality 80,60 -dct float -smooth 5 -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
-
-                    return string.Format(CultureInfo.CurrentCulture, "/c jpegtran -copy none -optimize -progressive -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
-                //return string.Format(CultureInfo.CurrentCulture, "/c guetzli_windows_x86-64 \"{0}\" \"{1}\"", sourceFile, targetFile);
+                    else
+                        return string.Format(CultureInfo.CurrentCulture, "/c jpegtran -copy none -optimize -progressive -outfile \"{1}\" \"{0}\"", sourceFile, targetFile);
+                        //return string.Format(CultureInfo.CurrentCulture, "/c guetzli_windows_x86-64 \"{0}\" \"{1}\"", sourceFile, targetFile);
 
                 case ".gif":
                     return string.Format(CultureInfo.CurrentCulture, "/c gifsicle -O3 --batch --colors=256 \"{0}\" --output=\"{1}\"", sourceFile, targetFile);
