@@ -7,11 +7,11 @@ internal static class Logger
 {
     private static string _name;
     private static Interop.IVsOutputWindowPane _pane;
-    private static Interop.IVsOutputWindow _output; 
+    private static Interop.IVsOutputWindow _output;
 
     public static async Task InitializeAsync(IAsyncServiceProvider provider, string name)
     {
-        _output =  await provider.GetServiceAsync(typeof(Interop.SVsOutputWindow)) as Interop.IVsOutputWindow;
+        _output = await provider.GetServiceAsync(typeof(Interop.SVsOutputWindow)) as Interop.IVsOutputWindow;
         _name = name;
     }
 
@@ -19,13 +19,15 @@ internal static class Logger
     {
         try
         {
-            if (EnsurePane())
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
             {
-                ThreadHelper.Generic.BeginInvoke(() =>
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                if (EnsurePane())
                 {
                     _pane.OutputStringThreadSafe(DateTime.Now + ": " + message + Environment.NewLine);
-                });
-            }
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -37,15 +39,9 @@ internal static class Logger
     {
         if (_pane == null)
         {
-            ThreadHelper.Generic.Invoke(() =>
-            {
-                if (_pane == null)
-                {
-                    var guid = Guid.NewGuid();
-                    _output.CreatePane(ref guid, _name, 1, 1);
-                    _output.GetPane(ref guid, out _pane);
-                }
-            });
+                var guid = Guid.NewGuid();
+                _output.CreatePane(ref guid, _name, 1, 1);
+                _output.GetPane(ref guid, out _pane);
         }
 
         return _pane != null;

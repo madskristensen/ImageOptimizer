@@ -101,7 +101,6 @@ namespace MadsKristensen.ImageOptimizer
             if (button.Visible && _isProcessing)
             {
                 button.Enabled = false;
-                button.Text += " (running)";
             }
         }
 
