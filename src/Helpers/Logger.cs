@@ -15,19 +15,16 @@ internal static class Logger
         _name = name;
     }
 
-    public static void Log(object message)
+    public static async Task LogToOutputWindowAsync(object message)
     {
         try
         {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
-            {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                if (EnsurePane())
-                {
-                    _pane.OutputStringThreadSafe(DateTime.Now + ": " + message + Environment.NewLine);
-                }
-            });
+            if (EnsurePane())
+            {
+                _pane.OutputStringThreadSafe(message + Environment.NewLine);
+            }
         }
         catch (Exception ex)
         {
@@ -39,9 +36,9 @@ internal static class Logger
     {
         if (_pane == null)
         {
-                var guid = Guid.NewGuid();
-                _output.CreatePane(ref guid, _name, 1, 1);
-                _output.GetPane(ref guid, out _pane);
+            var guid = Guid.NewGuid();
+            _output.CreatePane(ref guid, _name, 1, 1);
+            _output.GetPane(ref guid, out _pane);
         }
 
         return _pane != null;

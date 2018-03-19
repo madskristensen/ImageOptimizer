@@ -27,8 +27,8 @@ namespace MadsKristensen.ImageOptimizer
             _dte = dte;
             _commandService = commandService;
 
-            AddCommand(PackageIds.cmdOptimizelossless, (s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(false)); }, (s, e) => { OptimizeBeforeQueryStatus(s, false); });
-            AddCommand(PackageIds.cmdOptimizelossy, (s, e) => { System.Threading.Tasks.Task.Run(() => OptimizeImage(true)); }, (s, e) => { OptimizeBeforeQueryStatus(s, true); });
+            AddCommand(PackageIds.cmdOptimizelossless, (s, e) => OptimizeImageAsync(false), (s, e) => { OptimizeBeforeQueryStatus(s, false); });
+            AddCommand(PackageIds.cmdOptimizelossy, (s, e) => OptimizeImageAsync(true), (s, e) => { OptimizeBeforeQueryStatus(s, true); });
             AddCommand(PackageIds.cmdCopyDataUri, CopyAsBase64, CopyBeforeQueryStatus);
         }
 
@@ -104,7 +104,7 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        void OptimizeImage(bool lossy)
+        private async void OptimizeImageAsync(bool lossy)
         {
             _isProcessing = true;
 
@@ -121,47 +121,50 @@ namespace MadsKristensen.ImageOptimizer
             var stopwatch = Stopwatch.StartNew();
             int count = files.Count();
 
-            try
+            await Task.Run(async () =>
             {
-                string text = count == 1 ? " image" : " images";
-                _dte.StatusBar.Progress(true, "Optimizing " + count + text + "...", AmountCompleted: 1, Total: count + 1);
-
-                var compressor = new Compressor();
-                var cache = new Cache(_dte.Solution, lossy);
-                int nCompleted = 0;
-                var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
-
-                Parallel.For(0, count, options, i =>
+                try
                 {
-                    string file = files.ElementAt((int)i);
+                    string text = count == 1 ? " image" : " images";
+                    _dte.StatusBar.Progress(true, "Optimizing " + count + text + "...", AmountCompleted: 1, Total: count + 1);
 
-                    // Don't process if file has been fully optimized already
-                    if (cache.IsFullyOptimized(file))
-                    {
-                        var bogus = new CompressionResult(file, file, TimeSpan.Zero) { Processed = false };
-                        HandleResult(bogus, nCompleted + 1);
-                    }
-                    else
-                    {
-                        CompressionResult result = compressor.CompressFileAsync(file, lossy);
-                        HandleResult(result, nCompleted + 1);
+                    var compressor = new Compressor();
+                    var cache = new Cache(_dte.Solution, lossy);
+                    int nCompleted = 0;
+                    var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
-                        if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
-                            list[i] = result;
+                    Parallel.For(0, count, options, i =>
+                    {
+                        string file = files.ElementAt(i);
+
+                        // Don't process if file has been fully optimized already
+                        if (cache.IsFullyOptimized(file))
+                        {
+                            var bogus = new CompressionResult(file, file, TimeSpan.Zero) { Processed = false };
+                            HandleResult(bogus, nCompleted + 1);
+                        }
                         else
-                            cache.AddToCache(file);
-                    }
+                        {
+                            CompressionResult result = compressor.CompressFileAsync(file, lossy);
+                            HandleResult(result, nCompleted + 1);
 
-                    Interlocked.Increment(ref nCompleted);
-                });
-            }
-            finally
-            {
-                _dte.StatusBar.Progress(false);
-                stopwatch.Stop();
-                DisplayEndResult(list, stopwatch.Elapsed);
-                _isProcessing = false;
-            }
+                            if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
+                                list[i] = result;
+                            else
+                                cache.AddToCache(file);
+                        }
+
+                        Interlocked.Increment(ref nCompleted);
+                    });
+                }
+                finally
+                {
+                    _dte.StatusBar.Progress(false);
+                    stopwatch.Stop();
+                    await DisplayEndResultAsync(list, stopwatch.Elapsed);
+                    _isProcessing = false;
+                }
+            });
         }
 
         void HandleResult(CompressionResult result, int count)
@@ -179,18 +182,16 @@ namespace MadsKristensen.ImageOptimizer
                 string text = "Compressed " + name + " by " + result.Saving + " bytes / " + result.Percent + "%";
                 _dte.StatusBar.Progress(true, text, count, count + 1);
 
-                Logger.Log(result.ToString());
                 string ext = Path.GetExtension(result.OriginalFileName).ToLowerInvariant().Replace(".jpeg", ".jpg");
                 var metrics = new Dictionary<string, double> { { "saving", result.Saving } };
             }
             else
             {
                 _dte.StatusBar.Progress(true, name + " is already optimized", AmountCompleted: count, Total: count + 1);
-                Logger.Log(name + " is already optimized");
             }
         }
 
-        void DisplayEndResult(IList<CompressionResult> list, TimeSpan elapsed)
+        private async Task DisplayEndResultAsync(IList<CompressionResult> list, TimeSpan elapsed)
         {
             long savings = list.Where(r => r != null).Sum(r => r.Saving);
             long originals = list.Where(r => r != null).Sum(r => r.OriginalFileSize);
@@ -201,11 +202,25 @@ namespace MadsKristensen.ImageOptimizer
                 int successfulOptimizations = list.Count(x => x != null);
                 double percent = Math.Round(100 - ((double)results / (double)originals * 100), 1, MidpointRounding.AwayFromZero);
                 string image = successfulOptimizations == 1 ? "image" : "images";
-                _dte.StatusBar.Text = successfulOptimizations + " " + image + " optimized in " + Math.Round(elapsed.TotalMilliseconds / 1000, 2) + " seconds. Total saving of " + savings + " bytes / " + percent + "%";
+                string msg = successfulOptimizations + " " + image + " optimized in " + Math.Round(elapsed.TotalMilliseconds / 1000, 2) + " seconds. Total saving of " + savings + " bytes / " + percent + "%";
+
+                _dte.StatusBar.Text = msg;
+                await Logger.LogToOutputWindowAsync(msg + Environment.NewLine);
+
+                IEnumerable<CompressionResult> filesOptimized = list.Where(r => r != null && r.Saving > 0);
+                int maxLength = filesOptimized.Max(r => Path.GetFileName(r.OriginalFileName).Length);
+
+                foreach (CompressionResult result in filesOptimized)
+                {
+                    string name = Path.GetFileName(result.OriginalFileName).PadRight(maxLength);
+                    double p = Math.Round(100 - ((double)result.ResultFileSize / (double)result.OriginalFileSize * 100), 1, MidpointRounding.AwayFromZero);
+                    await Logger.LogToOutputWindowAsync("  " + name + "\t  optimized by " + result.Saving + " bytes / " + p + "%");
+                }
             }
             else
             {
                 _dte.StatusBar.Text = "The images were already optimized";
+                await Logger.LogToOutputWindowAsync("The images were already optimized");
             }
         }
     }

@@ -25,7 +25,7 @@ namespace MadsKristensen.ImageOptimizer
         {
             string targetFile = Path.ChangeExtension(Path.GetTempFileName(), Path.GetExtension(fileName));
 
-            ProcessStartInfo start = new ProcessStartInfo("cmd")
+            var start = new ProcessStartInfo("cmd")
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = _cwd,
@@ -59,7 +59,7 @@ namespace MadsKristensen.ImageOptimizer
             }
             catch (ArgumentException ex)
             {
-                Logger.Log(ex);
+                System.Diagnostics.Debug.Write(ex);
                 return null;
             }
 
