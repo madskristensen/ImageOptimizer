@@ -148,7 +148,7 @@ namespace MadsKristensen.ImageOptimizer
                             CompressionResult result = compressor.CompressFileAsync(file, lossy);
                             HandleResult(result, nCompleted + 1);
 
-                            if (result.Saving > 0 && !string.IsNullOrEmpty(result.ResultFileName))
+                            if (result.Saving > 0 && result.ResultFileSize > 0 && !string.IsNullOrEmpty(result.ResultFileName))
                                 list[i] = result;
                             else
                                 cache.AddToCache(file);
@@ -171,7 +171,7 @@ namespace MadsKristensen.ImageOptimizer
         {
             string name = Path.GetFileName(result.OriginalFileName);
 
-            if (result.Saving > 0 && File.Exists(result.ResultFileName))
+            if (result.Saving > 0 && result.ResultFileSize > 0 && File.Exists(result.ResultFileName))
             {
                 if (_dte.SourceControl.IsItemUnderSCC(result.OriginalFileName) && !_dte.SourceControl.IsItemCheckedOut(result.OriginalFileName))
                     _dte.SourceControl.CheckOutItem(result.OriginalFileName);
@@ -181,9 +181,6 @@ namespace MadsKristensen.ImageOptimizer
 
                 string text = "Compressed " + name + " by " + result.Saving + " bytes / " + result.Percent + "%";
                 _dte.StatusBar.Progress(true, text, count, count + 1);
-
-                string ext = Path.GetExtension(result.OriginalFileName).ToLowerInvariant().Replace(".jpeg", ".jpg");
-                var metrics = new Dictionary<string, double> { { "saving", result.Saving } };
             }
             else
             {
