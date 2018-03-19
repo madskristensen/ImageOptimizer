@@ -11,7 +11,7 @@ namespace MadsKristensen.ImageOptimizer
         public const string Name = "Image Optimizer";
         public const string Description = @"Uses industry standard tools to optimize any JPEG, PNG and Gifs - including animated Gifs. Can do both lossy and lossless optimization.";
         public const string Language = "en-US";
-        public const string Version = "3.7";
+        public const string Version = "4.0";
         public const string Author = "Mads Kristensen";
         public const string Tags = "image, png, gif, jpg, jpeg, compression, optimization, zopfli";
     }
