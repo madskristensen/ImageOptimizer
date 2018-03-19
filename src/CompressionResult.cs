@@ -9,8 +9,8 @@ namespace MadsKristensen.ImageOptimizer
         public CompressionResult(string originalFileName, string resultFileName, TimeSpan elapsed)
         {
             Elapsed = elapsed;
-            FileInfo original = new FileInfo(originalFileName);
-            FileInfo result = new FileInfo(resultFileName);
+            var original = new FileInfo(originalFileName);
+            var result = new FileInfo(resultFileName);
 
             if (original.Exists)
             {
@@ -49,7 +49,7 @@ namespace MadsKristensen.ImageOptimizer
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendLine("Optimized " + Path.GetFileName(OriginalFileName) + " in " + Math.Round(Elapsed.TotalMilliseconds / 1000, 2) + " seconds");
             sb.AppendLine("Before: " + OriginalFileSize + " bytes");
             sb.AppendLine("After: " + ResultFileSize + " bytes");
