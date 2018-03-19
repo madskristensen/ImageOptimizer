@@ -32,12 +32,12 @@ namespace MadsKristensen.ImageOptimizer
             AddCommand(PackageIds.cmdCopyDataUri, CopyAsBase64, CopyBeforeQueryStatus);
         }
 
-        public static void Initialize(IServiceProvider package)
+        public static async Task InitializeAsync(IAsyncServiceProvider package)
         {
-            var commandService = package.GetService(typeof(IMenuCommandService)) as IMenuCommandService;
-            var dte = package.GetService(typeof(DTE)) as DTE2;
+            var commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as IMenuCommandService;
+            var dte = await package.GetServiceAsync(typeof(DTE)) as DTE2;
 
-            new OptimizeCommand(dte, commandService);            
+            new OptimizeCommand(dte, commandService);
         }
 
         private void AddCommand(int commandId, EventHandler invokeHandler, EventHandler beforeQueryStatus)
@@ -95,10 +95,6 @@ namespace MadsKristensen.ImageOptimizer
             var button = (OleMenuCommand)sender;
             IEnumerable<string> paths = ProjectHelpers.GetSelectedItemPaths();
 
-            bool isPlural = IsPlural(paths);
-
-            string text = isPlural ? " Optimize Images" : " Optimize Image";
-            button.Text = (lossy ? "Lossy" : "Lossless") + text;
             button.Visible = paths.Any();
             button.Enabled = true;
 
@@ -107,17 +103,6 @@ namespace MadsKristensen.ImageOptimizer
                 button.Enabled = false;
                 button.Text += " (running)";
             }
-        }
-
-        private static bool IsPlural(IEnumerable<string> entries)
-        {
-            if (!entries.Any())
-                return false;
-
-            if (entries.Count() > 1)
-                return true;
-
-            return Directory.Exists(entries.First());
         }
 
         void OptimizeImage(bool lossy)

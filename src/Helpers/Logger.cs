@@ -1,17 +1,17 @@
 using System;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
+using Interop = Microsoft.VisualStudio.Shell.Interop;
 
 internal static class Logger
 {
     private static string _name;
-    private static IVsOutputWindowPane _pane;
-    private static IVsOutputWindow _output; 
+    private static Interop.IVsOutputWindowPane _pane;
+    private static Interop.IVsOutputWindow _output; 
 
-    public static void Initialize(IServiceProvider provider, string name)
+    public static async Task InitializeAsync(IAsyncServiceProvider provider, string name)
     {
-        _output =  provider.GetService(typeof(SVsOutputWindow)) as IVsOutputWindow;
+        _output =  await provider.GetServiceAsync(typeof(Interop.SVsOutputWindow)) as Interop.IVsOutputWindow;
         _name = name;
     }
 

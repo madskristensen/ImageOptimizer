@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
@@ -10,15 +11,26 @@ namespace MadsKristensen.ImageOptimizer
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", Vsix.Version, IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionHasSingleProject)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionHasMultipleProjects)]
+    //[ProvideAutoLoad(UIContextGuids80.SolutionHasSingleProject)]
+    //[ProvideAutoLoad(UIContextGuids80.SolutionHasMultipleProjects)]
     [Guid(PackageGuids.guidImageOptimizerPkgString)]
-    public sealed class ImageOptimizerPackage : Package
+    [ProvideUIContextRule(PackageGuids.guidAutoloadImagesString,
+    name: "Images",
+    expression: "Images",
+    termNames: new[] { "Images" },
+    termValues: new[] { "HierSingleSelectionName:.(png|jpg|jpeg|gif)$" })]
+    [ProvideUIContextRule(PackageGuids.guidAutoloadFoldersString,
+    name: "Folders",
+    expression: "Folders",
+    termNames: new[] { "Folders" },
+    termValues: new[] { "HierSingleSelectionName:[^\\.]+$" })]
+    public sealed class ImageOptimizerPackage : AsyncPackage
     {
-        protected override void Initialize()
+        protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
-            Logger.Initialize(this, Vsix.Name);
-            OptimizeCommand.Initialize(this);
+            await JoinableTaskFactory.SwitchToMainThreadAsync();
+            await Logger.InitializeAsync(this, Vsix.Name);
+            await OptimizeCommand.InitializeAsync(this);
         }
     }
 }

@@ -13,9 +13,13 @@ namespace MadsKristensen.ImageOptimizer
     internal sealed partial class PackageGuids
     {
         public const string guidImageOptimizerPkgString = "bf95754f-93d3-42ff-bfe3-e05d23188b08";
+        public const string guidAutoloadImagesString = "ca4b4a68-7c99-489f-8245-8eb13f2ac2f8";
+        public const string guidAutoloadFoldersString = "ca4b4a68-7c99-489f-8245-8eb13f2ac2f9";
         public const string guidImageOptimizerCmdSetString = "d3662d85-2693-4ff5-97aa-3878453c787b";
         public const string guidImagesString = "e0d8d968-5115-44d4-be14-c7c68d469d27";
         public static Guid guidImageOptimizerPkg = new Guid(guidImageOptimizerPkgString);
+        public static Guid guidAutoloadImages = new Guid(guidAutoloadImagesString);
+        public static Guid guidAutoloadFolders = new Guid(guidAutoloadFoldersString);
         public static Guid guidImageOptimizerCmdSet = new Guid(guidImageOptimizerCmdSetString);
         public static Guid guidImages = new Guid(guidImagesString);
     }
