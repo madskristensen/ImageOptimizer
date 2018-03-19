@@ -31,7 +31,6 @@
         <Icon guid="guidImages" id="lossless" />
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Lossless Optimization</ButtonText>
         </Strings>
@@ -42,7 +41,6 @@
         <Icon guid="guidImages" id="lossy" />
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Lossy Optimization</ButtonText>
         </Strings>
@@ -90,10 +88,6 @@
   </CommandPlacements>
 
   <VisibilityConstraints>
-    <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" context="guidAutoloadImages" />
-    <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" context="guidAutoloadFolders" />
-    <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdOptimizelossless" context="guidAutoloadImages" />
-    <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdOptimizelossless" context="guidAutoloadFolders" />
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdCopyDataUri" context="guidAutoloadImages" />
   </VisibilityConstraints>
 

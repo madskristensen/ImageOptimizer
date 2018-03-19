@@ -19,11 +19,6 @@ namespace MadsKristensen.ImageOptimizer
     expression: "Images",
     termNames: new[] { "Images" },
     termValues: new[] { "HierSingleSelectionName:.(png|jpg|jpeg|gif)$" })]
-    [ProvideUIContextRule(PackageGuids.guidAutoloadFoldersString,
-    name: "Folders",
-    expression: "Folders",
-    termNames: new[] { "Folders" },
-    termValues: new[] { "HierSingleSelectionName:[^\\.]+$" })]
     public sealed class ImageOptimizerPackage : AsyncPackage
     {
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
