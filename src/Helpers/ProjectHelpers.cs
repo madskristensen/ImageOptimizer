@@ -10,20 +10,18 @@ namespace MadsKristensen.ImageOptimizer
 {
     public static class ProjectHelpers
     {
-        private static DTE2 _dte = (DTE2)Package.GetGlobalService(typeof(DTE));
-
-        public static IEnumerable<string> GetSelectedFilePaths()
+        public static IEnumerable<string> GetSelectedFilePaths(DTE2 dte)
         {
-            return GetSelectedItemPaths()
+            return GetSelectedItemPaths(dte)
                 .SelectMany(p => Directory.Exists(p)
                                  ? Directory.EnumerateFiles(p, "*", SearchOption.AllDirectories)
                                  : new[] { p }
                            );
         }
 
-        public static IEnumerable<string> GetSelectedItemPaths()
+        public static IEnumerable<string> GetSelectedItemPaths(DTE2 dte)
         {
-            var items = (Array)_dte.ToolWindows.SolutionExplorer.SelectedItems;
+            var items = (Array)dte.ToolWindows.SolutionExplorer.SelectedItems;
 
             foreach (UIHierarchyItem selItem in items)
             {

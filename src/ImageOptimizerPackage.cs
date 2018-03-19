@@ -22,6 +22,7 @@ namespace MadsKristensen.ImageOptimizer
             await JoinableTaskFactory.SwitchToMainThreadAsync();
             await Logger.InitializeAsync(this, Vsix.Name);
             await OptimizeCommand.InitializeAsync(this);
+            await CopyBase64Command.InitializeAsync(this);
         }
     }
 }

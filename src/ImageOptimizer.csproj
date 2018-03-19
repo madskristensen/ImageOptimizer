@@ -103,6 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cache.cs" />
+    <Compile Include="Commands\CopyBase64Command.cs" />
     <Compile Include="Commands\OptimizeCommand.cs" />
     <Compile Include="CompressionResult.cs" />
     <Compile Include="Compressor.cs" />

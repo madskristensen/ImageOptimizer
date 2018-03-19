@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
@@ -17,7 +16,6 @@ namespace MadsKristensen.ImageOptimizer
     internal class OptimizeCommand
     {
         private DTE2 _dte;
-        private string _copyPath;
         private bool _isProcessing;
         private Dictionary<string, DateTime> _fullyOptimized = new Dictionary<string, DateTime>();
         private IMenuCommandService _commandService;
@@ -29,7 +27,6 @@ namespace MadsKristensen.ImageOptimizer
 
             AddCommand(PackageIds.cmdOptimizelossless, (s, e) => OptimizeImageAsync(false), (s, e) => { OptimizeBeforeQueryStatus(s, false); });
             AddCommand(PackageIds.cmdOptimizelossy, (s, e) => OptimizeImageAsync(true), (s, e) => { OptimizeBeforeQueryStatus(s, true); });
-            AddCommand(PackageIds.cmdCopyDataUri, CopyAsBase64, CopyBeforeQueryStatus);
         }
 
         public static async Task InitializeAsync(IAsyncServiceProvider package)
@@ -48,52 +45,10 @@ namespace MadsKristensen.ImageOptimizer
             _commandService.AddCommand(menuCmd);
         }
 
-        void CopyBeforeQueryStatus(object sender, EventArgs e)
-        {
-            var button = (OleMenuCommand)sender;
-            button.Visible = false;
-
-            IEnumerable<string> files = ProjectHelpers.GetSelectedFilePaths();
-
-            if (files.Count() == 1)
-            {
-                _copyPath = files.FirstOrDefault();
-                button.Visible = !string.IsNullOrEmpty(_copyPath) && Compressor.IsFileSupported(_copyPath);
-            }
-        }
-
-        void CopyAsBase64(object sender, EventArgs e)
-        {
-            string base64 = "data:"
-                        + GetMimeTypeFromFileExtension(_copyPath)
-                        + ";base64,"
-                        + Convert.ToBase64String(File.ReadAllBytes(_copyPath));
-
-            Clipboard.SetText(base64);
-
-            _dte.StatusBar.Text = "DataURI copied to clipboard (" + base64.Length + " characters)";
-        }
-
-        static string GetMimeTypeFromFileExtension(string file)
-        {
-            string ext = Path.GetExtension(file).TrimStart('.');
-
-            switch (ext)
-            {
-                case "jpg":
-                case "jpeg":
-                    return "image/jpeg";
-                case "svg":
-                    return "image/svg+xml";
-                default:
-                    return "image/" + ext;
-            }
-        }
-
         void OptimizeBeforeQueryStatus(object sender, bool lossy)
         {
             var button = (OleMenuCommand)sender;
-            IEnumerable<string> paths = ProjectHelpers.GetSelectedItemPaths();
+            IEnumerable<string> paths = ProjectHelpers.GetSelectedItemPaths(_dte);
 
             button.Visible = paths.Any();
             button.Enabled = true;
@@ -108,7 +63,7 @@ namespace MadsKristensen.ImageOptimizer
         {
             _isProcessing = true;
 
-            IEnumerable<string> files = ProjectHelpers.GetSelectedFilePaths().Where(f => Compressor.IsFileSupported(f));
+            IEnumerable<string> files = ProjectHelpers.GetSelectedFilePaths(_dte).Where(f => Compressor.IsFileSupported(f));
 
             if (!files.Any())
             {
