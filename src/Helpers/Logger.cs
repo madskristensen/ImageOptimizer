@@ -40,8 +40,8 @@ internal static class Logger
             {
                 if (_pane == null)
                 {
-                    Guid guid = Guid.NewGuid();
-                    IVsOutputWindow output = (IVsOutputWindow)_provider.GetService(typeof(SVsOutputWindow));
+                    var guid = Guid.NewGuid();
+                    var output = (IVsOutputWindow)_provider.GetService(typeof(SVsOutputWindow));
                     output.CreatePane(ref guid, _name, 1, 1);
                     output.GetPane(ref guid, out _pane);
                 }

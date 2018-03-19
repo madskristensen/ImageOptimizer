@@ -4,12 +4,13 @@ using System.IO;
 using System.Linq;
 using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
 
 namespace MadsKristensen.ImageOptimizer
 {
     public static class ProjectHelpers
     {
-        private static DTE2 _dte = ImageOptimizerPackage.Instance._dte;
+        private static DTE2 _dte = (DTE2)Package.GetGlobalService(typeof(DTE));
 
         public static IEnumerable<string> GetSelectedFilePaths()
         {
@@ -26,11 +27,10 @@ namespace MadsKristensen.ImageOptimizer
 
             foreach (UIHierarchyItem selItem in items)
             {
-                var item = selItem.Object as ProjectItem;
                 var proj = selItem.Object as Project;
                 var sol = selItem.Object as Solution;
 
-                if (item != null && item.Properties != null)
+                if (selItem.Object is ProjectItem item && item.Properties != null)
                 {
                     yield return item.Properties.Item("FullPath").Value.ToString();
                 }
