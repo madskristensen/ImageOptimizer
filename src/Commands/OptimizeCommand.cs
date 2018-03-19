@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
+using Task = System.Threading.Tasks.Task;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -34,7 +35,7 @@ namespace MadsKristensen.ImageOptimizer
         public static void Initialize(IServiceProvider package)
         {
             var commandService = package.GetService(typeof(IMenuCommandService)) as IMenuCommandService;
-            var dte = (DTE2)package.GetService(typeof(DTE));
+            var dte = package.GetService(typeof(DTE)) as DTE2;
 
             new OptimizeCommand(dte, commandService);            
         }

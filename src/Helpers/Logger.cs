@@ -1,16 +1,17 @@
 using System;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Task = System.Threading.Tasks.Task;
 
 internal static class Logger
 {
     private static string _name;
     private static IVsOutputWindowPane _pane;
-    private static IServiceProvider _provider;
+    private static IVsOutputWindow _output; 
 
     public static void Initialize(IServiceProvider provider, string name)
     {
-        _provider = provider;
+        _output =  provider.GetService(typeof(SVsOutputWindow)) as IVsOutputWindow;
         _name = name;
     }
 
@@ -41,9 +42,8 @@ internal static class Logger
                 if (_pane == null)
                 {
                     var guid = Guid.NewGuid();
-                    var output = (IVsOutputWindow)_provider.GetService(typeof(SVsOutputWindow));
-                    output.CreatePane(ref guid, _name, 1, 1);
-                    output.GetPane(ref guid, out _pane);
+                    _output.CreatePane(ref guid, _name, 1, 1);
+                    _output.GetPane(ref guid, out _pane);
                 }
             });
         }
