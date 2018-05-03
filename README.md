@@ -32,11 +32,11 @@ one of the image optimization buttons.
 
 You can also right-click a folder to optimize all images inside it.
 
-### Lossless optimization
-If you chose lossless optimization, the tool will
+### Best quality 
+If you chose best quality optimization, the tool will
 do its optimizations without changing the quality of the image.
 
-### Lossy optimizations
+### Best compression
 If you decide to sacrifice just a small amount of image quality
 (which in most cases is unnoticeable to the human eye), you will
 be able to save up to 90% of the initial file weight. Lossy

@@ -69,9 +69,9 @@ namespace MadsKristensen.ImageOptimizer
                     File.Copy(sourceFile, targetFile);
 
                     if (lossy)
-                        return string.Format(CultureInfo.CurrentCulture, "/c pingo -s8 -q -palette=79 \"{0}\"", targetFile);
+                        return string.Format(CultureInfo.CurrentCulture, "/c pingo -s8 -pngpalette=79 -q \"{0}\"", targetFile);
                     else
-                        return string.Format(CultureInfo.CurrentCulture, "/c pingo -s8 -q \"{0}\"", targetFile);
+                        return string.Format(CultureInfo.CurrentCulture, "/c pingo -auto=100 -s8 -q \"{0}\"", targetFile);
 
                 case ".jpg":
                 case ".jpeg":
