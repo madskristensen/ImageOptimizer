@@ -11,6 +11,7 @@ internal static class Logger
 
     public static async Task InitializeAsync(IAsyncServiceProvider provider, string name)
     {
+        ThreadHelper.ThrowIfNotOnUIThread();
         _output = await provider.GetServiceAsync(typeof(Interop.SVsOutputWindow)) as Interop.IVsOutputWindow;
         _name = name;
     }
@@ -34,6 +35,7 @@ internal static class Logger
 
     private static bool EnsurePane()
     {
+        ThreadHelper.ThrowIfNotOnUIThread();
         if (_pane == null)
         {
             var guid = Guid.NewGuid();

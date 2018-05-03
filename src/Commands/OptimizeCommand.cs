@@ -25,8 +25,8 @@ namespace MadsKristensen.ImageOptimizer
             _dte = dte;
             _commandService = commandService;
 
-            AddCommand(PackageIds.cmdOptimizelossless, (s, e) => OptimizeImageAsync(false), (s, e) => { OptimizeBeforeQueryStatus(s, false); });
-            AddCommand(PackageIds.cmdOptimizelossy, (s, e) => OptimizeImageAsync(true), (s, e) => { OptimizeBeforeQueryStatus(s, true); });
+            AddCommand(PackageIds.cmdOptimizelossless, (s, e) => OptimizeImageAsync(false).ConfigureAwait(false), (s, e) => { OptimizeBeforeQueryStatus(s, false); });
+            AddCommand(PackageIds.cmdOptimizelossy, (s, e) => OptimizeImageAsync(true).ConfigureAwait(false), (s, e) => { OptimizeBeforeQueryStatus(s, true); });
         }
 
         public static async Task InitializeAsync(IAsyncServiceProvider package)
@@ -59,7 +59,7 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private async void OptimizeImageAsync(bool lossy)
+        private async Task OptimizeImageAsync(bool lossy)
         {
             _isProcessing = true;
 
@@ -100,7 +100,7 @@ namespace MadsKristensen.ImageOptimizer
                         }
                         else
                         {
-                            CompressionResult result = compressor.CompressFileAsync(file, lossy);
+                            CompressionResult result = compressor.CompressFile(file, lossy);
                             HandleResult(result, nCompleted + 1);
 
                             if (result.Saving > 0 && result.ResultFileSize > 0 && !string.IsNullOrEmpty(result.ResultFileName))
@@ -145,6 +145,7 @@ namespace MadsKristensen.ImageOptimizer
 
         private async Task DisplayEndResultAsync(IList<CompressionResult> list, TimeSpan elapsed)
         {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             long savings = list.Where(r => r != null).Sum(r => r.Saving);
             long originals = list.Where(r => r != null).Sum(r => r.OriginalFileSize);
             long results = list.Where(r => r != null).Sum(r => r.ResultFileSize);

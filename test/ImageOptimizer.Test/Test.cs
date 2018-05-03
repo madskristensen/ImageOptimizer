@@ -79,7 +79,7 @@ namespace ImageOptimizer.Test
 
             foreach (var file in files)
             {
-                var result = _compressor.CompressFileAsync(file, lossy);
+                var result = _compressor.CompressFile(file, lossy);
 
                 if (File.Exists(result.ResultFileName))
                 {

@@ -21,7 +21,7 @@ namespace MadsKristensen.ImageOptimizer
             _cwd = cwd;
         }
 
-        public CompressionResult CompressFileAsync(string fileName, bool lossy)
+        public CompressionResult CompressFile(string fileName, bool lossy)
         {
             string targetFile = Path.ChangeExtension(Path.GetTempFileName(), Path.GetExtension(fileName));
 

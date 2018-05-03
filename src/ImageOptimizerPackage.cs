@@ -6,7 +6,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace MadsKristensen.ImageOptimizer
 {
-    [PackageRegistration(UseManagedResourcesOnly = true)]
+    [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading =true)]
     [InstalledProductRegistration("#110", "#112", Vsix.Version, IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [Guid(PackageGuids.guidImageOptimizerPkgString)]
