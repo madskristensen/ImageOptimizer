@@ -33,7 +33,7 @@
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Best Quality</ButtonText>
+          <ButtonText>Optimize for Best Quality</ButtonText>
         </Strings>
       </Button>
 
@@ -43,7 +43,7 @@
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Best Compression</ButtonText>
+          <ButtonText>Optimize for Best Compression</ButtonText>
         </Strings>
       </Button>
 
