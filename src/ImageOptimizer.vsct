@@ -32,8 +32,10 @@
         <Icon guid="ImageCatalogGuid" id="ResamplePicture" />
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>AllowParams</CommandFlag>
         <Strings>
           <ButtonText>Optimize for Best Quality</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.OptimizeLossless</LocCanonicalName>
         </Strings>
       </Button>
 
@@ -42,8 +44,10 @@
         <Icon guid="ImageCatalogGuid" id="ImageGenerator" />
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>AllowParams</CommandFlag>
         <Strings>
           <ButtonText>Optimize for Best Compression</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.OptimizeLossy</LocCanonicalName>
         </Strings>
       </Button>
 
@@ -56,6 +60,7 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Copy base64 DataURI to clipboard</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.CopyAsBase64</LocCanonicalName>
         </Strings>
       </Button>
     </Buttons>

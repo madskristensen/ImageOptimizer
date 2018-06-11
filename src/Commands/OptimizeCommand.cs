@@ -25,8 +25,8 @@ namespace MadsKristensen.ImageOptimizer
             _dte = dte;
             _commandService = commandService;
 
-            AddCommand(PackageIds.cmdOptimizelossless, (s, e) => OptimizeImageAsync(false).ConfigureAwait(false), (s, e) => { OptimizeBeforeQueryStatus(s, false); });
-            AddCommand(PackageIds.cmdOptimizelossy, (s, e) => OptimizeImageAsync(true).ConfigureAwait(false), (s, e) => { OptimizeBeforeQueryStatus(s, true); });
+            AddCommand(PackageIds.cmdOptimizelossless, (s, e) => OptimizeImageAsync(false, e).ConfigureAwait(false), (s, e) => { OptimizeBeforeQueryStatus(s, false); });
+            AddCommand(PackageIds.cmdOptimizelossy, (s, e) => OptimizeImageAsync(true, e).ConfigureAwait(false), (s, e) => { OptimizeBeforeQueryStatus(s, true); });
         }
 
         public static async Task InitializeAsync(IAsyncServiceProvider package)
@@ -42,6 +42,7 @@ namespace MadsKristensen.ImageOptimizer
             var cmdId = new CommandID(PackageGuids.guidImageOptimizerCmdSet, commandId);
             var menuCmd = new OleMenuCommand(invokeHandler, cmdId);
             menuCmd.BeforeQueryStatus += beforeQueryStatus;
+            menuCmd.ParametersDescription = "*";
             _commandService.AddCommand(menuCmd);
         }
 
@@ -59,11 +60,28 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private async Task OptimizeImageAsync(bool lossy)
+        private async Task OptimizeImageAsync(bool lossy, EventArgs e)
         {
             _isProcessing = true;
 
-            IEnumerable<string> files = ProjectHelpers.GetSelectedFilePaths(_dte).Where(f => Compressor.IsFileSupported(f));
+            IEnumerable<string> files = null;
+
+            // Check command parameters first
+            if (e is OleMenuCmdEventArgs cmdArgs && cmdArgs.InValue is string arg)
+            {
+                string filePath = arg.Trim('"', '\'');
+
+                if (Compressor.IsFileSupported(filePath) && File.Exists(filePath))
+                {
+                    files = new[] { filePath };
+                }
+            }
+
+            // Then check selected items
+            if (files == null)
+            {
+                files = ProjectHelpers.GetSelectedFilePaths(_dte).Where(f => Compressor.IsFileSupported(f));
+            }
 
             if (!files.Any())
             {
