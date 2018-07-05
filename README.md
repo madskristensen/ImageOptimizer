@@ -55,7 +55,7 @@ slow. This extension parallelizes the workload on each CPU core
 available on the machine. This speeds up the optimization
 significantly.
 
-## API
+## API for extenders
 Any extension can call the commands provided in the Image Optimizer extension to optimize any image. 
 
 ```c#
