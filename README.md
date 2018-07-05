@@ -55,6 +55,34 @@ slow. This extension parallelizes the workload on each CPU core
 available on the machine. This speeds up the optimization
 significantly.
 
+## API
+Any extension can call the commands provided in the Image Optimizer extension to optimize any image. 
+
+```c#
+public void OptimizeImage(string filePath)
+{
+	try
+	{
+		var DTE = (DTE2)Package.GetGlobalService(typeof(DTE));
+		Command command = DTE.Commands.Item("ImageOptimizer.OptimizeLossless");
+
+		if (command != null && command.IsAvailable)
+		{
+			DTE.Commands.Raise(command.Guid, command.ID, filePath, null);
+		}
+	}
+	catch (Exception ex)
+	{
+		// Image Optimizer not installed
+	}
+}
+```
+
+The commands are:
+
+* ImageOptimizer.OptimizeLossless - *Optimize for best quality*
+* ImageOptimizer.OptimizeLossy - *Optimize for best compression*
+
 ## Contribute
 Check out the [contribution guidelines](.github/CONTRIBUTING.md)
 if you want to contribute to this project.
