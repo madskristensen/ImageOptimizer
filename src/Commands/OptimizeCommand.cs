@@ -17,7 +17,7 @@ namespace MadsKristensen.ImageOptimizer
     {
         private DTE2 _dte;
         private bool _isProcessing;
-        private Dictionary<string, DateTime> _fullyOptimized = new Dictionary<string, DateTime>();
+        private readonly Dictionary<string, DateTime> _fullyOptimized = new Dictionary<string, DateTime>();
         private IMenuCommandService _commandService;
 
         private OptimizeCommand(DTE2 dte, IMenuCommandService commandService)
