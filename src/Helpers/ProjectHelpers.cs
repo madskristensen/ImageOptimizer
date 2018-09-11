@@ -32,7 +32,7 @@ namespace MadsKristensen.ImageOptimizer
                 {
                     yield return item.Properties.Item("FullPath").Value.ToString();
                 }
-                else if (proj != null && proj.Kind != ProjectKinds.vsProjectKindSolutionFolder)
+                else if (proj != null && proj.Kind != "{66A26720-8FB5-11D2-AA7E-00C04F688DDE}")//ProjectKinds.vsProjectKindSolutionFolder)
                 {
                     yield return proj.GetRootFolder();
                 }

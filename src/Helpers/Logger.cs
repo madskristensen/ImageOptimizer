@@ -1,18 +1,21 @@
 using System;
-using Microsoft.VisualStudio.Shell;
+using System.Diagnostics;
+using Microsoft;
+using Shell = Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
-using Interop = Microsoft.VisualStudio.Shell.Interop;
 
 internal static class Logger
 {
     private static string _name;
-    private static Interop.IVsOutputWindowPane _pane;
-    private static Interop.IVsOutputWindow _output;
+    private static IVsOutputWindowPane _pane;
+    private static IVsOutputWindow _output;
 
-    public static async Task InitializeAsync(IAsyncServiceProvider provider, string name)
+    public static async Task InitializeAsync(Shell.IAsyncServiceProvider provider, string name)
     {
-        ThreadHelper.ThrowIfNotOnUIThread();
-        _output = await provider.GetServiceAsync(typeof(Interop.SVsOutputWindow)) as Interop.IVsOutputWindow;
+        await Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+        _output = await provider.GetServiceAsync(typeof(SVsOutputWindow)) as IVsOutputWindow;
+        Assumes.Present(_output);
         _name = name;
     }
 
@@ -20,7 +23,7 @@ internal static class Logger
     {
         try
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             if (EnsurePane())
             {
@@ -29,13 +32,13 @@ internal static class Logger
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.Write(ex);
+            Debug.Write(ex);
         }
     }
 
     private static bool EnsurePane()
     {
-        ThreadHelper.ThrowIfNotOnUIThread();
+        Shell.ThreadHelper.ThrowIfNotOnUIThread();
         if (_pane == null)
         {
             var guid = Guid.NewGuid();
