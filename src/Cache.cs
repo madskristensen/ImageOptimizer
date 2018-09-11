@@ -7,13 +7,13 @@ namespace MadsKristensen.ImageOptimizer
     class Cache
     {
         public Dictionary<string, long> _cache;
-        bool _lossy;
-        Solution _solution;
-        private static object _syncRoot = new object();
+        readonly bool _lossy;
+        readonly string _solutionFullName;
+        private static readonly object _syncRoot = new object();
 
-        public Cache(Solution solution, bool lossy)
+        public Cache(string solution, bool lossy)
         {
-            _solution = solution;
+            _solutionFullName = solution;
             _lossy = lossy;
             _cache = GetCacheFromDisk();
         }
@@ -27,7 +27,7 @@ namespace MadsKristensen.ImageOptimizer
 
         public void AddToCache(string file)
         {
-            if (string.IsNullOrEmpty(_solution.FullName))
+            if (string.IsNullOrEmpty(_solutionFullName))
                 return;
 
             var info = new FileInfo(file);
@@ -50,7 +50,7 @@ namespace MadsKristensen.ImageOptimizer
 
         Dictionary<string, long> GetCacheFromDisk()
         {
-            if (string.IsNullOrEmpty(_solution.FullName))
+            if (string.IsNullOrEmpty(_solutionFullName))
                 return new Dictionary<string, long>();
 
             FileInfo file = GetCacheFileName();
@@ -79,7 +79,7 @@ namespace MadsKristensen.ImageOptimizer
 
         FileInfo GetCacheFileName()
         {
-            string file = _solution.FullName;
+            string file = _solutionFullName;
 
             if (string.IsNullOrEmpty(file))
                 return null;

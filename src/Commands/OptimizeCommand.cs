@@ -80,13 +80,16 @@ namespace MadsKristensen.ImageOptimizer
             // Then check selected items
             if (files == null)
             {
-                files = ProjectHelpers.GetSelectedFilePaths(_dte).Where(f => Compressor.IsFileSupported(f));
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                files = ProjectHelpers.GetSelectedFilePaths(_dte).Where(f => Compressor.IsFileSupported(f)).ToArray();
             }
 
             if (!files.Any())
             {
-                _dte.StatusBar.Text = "No images found to optimize";
                 _isProcessing = false;
+
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                _dte.StatusBar.Text = "No images found to optimize";
                 return;
             }
 
@@ -102,7 +105,7 @@ namespace MadsKristensen.ImageOptimizer
                     _dte.StatusBar.Progress(true, "Optimizing " + count + text + "...", AmountCompleted: 1, Total: count + 1);
 
                     var compressor = new Compressor();
-                    var cache = new Cache(_dte.Solution, lossy);
+                    var cache = new Cache(_dte.Solution.FullName, lossy);
                     int nCompleted = 0;
                     var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 

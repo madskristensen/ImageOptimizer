@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
+using Microsoft;
 using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
 
@@ -18,7 +19,10 @@ namespace MadsKristensen.ImageOptimizer
         public static async Task InitializeAsync(IAsyncServiceProvider provider)
         {
             var commandService = await provider.GetServiceAsync(typeof(IMenuCommandService)) as IMenuCommandService;
+            Assumes.Present(commandService);
+
             _dte = await provider.GetServiceAsync(typeof(DTE)) as DTE2;
+            Assumes.Present(_dte);
 
             var cmdId = new CommandID(PackageGuids.guidImageOptimizerCmdSet, PackageIds.cmdCopyDataUri);
             var menuCmd = new OleMenuCommand(Execute, cmdId);
@@ -42,6 +46,8 @@ namespace MadsKristensen.ImageOptimizer
 
         private static void Execute(object sender, EventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             IEnumerable<string> files = ProjectHelpers.GetSelectedFilePaths(_dte);
             string copyPath = files.FirstOrDefault();
 

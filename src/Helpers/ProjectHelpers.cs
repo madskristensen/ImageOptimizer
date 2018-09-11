@@ -21,6 +21,8 @@ namespace MadsKristensen.ImageOptimizer
 
         public static IEnumerable<string> GetSelectedItemPaths(DTE2 dte)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             var items = (Array)dte.ToolWindows.SolutionExplorer.SelectedItems;
 
             foreach (UIHierarchyItem selItem in items)
@@ -45,6 +47,8 @@ namespace MadsKristensen.ImageOptimizer
 
         public static string GetRootFolder(this Project project)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             if (string.IsNullOrEmpty(project.FullName))
                 return null;
 

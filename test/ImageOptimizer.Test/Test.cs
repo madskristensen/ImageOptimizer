@@ -65,21 +65,21 @@ namespace ImageOptimizer.Test
 
         private long ExecuteTest(string searchFilter, bool lossy)
         {
-            var files = _folder.GetFiles(searchFilter, SearchOption.AllDirectories);
+            FileInfo[] files = _folder.GetFiles(searchFilter, SearchOption.AllDirectories);
             CopyFiles(files);
 
-            var savings = RunCompression(searchFilter, lossy);
+            long savings = RunCompression(searchFilter, lossy);
             return savings;
         }
 
         private long RunCompression(string searchFilter, bool lossy)
         {
-            var files = Directory.GetFiles(_temp, searchFilter);
+            string[] files = Directory.GetFiles(_temp, searchFilter);
             var list = new List<CompressionResult>();
 
-            foreach (var file in files)
+            foreach (string file in files)
             {
-                var result = _compressor.CompressFile(file, lossy);
+                CompressionResult result = _compressor.CompressFile(file, lossy);
 
                 if (File.Exists(result.ResultFileName))
                 {
@@ -89,16 +89,16 @@ namespace ImageOptimizer.Test
                 }
             }
 
-            var grouped = list.GroupBy(r => Path.GetExtension(r.OriginalFileName).ToLowerInvariant());
+            IEnumerable<IGrouping<string, CompressionResult>> grouped = list.GroupBy(r => Path.GetExtension(r.OriginalFileName).ToLowerInvariant());
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendLine("Type\t#\tSavings\tTime");
             sb.AppendLine();
 
-            foreach (var group in grouped)
+            foreach (IGrouping<string, CompressionResult> group in grouped)
             {
-                var sum = group.Sum(g => g.Saving);
-                var time = group.Average(g => g.Elapsed.TotalSeconds);
+                long sum = group.Sum(g => g.Saving);
+                double time = group.Average(g => g.Elapsed.TotalSeconds);
                 sb.AppendLine(group.Key + "\t" + group.Count() + "\t" + sum + "\t" + Math.Round(time, 2));
             }
 
@@ -113,13 +113,13 @@ namespace ImageOptimizer.Test
         {
             Directory.CreateDirectory(_temp);
 
-            var oldFiles = Directory.GetFiles(_temp, "*.*");
-            foreach (var file in oldFiles)
+            string[] oldFiles = Directory.GetFiles(_temp, "*.*");
+            foreach (string file in oldFiles)
             {
                 File.Delete(file);
             }
 
-            foreach (var file in files)
+            foreach (FileInfo file in files)
             {
                 file.CopyTo(Path.Combine(_temp, file.Name), true);
             }
