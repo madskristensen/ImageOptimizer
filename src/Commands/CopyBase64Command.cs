@@ -32,6 +32,7 @@ namespace MadsKristensen.ImageOptimizer
 
         private static void CopyBeforeQueryStatus(object sender, EventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             var button = (OleMenuCommand)sender;
             button.Visible = false;
 

@@ -99,6 +99,7 @@ namespace MadsKristensen.ImageOptimizer
 
             await Task.Run(async () =>
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 try
                 {
                     string text = count == 1 ? " image" : " images";
@@ -145,6 +146,7 @@ namespace MadsKristensen.ImageOptimizer
 
         void HandleResult(CompressionResult result, int count)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             string name = Path.GetFileName(result.OriginalFileName);
 
             if (result.Saving > 0 && result.ResultFileSize > 0 && File.Exists(result.ResultFileName))
