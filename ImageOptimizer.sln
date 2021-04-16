@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31214.321
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageOptimizer", "src\ImageOptimizer.csproj", "{CE4D2845-D1D2-4E6C-90C0-E7715FC0E1AB}"
 EndProject
@@ -13,7 +13,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageOptimizer.Test", "Test\ImageOptimizer.Test\ImageOptimizer.Test.csproj", "{C117F13F-2F5D-4434-AD47-71FA3B04390D}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "ImageOptimizerShared", "ImageOptimizerShared\ImageOptimizerShared.shproj", "{7157677D-FD95-473B-A0F1-EA0E1113E57A}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		ImageOptimizerShared\ImageOptimizerShared.projitems*{7157677d-fd95-473b-a0f1-ea0e1113e57a}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -30,5 +35,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E35C8296-FA6F-416C-A7E9-DB089CA416DA}
 	EndGlobalSection
 EndGlobal
