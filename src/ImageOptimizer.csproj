@@ -125,6 +125,7 @@
       <Version>16.9.31213.332</Version>
     </PackageReference>
   </ItemGroup>
+  <Import Project="..\ImageOptimizerShared\ImageOptimizerShared.projitems" Label="Shared" />
   <PropertyGroup>
     <UseCodebase>true</UseCodebase>
   </PropertyGroup>
