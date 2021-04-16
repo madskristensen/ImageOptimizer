@@ -52,10 +52,10 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ImageOptimizer.cs">
+    <Compile Include="..\SharedFiles\ImageOptimizer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>ImageOptimizer.vsct</DependentUpon>
+      <DependentUpon>..\SharedFiles\ImageOptimizer.vsct</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="source.extension.cs">
@@ -63,7 +63,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\icon.png">
+    <Content Include="..\SharedFiles\icon.png">
+      <Link>Resources\icon.png</Link>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="..\LICENSE">
@@ -80,10 +81,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <VSCTCompile Include="ImageOptimizer.vsct">
+    <VSCTCompile Include="..\SharedFiles\ImageOptimizer.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <Generator>VsctGenerator</Generator>
-      <LastGenOutput>ImageOptimizer.cs</LastGenOutput>
+      <LastGenOutput>..\SharedFiles\ImageOptimizer.cs</LastGenOutput>
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
