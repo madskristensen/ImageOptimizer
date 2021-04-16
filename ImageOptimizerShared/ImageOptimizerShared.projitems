@@ -9,5 +9,20 @@
     <Import_RootNamespace>ImageOptimizerShared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Cache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\CopyBase64Command.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\OptimizeCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CompressionResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compressor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\ProjectHelpers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImageOptimizerPackage.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\cjpeg.exe" />
+    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\gifsicle.exe" />
+    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\jpegtran.exe" />
+    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\libjpeg-62.dll" />
+    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\pingo.exe" />
   </ItemGroup>
 </Project>
