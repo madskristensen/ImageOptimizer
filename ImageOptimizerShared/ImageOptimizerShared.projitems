@@ -18,11 +18,4 @@
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ProjectHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImageOptimizerPackage.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\cjpeg.exe" />
-    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\gifsicle.exe" />
-    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\jpegtran.exe" />
-    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\libjpeg-62.dll" />
-    <Content Include="$(MSBuildThisFileDirectory)Resources\Tools\pingo.exe" />
-  </ItemGroup>
 </Project>

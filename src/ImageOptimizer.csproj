@@ -71,6 +71,30 @@
       <Link>Resources\LICENSE</Link>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="..\SharedFiles\Tools\cjpeg.exe">
+      <Link>Resources\Tools\cjpeg.exe</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\SharedFiles\Tools\gifsicle.exe">
+      <Link>Resources\Tools\gifsicle.exe</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\SharedFiles\Tools\guetzli_windows_x86-64.exe">
+      <Link>Resources\Tools\guetzli_windows_x86-64.exe</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\SharedFiles\Tools\jpegtran.exe">
+      <Link>Resources\Tools\jpegtran.exe</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\SharedFiles\Tools\libjpeg-62.dll">
+      <Link>Resources\Tools\libjpeg-62.dll</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="..\SharedFiles\Tools\pingo.exe">
+      <Link>Resources\Tools\pingo.exe</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Resource Include="source.extension.ico">
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
     </Resource>
