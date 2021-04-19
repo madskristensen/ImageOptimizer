@@ -123,7 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.SDK">
-      <Version>16.9.31213.332</Version>
+      <Version>16.9.31025.194</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="..\ImageOptimizerShared\ImageOptimizerShared.projitems" Label="Shared" />
