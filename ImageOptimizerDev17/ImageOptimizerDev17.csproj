@@ -97,12 +97,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Interop">
-      <Version>17.0.0-preview-1-31216-036</Version>
+      <Version>17.0.0-previews-1-31314-256</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.0-preview-1-31216-1036" ExcludeAssets="runtime">
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.0-previews-1-31314-256" ExcludeAssets="runtime">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.63-dev17-g3f11f5ab">
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.1606-preview1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -122,7 +122,7 @@
   <ItemGroup>
     <VSCTCompile Include="..\SharedFiles\ImageOptimizer.vsct">
       <Link>ImageOptimizer.vsct</Link>
-      <Generator>VsctGenerator</Generator>
+		<Generator>VsctGenerator</Generator>
       <LastGenOutput>..\SharedFiles\ImageOptimizer.cs</LastGenOutput>
     </VSCTCompile>
   </ItemGroup>
