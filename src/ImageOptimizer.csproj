@@ -107,8 +107,8 @@
   </ItemGroup>
   <ItemGroup>
     <VSCTCompile Include="..\SharedFiles\ImageOptimizer.vsct">
+      <Link>ImageOptimizer.vsct</Link>
       <ResourceName>Menus.ctmenu</ResourceName>
-      <Generator>VsctGenerator</Generator>
       <LastGenOutput>..\SharedFiles\ImageOptimizer.cs</LastGenOutput>
     </VSCTCompile>
   </ItemGroup>
