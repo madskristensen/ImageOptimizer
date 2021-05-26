@@ -12,6 +12,7 @@ namespace MadsKristensen.ImageOptimizer
     {
         public static IEnumerable<string> GetSelectedFilePaths(DTE2 dte)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             return GetSelectedItemPaths(dte)
                 .SelectMany(p => Directory.Exists(p)
                                  ? Directory.EnumerateFiles(p, "*", SearchOption.AllDirectories)

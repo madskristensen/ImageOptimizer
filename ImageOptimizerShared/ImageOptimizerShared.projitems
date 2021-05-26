@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>7157677d-fd95-473b-a0f1-ea0e1113e57a</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>ImageOptimizerShared</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Cache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\CopyBase64Command.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\OptimizeCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CompressionResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compressor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\ProjectHelpers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImageOptimizerPackage.cs" />
+  </ItemGroup>
+</Project>

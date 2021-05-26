@@ -19,7 +19,7 @@ namespace ImageOptimizer.Test
         public void Initialize()
         {
             _temp = Path.Combine(Path.GetTempPath(), "image optimizer");
-            string cwd = new DirectoryInfo("../../../../src/resources/tools").FullName;
+            string cwd = new DirectoryInfo("../../../../SharedFiles/Tools").FullName;
             _compressor = new Compressor(cwd);
         }
 
