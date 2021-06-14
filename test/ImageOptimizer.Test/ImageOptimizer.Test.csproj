@@ -55,12 +55,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ImageOptimizer.csproj">
-      <Project>{ce4d2845-d1d2-4e6c-90c0-e7715fc0e1ab}</Project>
-      <Name>ImageOptimizer</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Artifacts\gif\animation-cartoon.gif" />
     <Content Include="Artifacts\gif\animation-road.gif" />
     <Content Include="Artifacts\gif\animation-screenshot.gif" />
