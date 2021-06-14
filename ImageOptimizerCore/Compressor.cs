@@ -13,7 +13,7 @@ namespace MadsKristensen.ImageOptimizer
 
         public Compressor()
         {
-            _cwd = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), @"..\SharedFiles\Tools\");
+            _cwd = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), @"Resources\Tools\");
         }
 
         public Compressor(string cwd)
