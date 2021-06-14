@@ -76,6 +76,12 @@
     <Content Include="Artifacts\png\logo.png" />
     <Content Include="Artifacts\png\screenshot.png" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ImageOptimizer2022\ImageOptimizer2022.csproj">
+      <Project>{1b39376c-3d96-4996-904c-583d90817644}</Project>
+      <Name>ImageOptimizer2022</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
