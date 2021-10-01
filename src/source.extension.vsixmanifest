@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="bf95754f-93d3-42ff-bfe3-e05d23188b08" Version="4.0.999" Language="en-US" Publisher="Mads Kristensen" />
-    <DisplayName>Image Optimizer</DisplayName>
+    <Identity Id="fc4e241f-57de-4032-9c89-527984c0a0ae" Version="4.0.999" Language="en-US" Publisher="Mads Kristensen" />
+    <DisplayName>Image Optimizer (64-bit)</DisplayName>
     <Description xml:space="preserve">Uses industry standard tools to optimize any JPEG, PNG and Gifs - including animated Gifs. Can do both lossy and lossless optimization.</Description>
     <MoreInfo>https://github.com/madskristensen/ImageOptimizer</MoreInfo>
     <License>Resources\LICENSE</License>
@@ -11,10 +11,12 @@
     <Tags>image, png, gif, jpg, jpeg, compression, optimization, zopfli</Tags>
   </Metadata>
   <Installation InstalledByMsi="false">
-    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[15.0,17.0)" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[17.0,18.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
   </Installation>
   <Prerequisites>
-    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,)" DisplayName="Visual Studio core editor" />
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,)" DisplayName="Visual Studio core editor" />
   </Prerequisites>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
