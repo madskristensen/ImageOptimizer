@@ -11,56 +11,70 @@ namespace ImageOptimizer.Test
     [TestClass]
     public class Test
     {
-        Compressor _compressor;
-        DirectoryInfo _folder = new DirectoryInfo("../../artifacts/");
-        string _temp;
+        private Compressor _compressor;
+        private readonly DirectoryInfo _folder = new DirectoryInfo("../../artifacts/");
+        private string _temp;
 
         [TestInitialize]
         public void Initialize()
         {
             _temp = Path.Combine(Path.GetTempPath(), "image optimizer");
-            string cwd = new DirectoryInfo("../../../../src/resources/tools").FullName;
+            var cwd = new DirectoryInfo("../../../../src/resources/tools").FullName;
             _compressor = new Compressor(cwd);
         }
 
         [TestMethod, TestCategory("JPG")]
         public void Jpg_LossLess()
         {
-            long savings = ExecuteTest("*.jpg", false);
+            var savings = ExecuteTest("*.jpg", false);
 
-            Assert.IsTrue(savings >= 104895, "Don't compress enough (" + savings + ")");
+            Assert.IsTrue(savings >= 98665, "Don't compress enough (" + savings + ")");
+            Console.Write($"Savings: {savings}");
         }
 
         [TestMethod, TestCategory("JPG")]
         public void Jpg_Lossy()
         {
-            long savings = ExecuteTest("*.jpg", true);
+            var savings = ExecuteTest("*.jpg", true);
 
-            Assert.IsTrue(savings == 223692, "Don't compress enough (" + savings + ")");
+            Assert.IsTrue(savings >= 223838, "Don't compress enough (" + savings + ")");
+            Console.Write($"Savings: {savings}");
         }
 
         [TestMethod, TestCategory("PNG")]
         public void Png_LossLess()
         {
-            long savings = ExecuteTest("*.png", false);
+            var savings = ExecuteTest("*.png", false);
 
-            Assert.IsTrue(savings >= 65742, "Don't compress enough (" + savings + ")");
+            Assert.IsTrue(savings >= 29025, "Don't compress enough (" + savings + ")");
+            Console.Write($"Savings: {savings}");
         }
 
         [TestMethod, TestCategory("PNG")]
         public void Png_Lossy()
         {
-            long savings = ExecuteTest("*.png", true);
+            var savings = ExecuteTest("*.png", true);
 
-            Assert.IsTrue(savings >= 139309, "Don't compress enough (" + savings + ")");
+            Assert.IsTrue(savings >= 140321, "Don't compress enough (" + savings + ")");
+            Console.Write($"Savings: {savings}");
         }
 
         [TestMethod, TestCategory("GIF")]
         public void Gif_Lossless()
         {
-            long savings = ExecuteTest("*.gif", false);
+            var savings = ExecuteTest("*.gif", false);
 
-            Assert.IsTrue(savings == 5455, "Don't compress enough (" + savings + ")");
+            Assert.IsTrue(savings >= 5455, "Don't compress enough (" + savings + ")");
+            Console.Write($"Savings: {savings}");
+        }
+
+        [TestMethod, TestCategory("GIF")]
+        public void Gif_Lossy()
+        {
+            var savings = ExecuteTest("*.gif", true);
+
+            Assert.IsTrue(savings >= 134854, "Don't compress enough (" + savings + ")");
+            Console.Write($"Savings: {savings}");
         }
 
         private long ExecuteTest(string searchFilter, bool lossy)
@@ -68,16 +82,16 @@ namespace ImageOptimizer.Test
             FileInfo[] files = _folder.GetFiles(searchFilter, SearchOption.AllDirectories);
             CopyFiles(files);
 
-            long savings = RunCompression(searchFilter, lossy);
+            var savings = RunCompression(searchFilter, lossy);
             return savings;
         }
 
         private long RunCompression(string searchFilter, bool lossy)
         {
-            string[] files = Directory.GetFiles(_temp, searchFilter);
+            var files = Directory.GetFiles(_temp, searchFilter);
             var list = new List<CompressionResult>();
 
-            foreach (string file in files)
+            foreach (var file in files)
             {
                 CompressionResult result = _compressor.CompressFile(file, lossy);
 
@@ -97,24 +111,24 @@ namespace ImageOptimizer.Test
 
             foreach (IGrouping<string, CompressionResult> group in grouped)
             {
-                long sum = group.Sum(g => g.Saving);
-                double time = group.Average(g => g.Elapsed.TotalSeconds);
+                var sum = group.Sum(g => g.Saving);
+                var time = group.Average(g => g.Elapsed.TotalSeconds);
                 sb.AppendLine(group.Key + "\t" + group.Count() + "\t" + sum + "\t" + Math.Round(time, 2));
             }
 
-            string testName = searchFilter.Replace("*.*", "all").Trim('.', '*');
+            var testName = searchFilter.Replace("*.*", "all").Trim('.', '*');
 
             File.WriteAllText("../../" + testName + "-" + (lossy ? "lossy" : "lossless") + ".txt", sb.ToString());
 
             return list.Sum(r => r.Saving);
         }
 
-        void CopyFiles(IEnumerable<FileInfo> files)
+        private void CopyFiles(IEnumerable<FileInfo> files)
         {
             Directory.CreateDirectory(_temp);
 
-            string[] oldFiles = Directory.GetFiles(_temp, "*.*");
-            foreach (string file in oldFiles)
+            var oldFiles = Directory.GetFiles(_temp, "*.*");
+            foreach (var file in oldFiles)
             {
                 File.Delete(file);
             }

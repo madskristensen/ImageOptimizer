@@ -1,28 +1,19 @@
-image: Visual Studio 2019
+image: Visual Studio 2022
 
 install:
 - ps: (new-object Net.WebClient).DownloadString("https://raw.github.com/madskristensen/ExtensionScripts/master/AppVeyor/vsix.ps1") | iex
 
 before_build:
   - ps: Vsix-IncrementVsixVersion | Vsix-UpdateBuildVersion
-  - ps: Vsix-TokenReplacement src\source.extension.cs 'Version = "([0-9\\.]+)"' 'Version = "{version}"'
+  - ps: Vsix-TokenReplacement src\source.extension1.cs 'Version = "([0-9\\.]+)"' 'Version = "{version}"'
 
 build_script:
   - nuget restore -Verbosity quiet
   - msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal /v:m
 
-after_test:
+deploy_script:
   - ps: Vsix-PushArtifacts | Vsix-PublishToGallery
 
 artifacts:
   - path: test/ImageOptimizer.Test/*.txt
 
-before_deploy:
-  - ps: Vsix-CreateChocolatyPackage -packageId imageoptimizer
-
-deploy:
-  - provider: Environment
-    name: Chocolatey
-    on:
-      branch: master
-      appveyor_repo_commit_message_extended: /\[release\]/
