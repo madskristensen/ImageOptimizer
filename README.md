@@ -2,7 +2,8 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/26hxodkud0i54rv5?svg=true)](https://ci.appveyor.com/project/madskristensen/imageoptimizer)
 
-Download this extension from the [VS Gallery](https://visualstudiogallery.msdn.microsoft.com/a56eddd3-d79b-48ac-8c8f-2db06ade77c3)
+Download this extension from the VS marketplace [Visual Studio 2017, 2019](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.ImageOptimizer) 
+ or [Visual Studio 2022](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.ImageOptimizer64bit) 
 or get the [nightly build](http://vsixgallery.com/extension/bf95754f-93d3-42ff-bfe3-e05d23188b08/).
 
 --------------------------------
