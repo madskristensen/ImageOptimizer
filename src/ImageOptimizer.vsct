@@ -15,11 +15,26 @@
       <Group guid="guidImageOptimizerCmdSet" id="ClipboardGroup" priority="0x0200">
         <Parent guid="guidImageOptimizerCmdSet" id="MyMenu"/>
       </Group>
+
+		<!--Workspace-->
+		<Group guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenuGroup" priority="0x0600">
+			<Parent guid="guidWorkspaceExplorerToolWindowPackageCmdSet" id="idmWSE_ContextMenu"/>
+		</Group>
+		<Group guid="guidImageOptimizerCmdSet" id="WorkspaceOptimizeGroup" priority="0x0001">
+			<Parent guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenu"/>
+		</Group>
     </Groups>
 
     <Menus>
       <Menu guid="guidImageOptimizerCmdSet" id="MyMenu" priority="0x0200" type="Menu">
         <Parent guid="guidImageOptimizerCmdSet" id="MyMenuGroup" />
+        <Strings>
+          <ButtonText>Image Optimizer</ButtonText>
+        </Strings>
+      </Menu>
+		
+		<Menu guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenu" priority="0x0200" type="Menu">
+        <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenuGroup" />
         <Strings>
           <ButtonText>Image Optimizer</ButtonText>
         </Strings>
@@ -63,6 +78,31 @@
           <LocCanonicalName>.ImageOptimizer.CopyAsBase64</LocCanonicalName>
         </Strings>
       </Button>
+
+		<!-- Workspace-->
+		<Button guid="guidImageOptimizerCmdSet" id="cmdWorkspaceOptimizelossless" priority="0x0100" type="Button">
+			<Parent guid="guidImageOptimizerCmdSet" id="WorkspaceOptimizeGroup" />
+			<Icon guid="ImageCatalogGuid" id="ResamplePicture" />
+			<CommandFlag>IconIsMoniker</CommandFlag>
+			<CommandFlag>DynamicVisibility</CommandFlag>
+			<CommandFlag>DefaultInvisible</CommandFlag>
+			<Strings>
+				<ButtonText>Optimize for Best Quality</ButtonText>
+				<LocCanonicalName>.ImageOptimizer.WorkspaceptimizeLossless</LocCanonicalName>
+			</Strings>
+		</Button>
+
+		<Button guid="guidImageOptimizerCmdSet" id="cmdWorkspaceOptimizelossy" priority="0x0110" type="Button">
+			<Parent guid="guidImageOptimizerCmdSet" id="WorkspaceOptimizeGroup" />
+			<Icon guid="ImageCatalogGuid" id="ImageGenerator" />
+			<CommandFlag>IconIsMoniker</CommandFlag>
+			<CommandFlag>DynamicVisibility</CommandFlag>
+			<CommandFlag>DefaultInvisible</CommandFlag>
+			<Strings>
+				<ButtonText>Optimize for Best Compression</ButtonText>
+				<LocCanonicalName>.ImageOptimizer.WorkspaceOptimizeLossy</LocCanonicalName>
+			</Strings>
+		</Button>
     </Buttons>
   </Commands>
 
@@ -109,6 +149,20 @@
       <IDSymbol name="cmdOptimizelossy" value="0x0100" />
       <IDSymbol name="cmdOptimizelossless" value="0x0150" />
       <IDSymbol name="cmdCopyDataUri" value="0x0200" />
+
+      <IDSymbol name="WorkspaceContextMenuGroup" value="4" />
+      <IDSymbol name="WorkspaceContextMenu" value="5" />
+      <IDSymbol name="WorkspaceOptimizeGroup" value="6" />
+      <IDSymbol name="cmdWorkspaceOptimizelossless" value="7" />
+      <IDSymbol name="cmdWorkspaceOptimizelossy" value="8" />
     </GuidSymbol>
+
+	  <GuidSymbol name="guidWorkspaceExplorerToolWindowPackageCmdSet" value="{cfb400f1-5c60-4f3c-856e-180d28def0b7}">
+		  <IDSymbol name="idmWSE_ContextMenu" value="0x0002"/>
+		  <IDSymbol name="idgWSE_ContextMenu_BuildDebugActions" value="0x014"/>
+		  <IDSymbol name="idgWSE_ContextMenu_FileContextActions" value="0x0017"/>
+		  <IDSymbol name="idgAddNew_FilesFolders" value="0x2201"/>
+		  <IDSymbol name="idgWSE_ContextMenu_ScopeActions" value="0x016"/>
+	  </GuidSymbol>
   </Symbols>
 </CommandTable>

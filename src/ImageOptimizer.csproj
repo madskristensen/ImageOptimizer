@@ -55,6 +55,7 @@
     <Compile Include="Cache.cs" />
     <Compile Include="Commands\CopyBase64Command.cs" />
     <Compile Include="Commands\OptimizeCommand.cs" />
+    <Compile Include="Commands\WorkspaceOptimizeCommand.cs" />
     <Compile Include="CompressionResult.cs" />
     <Compile Include="Compressor.cs" />
     <Compile Include="Helpers\Logger.cs" />
@@ -106,11 +107,14 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.SDK" ExcludeAssets="runtime">
-      <Version>17.0.31902.203</Version>
+      <Version>17.0.32112.339</Version>
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Workspace.VSIntegration">
+      <Version>16.3.43</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
-      <Version>17.0.5232</Version>
+      <Version>17.9.3174</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

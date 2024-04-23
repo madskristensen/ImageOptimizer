@@ -43,7 +43,7 @@ namespace MadsKristensen.ImageOptimizer
         {
             get
             {
-                return Math.Round(100 - (double)ResultFileSize / (double)OriginalFileSize * 100, 1);
+                return Math.Round(100 - ResultFileSize / (double)OriginalFileSize * 100, 1);
             }
         }
 
