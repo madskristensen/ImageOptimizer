@@ -94,6 +94,10 @@ namespace MadsKristensen.ImageOptimizer.Commands
 
                     return VSConstants.S_OK;
                 }
+                else
+                {
+                    _dte.StatusBar.Text = "No images selected";
+                }
             }
 
             return (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
