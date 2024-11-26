@@ -81,6 +81,9 @@
     <Content Include="Artifacts\png\grunt.png" />
     <Content Include="Artifacts\png\logo.png" />
     <Content Include="Artifacts\png\screenshot.png" />
+    <Content Include="Artifacts\svg\success.svg" />
+    <Content Include="Artifacts\svg\fail.svg" />
+    <Content Include="Artifacts\svg\success2.svg" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

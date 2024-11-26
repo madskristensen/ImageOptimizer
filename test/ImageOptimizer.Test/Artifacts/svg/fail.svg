@@ -1,0 +1,35 @@
+﻿<svg width="400" height="550">
+    <defs>
+        <linearGradient id="MyGradient" gradientUnits="userSpaceOnUse" x1="100" y1="0" x2="300" y2="0">
+            <stop offset="0" style="stop-color:#000000" />
+            <stop offset=".33" style="stop-color:#ffffff" />
+            <stop offset=".67" style="stop-color:#ffff00" />
+            <stop offset="1" style="stop-color:#808080" />
+        </linearGradient>
+        <filter id="normal">
+            <feBlend mode="normal" in="SourceGraphic" />
+        </filter>
+        <filter id="multiply">
+            <feBlend mode="multiply" in="SourceGraphic" />
+        </filter>
+        <filter id="screen">
+            <feBlend mode="screen" in="SourceGraphic" />
+        </filter>
+        <filter id="darken">
+            <feBlend mode="darken" in="SourceGraphic" />
+        </filter>
+        <filter id="lighten">
+            <feBlend mode="lighten" in="SourceGraphic" />
+        </filter>
+    </defs>
+    <g style="enable-background:new">
+        <rect x="40" y="20" width="300" height="450" style="fill:url(#MyGradient)" />
+        <g style="font-size:75px;fill:#888888;fill-opacity:.6">
+            <text x="50" y="90" filter="url(#normal)">Normal</text>
+            <text x="50" y="180" filter="url(#multiply)">Multiply</text>
+            <text x="50" y="270" filter="url(#screen)">Screen</text>
+            <text x="50" y="360" filter="url(#darken)">Darken</text>
+            <text x="50" y="450" filter="url(#lighten)">Lighten</text>
+        </g>
+    </g>
+</svg>

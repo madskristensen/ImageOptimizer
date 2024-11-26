@@ -13,6 +13,6 @@ namespace MadsKristensen.ImageOptimizer
         public const string Language = "en-US";
         public const string Version = "5.0.999";
         public const string Author = "Mads Kristensen";
-        public const string Tags = "image, png, gif, jpg, jpeg, compression, optimization, zopfli";
+        public const string Tags = "image, png, gif, jpg, jpeg, svg, compression, optimization, zopfli";
     }
 }
