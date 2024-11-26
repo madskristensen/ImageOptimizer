@@ -106,8 +106,8 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Aspose.SVG">
-      <Version>24.10.0</Version>
+    <PackageReference Include="BracketPipe">
+      <Version>0.7.7232.28997</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK" ExcludeAssets="runtime">
       <Version>17.0.32112.339</Version>
