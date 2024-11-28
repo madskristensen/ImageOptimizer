@@ -6,6 +6,7 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -18,7 +19,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MadsKristensen.ImageOptimizer</RootNamespace>
     <AssemblyName>ImageOptimizer</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <StartAction>Program</StartAction>
     <StartProgram>$(DevEnvDir)\devenv.exe</StartProgram>
     <StartArguments>/rootsuffix Exp</StartArguments>
@@ -46,6 +47,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Design" />
@@ -54,18 +56,20 @@
   <ItemGroup>
     <Compile Include="Cache.cs" />
     <Compile Include="Commands\CopyBase64Command.cs" />
-    <Compile Include="Commands\OptimizeCommand.cs" />
+    <Compile Include="Commands\OptimizeLosslessCommand.cs" />
+    <Compile Include="Commands\OptimizeLossyCommand.cs" />
     <Compile Include="Commands\WorkspaceOptimizeCommand.cs" />
     <Compile Include="CompressionResult.cs" />
+    <Compile Include="CompressionType.cs" />
     <Compile Include="Compressor.cs" />
-    <Compile Include="Helpers\Logger.cs" />
-    <Compile Include="Helpers\ProjectHelpers.cs" />
     <Compile Include="ImageOptimizer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ImageOptimizer.vsct</DependentUpon>
     </Compile>
     <Compile Include="ImageOptimizerPackage.cs" />
+    <Compile Include="Optimizer.cs" />
+    <Compile Include="Options\General.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="source.extension1.cs">
       <AutoGen>True</AutoGen>
@@ -109,9 +113,8 @@
     <PackageReference Include="BracketPipe">
       <Version>0.7.7232.28997</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" ExcludeAssets="runtime">
-      <Version>17.0.32112.339</Version>
-      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    <PackageReference Include="Community.VisualStudio.Toolkit.17">
+      <Version>17.0.527</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Workspace.VSIntegration">
       <Version>16.3.43</Version>
