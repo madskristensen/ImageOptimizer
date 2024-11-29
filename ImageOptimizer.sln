@@ -5,12 +5,6 @@ VisualStudioVersion = 17.11.34909.225
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageOptimizer", "src\ImageOptimizer.csproj", "{CE4D2845-D1D2-4E6C-90C0-E7715FC0E1AB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F598A8CB-71BD-4F6A-B3C8-B3B0FF862966}"
-	ProjectSection(SolutionItems) = preProject
-		appveyor.yml = appveyor.yml
-		README.md = README.md
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageOptimizer.Test", "Test\ImageOptimizer.Test\ImageOptimizer.Test.csproj", "{C117F13F-2F5D-4434-AD47-71FA3B04390D}"
 EndProject
 Global
