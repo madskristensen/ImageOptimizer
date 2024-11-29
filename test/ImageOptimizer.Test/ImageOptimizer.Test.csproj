@@ -61,29 +61,75 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Artifacts\gif\animation-cartoon.gif" />
-    <Content Include="Artifacts\gif\animation-road.gif" />
-    <Content Include="Artifacts\gif\animation-screenshot.gif" />
-    <Content Include="Artifacts\gif\colors.gif" />
-    <Content Include="Artifacts\gif\line-drawing.gif" />
-    <Content Include="Artifacts\gif\screenshot-large.gif" />
-    <Content Include="Artifacts\jpg\clouds-original.jpg" />
-    <Content Include="Artifacts\jpg\dog1.jpg" />
-    <Content Include="Artifacts\jpg\dog2.jpg" />
-    <Content Include="Artifacts\jpg\dog3.jpg" />
-    <Content Include="Artifacts\jpg\dog4.jpg" />
-    <Content Include="Artifacts\jpg\dog5.jpg" />
-    <Content Include="Artifacts\gif\logo.gif" />
-    <Content Include="Artifacts\jpg\lake.jpg" />
-    <Content Include="Artifacts\png\AddClass.png" />
-    <Content Include="Artifacts\png\Bower.png" />
-    <Content Include="Artifacts\png\ducati.png" />
-    <Content Include="Artifacts\png\grunt.png" />
-    <Content Include="Artifacts\png\logo.png" />
-    <Content Include="Artifacts\png\screenshot.png" />
-    <Content Include="Artifacts\svg\success.svg" />
-    <Content Include="Artifacts\svg\fail.svg" />
-    <Content Include="Artifacts\svg\success2.svg" />
+    <Content Include="Artifacts\gif\animation-cartoon.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\gif\animation-road.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\gif\animation-screenshot.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\gif\colors.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\gif\line-drawing.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\gif\screenshot-large.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\jpg\clouds-original.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\jpg\dog1.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\jpg\dog2.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\jpg\dog3.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\jpg\dog4.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\jpg\dog5.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\gif\logo.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\jpg\lake.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\png\AddClass.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\png\Bower.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\png\ducati.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\png\grunt.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\png\logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\png\screenshot.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\svg\success.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\svg\fail.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Artifacts\svg\success2.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
