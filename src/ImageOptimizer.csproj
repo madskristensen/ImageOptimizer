@@ -68,7 +68,7 @@
       <DependentUpon>ImageOptimizer.vsct</DependentUpon>
     </Compile>
     <Compile Include="ImageOptimizerPackage.cs" />
-    <Compile Include="Optimizer.cs" />
+    <Compile Include="CompressionHandler.cs" />
     <Compile Include="Options\General.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="source.extension.cs">
