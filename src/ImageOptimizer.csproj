@@ -124,6 +124,9 @@
     <PackageReference Include="Community.VisualStudio.Toolkit.17">
       <Version>17.0.527</Version>
     </PackageReference>
+    <PackageReference Include="MessagePack">
+      <Version>2.5.192</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Workspace.VSIntegration">
       <Version>16.3.43</Version>
     </PackageReference>
