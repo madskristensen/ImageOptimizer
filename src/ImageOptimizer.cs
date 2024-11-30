@@ -21,6 +21,9 @@ namespace MadsKristensen.ImageOptimizer
         public const string guidAutoloadFoldersString = "ca4b4a68-7c99-489f-8245-8eb13f2ac2f9";
         public static Guid guidAutoloadFolders = new Guid(guidAutoloadFoldersString);
 
+        public const string guidBitmapOnlyUiContextString = "a076dc84-3c1c-45c2-ae98-f5f1a43ab976";
+        public static Guid guidBitmapOnlyUiContext = new Guid(guidBitmapOnlyUiContextString);
+
         public const string guidImageOptimizerCmdSetString = "d3662d85-2693-4ff5-97aa-3878453c787b";
         public static Guid guidImageOptimizerCmdSet = new Guid(guidImageOptimizerCmdSetString);
 
@@ -39,11 +42,13 @@ namespace MadsKristensen.ImageOptimizer
         public const int cmdOptimizelossy = 0x0100;
         public const int cmdOptimizelossless = 0x0150;
         public const int cmdCopyDataUri = 0x0200;
+        public const int cmdResize = 0x0250;
         public const int WorkspaceContextMenuGroup = 0x0004;
         public const int WorkspaceContextMenu = 0x0005;
         public const int WorkspaceOptimizeGroup = 0x0006;
         public const int cmdWorkspaceOptimizelossless = 0x0007;
         public const int cmdWorkspaceOptimizelossy = 0x0008;
+        public const int cmdWorkspaceResize = 0x0009;
         public const int idmWSE_ContextMenu = 0x0002;
         public const int idgWSE_ContextMenu_BuildDebugActions = 0x0014;
         public const int idgWSE_ContextMenu_FileContextActions = 0x0017;
