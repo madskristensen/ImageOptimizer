@@ -54,6 +54,8 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Base64Test.cs" />
+    <Compile Include="CacheTest.cs" />
+    <Compile Include="CompressionResultTests.cs" />
     <Compile Include="CompressionTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
