@@ -60,6 +60,11 @@
   <ItemGroup>
     <Compile Include="Commands\ResizeCommand.cs" />
     <Compile Include="Commands\WorkspaceResizeCommand.cs" />
+    <Compile Include="Common\Constants.cs" />
+    <Compile Include="Common\ErrorHandler.cs" />
+    <Compile Include="Common\FileUtilities.cs" />
+    <Compile Include="Common\InputValidator.cs" />
+    <Compile Include="Common\ValidationResult.cs" />
     <Compile Include="Compression\Cache.cs" />
     <Compile Include="Commands\CopyBase64Command.cs" />
     <Compile Include="Commands\OptimizeLosslessCommand.cs" />
@@ -122,16 +127,16 @@
       <Version>0.7.7232.28997</Version>
     </PackageReference>
     <PackageReference Include="Community.VisualStudio.Toolkit.17">
-      <Version>17.0.527</Version>
+      <Version>17.0.533</Version>
     </PackageReference>
     <PackageReference Include="MessagePack">
-      <Version>2.5.192</Version>
+      <Version>3.1.4</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Workspace.VSIntegration">
       <Version>16.3.43</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
-      <Version>17.12.2069</Version>
+      <Version>17.14.2101</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

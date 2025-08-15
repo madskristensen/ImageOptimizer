@@ -1,139 +1,147 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using BracketPipe;
+using MadsKristensen.ImageOptimizer.Common;
 
 namespace MadsKristensen.ImageOptimizer
 {
     public class Compressor
     {
-        private static readonly string[] _supported = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"];
         private static readonly string _cwd = Path.Combine(Path.GetDirectoryName(typeof(Compressor).Assembly.Location), @"Resources\Tools\");
-        private const int _processTimeoutMs = 60000; // 60 seconds timeout
 
         public CompressionResult CompressFile(string fileName, CompressionType type)
         {
-            var fileExtension = Path.GetExtension(fileName);
-            var targetFile = Path.ChangeExtension(Path.GetTempFileName(), fileExtension);
+            // Validate input
+            ValidationResult validation = InputValidator.ValidateFilePath(fileName);
+            if (!validation.IsValid)
+            {
+                throw new ArgumentException(validation.ErrorMessage, nameof(fileName));
+            }
+
+            var validatedPath = validation.GetValue<string>();
+            var fileExtension = Path.GetExtension(validatedPath);
+            var targetFile = FileUtilities.CreateTempFileWithExtension(validatedPath);
             var stopwatch = Stopwatch.StartNew();
 
             try
             {
                 if (fileExtension.Equals(".svg", StringComparison.OrdinalIgnoreCase))
                 {
-                    CompressSvgFile(fileName, targetFile);
+                    CompressSvgFile(validatedPath, targetFile);
                 }
                 else
                 {
-                    CompressImageFile(fileName, targetFile, type);
+                    CompressImageFile(validatedPath, targetFile, type);
                 }
             }
             catch (Exception)
             {
                 // Clean up temp file on error
-                SafeDeleteFile(targetFile);
-                return new CompressionResult(fileName, targetFile, stopwatch.Elapsed);
+                _ = FileUtilities.SafeDeleteFile(targetFile);
+                return new CompressionResult(validatedPath, targetFile, stopwatch.Elapsed);
             }
             finally
             {
                 stopwatch.Stop();
             }
 
-            return new CompressionResult(fileName, targetFile, stopwatch.Elapsed);
+            return new CompressionResult(validatedPath, targetFile, stopwatch.Elapsed);
         }
 
         private static void CompressSvgFile(string sourceFile, string targetFile)
         {
-            var source = File.ReadAllText(sourceFile);
-            string minified = Html.Minify(source);
-            File.WriteAllText(targetFile, minified);
+            ErrorHandler.SafeExecute(() =>
+            {
+                var source = File.ReadAllText(sourceFile);
+                string minified = Html.Minify(source);
+                File.WriteAllText(targetFile, minified);
+            });
         }
 
         private static void CompressImageFile(string sourceFile, string targetFile, CompressionType type)
         {
-            var arguments = GetArguments(sourceFile, targetFile, type);
+            var arguments = GetCompressionArguments(sourceFile, targetFile, type);
             if (string.IsNullOrEmpty(arguments))
             {
                 return;
             }
 
-            var processStartInfo = new ProcessStartInfo("cmd")
+            var processStartInfo = new ProcessStartInfo(Constants.CommandExecutor)
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = _cwd,
                 Arguments = arguments,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                RedirectStandardError = true, // Capture errors for better debugging
+                RedirectStandardError = true,
                 RedirectStandardOutput = true
             };
 
             using var process = Process.Start(processStartInfo);
-            if (process != null)
+            if (process != null && !process.WaitForExit(Constants.ProcessTimeoutMs))
             {
-                // Add timeout to prevent hanging processes
-                if (!process.WaitForExit(_processTimeoutMs))
-                {
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        // Process already exited
-                    }
-                    throw new TimeoutException($"Process timed out after {_processTimeoutMs}ms while compressing {sourceFile}");
-                }
+                KillProcessSafely(process, sourceFile);
             }
         }
 
-        private static void SafeDeleteFile(string filePath)
+        private static void KillProcessSafely(Process process, string sourceFile)
         {
             try
             {
-                if (File.Exists(filePath))
+                if (!process.HasExited)
                 {
-                    File.Delete(filePath);
+                    process.Kill();
+                    _ = process.WaitForExit(5000); // Give it 5 seconds to die gracefully
                 }
             }
-            catch
+            catch (InvalidOperationException)
             {
-                // Ignore cleanup errors
+                // Process already exited
             }
+            catch (Exception ex)
+            {
+                ex.LogAsync().FireAndForget();
+            }
+
+            throw new TimeoutException($"Process timed out after {Constants.ProcessTimeoutMs}ms while compressing {sourceFile}");
         }
 
-        private static string GetArguments(string sourceFile, string targetFile, CompressionType type)
+        private static string GetCompressionArguments(string sourceFile, string targetFile, CompressionType type)
         {
-            if (!File.Exists(sourceFile))
+            if (!ErrorHandler.ValidateFilePath(sourceFile, out _))
             {
                 return null;
             }
 
             var ext = Path.GetExtension(sourceFile).ToLowerInvariant();
 
-            switch (ext)
+            return ext switch
             {
-                case ".png":
-                case ".jpg":
-                case ".jpeg":
-                case ".webp":
-                    File.Copy(sourceFile, targetFile, true);
-                    return type is CompressionType.Lossy ? $"/c pingo -s4 -q \"{targetFile}\"" : $"/c pingo -lossless -s4 -q \"{targetFile}\"";
+                ".png" or ".jpg" or ".jpeg" or ".webp" => GetPingoArguments(sourceFile, targetFile, type),
+                ".gif" => GetGifsicleArguments(sourceFile, targetFile, type),
+                _ => null
+            };
+        }
 
-                case ".gif":
-                    return type is CompressionType.Lossy
-                        ? $"/c gifsicle -O3 --lossy \"{sourceFile}\" --output=\"{targetFile}\""
-                        : $"/c gifsicle -O3 \"{sourceFile}\" --output=\"{targetFile}\"";
+        private static string GetPingoArguments(string sourceFile, string targetFile, CompressionType type)
+        {
+            return !FileUtilities.SafeCopyFile(sourceFile, targetFile)
+                ? null
+                : type is CompressionType.Lossy
+                ? $"/c pingo -s4 -q \"{targetFile}\""
+                : $"/c pingo -lossless -s4 -q \"{targetFile}\"";
+        }
 
-                default:
-                    return null;
-            }
+        private static string GetGifsicleArguments(string sourceFile, string targetFile, CompressionType type)
+        {
+            return type is CompressionType.Lossy
+                ? $"/c gifsicle -O3 --lossy \"{sourceFile}\" --output=\"{targetFile}\""
+                : $"/c gifsicle -O3 \"{sourceFile}\" --output=\"{targetFile}\"";
         }
 
         public static bool IsFileSupported(string fileName)
         {
-            var ext = Path.GetExtension(fileName);
-            return _supported.Any(s => s.Equals(ext, StringComparison.OrdinalIgnoreCase));
+            return !string.IsNullOrWhiteSpace(fileName) && FileUtilities.IsImageFileSupported(fileName);
         }
     }
 }
