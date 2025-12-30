@@ -5,13 +5,15 @@ using System.Linq;
 namespace MadsKristensen.ImageOptimizer.Common
 {
     /// <summary>
-    /// Utility methods for file operations and validation
+    /// Utility methods for file operations and validation.
     /// </summary>
     internal static class FileUtilities
     {
         /// <summary>
-        /// Checks if a file is supported for image optimization
+        /// Checks if a file is supported for image optimization.
         /// </summary>
+        /// <param name="fileName">The file path to check.</param>
+        /// <returns>True if the file extension is supported; otherwise, false.</returns>
         public static bool IsImageFileSupported(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
@@ -20,13 +22,14 @@ namespace MadsKristensen.ImageOptimizer.Common
             }
 
             var ext = Path.GetExtension(fileName);
-            return Constants.SupportedImageExtensions.Any(s =>
-                s.Equals(ext, StringComparison.OrdinalIgnoreCase));
+            return !string.IsNullOrEmpty(ext) && Constants.SupportedImageExtensions.Contains(ext);
         }
 
         /// <summary>
-        /// Safely deletes a file with error handling
+        /// Safely deletes a file with error handling.
         /// </summary>
+        /// <param name="filePath">The path to the file to delete.</param>
+        /// <returns>True if the file was deleted; otherwise, false.</returns>
         public static bool SafeDeleteFile(string filePath)
         {
             return ErrorHandler.SafeExecute(() =>

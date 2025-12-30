@@ -1,14 +1,41 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using BracketPipe;
 using MadsKristensen.ImageOptimizer.Common;
 
 namespace MadsKristensen.ImageOptimizer
 {
+    /// <summary>
+    /// Handles image compression using external tools (pingo, gifsicle) and built-in SVG minification.
+    /// </summary>
     public class Compressor
     {
         private static readonly string _cwd = Path.Combine(Path.GetDirectoryName(typeof(Compressor).Assembly.Location), @"Resources\Tools\");
+        private readonly int _processTimeoutMs;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Compressor"/> class with default timeout.
+        /// </summary>
+        public Compressor() : this(Constants.DefaultProcessTimeoutMs)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Compressor"/> class with specified timeout.
+        /// </summary>
+        /// <param name="processTimeoutMs">The process timeout in milliseconds.</param>
+        public Compressor(int processTimeoutMs)
+        {
+            _processTimeoutMs = processTimeoutMs > 0 ? processTimeoutMs : Constants.DefaultProcessTimeoutMs;
+        }
+
+        /// <summary>
+        /// Compresses a single image file.
+        /// </summary>
+        /// <param name="fileName">The path to the image file.</param>
+        /// <param name="type">The type of compression to apply.</param>
+        /// <returns>A <see cref="CompressionResult"/> containing the compression outcome.</returns>
+        /// <exception cref="ArgumentException">Thrown when the file path is invalid.</exception>
         public CompressionResult CompressFile(string fileName, CompressionType type)
         {
             // Validate input
@@ -34,10 +61,18 @@ namespace MadsKristensen.ImageOptimizer
                     CompressImageFile(validatedPath, targetFile, type);
                 }
             }
-            catch (Exception)
+            catch (TimeoutException ex)
+            {
+                // Clean up temp file on timeout
+                FileUtilities.SafeDeleteFile(targetFile);
+                ex.LogAsync().FireAndForget();
+                return new CompressionResult(validatedPath, targetFile, stopwatch.Elapsed);
+            }
+            catch (Exception ex)
             {
                 // Clean up temp file on error
-                _ = FileUtilities.SafeDeleteFile(targetFile);
+                FileUtilities.SafeDeleteFile(targetFile);
+                ex.LogAsync().FireAndForget();
                 return new CompressionResult(validatedPath, targetFile, stopwatch.Elapsed);
             }
             finally
@@ -58,7 +93,7 @@ namespace MadsKristensen.ImageOptimizer
             });
         }
 
-        private static void CompressImageFile(string sourceFile, string targetFile, CompressionType type)
+        private void CompressImageFile(string sourceFile, string targetFile, CompressionType type)
         {
             var arguments = GetCompressionArguments(sourceFile, targetFile, type);
             if (string.IsNullOrEmpty(arguments))
@@ -78,32 +113,32 @@ namespace MadsKristensen.ImageOptimizer
             };
 
             using var process = Process.Start(processStartInfo);
-            if (process != null && !process.WaitForExit(Constants.ProcessTimeoutMs))
+            if (process != null && !process.WaitForExit(_processTimeoutMs))
             {
                 KillProcessSafely(process, sourceFile);
             }
         }
 
-        private static void KillProcessSafely(Process process, string sourceFile)
+        private void KillProcessSafely(Process process, string sourceFile)
         {
             try
             {
                 if (!process.HasExited)
                 {
                     process.Kill();
-                    _ = process.WaitForExit(5000); // Give it 5 seconds to die gracefully
+                    process.WaitForExit(Constants.ProcessKillGracePeriodMs);
                 }
             }
             catch (InvalidOperationException)
             {
-                // Process already exited
+                // Process already exited - this is fine
             }
             catch (Exception ex)
             {
                 ex.LogAsync().FireAndForget();
             }
 
-            throw new TimeoutException($"Process timed out after {Constants.ProcessTimeoutMs}ms while compressing {sourceFile}");
+            throw new TimeoutException($"Process timed out after {_processTimeoutMs}ms while compressing {Path.GetFileName(sourceFile)}");
         }
 
         private static string GetCompressionArguments(string sourceFile, string targetFile, CompressionType type)
@@ -139,6 +174,11 @@ namespace MadsKristensen.ImageOptimizer
                 : $"/c gifsicle -O3 \"{sourceFile}\" --output=\"{targetFile}\"";
         }
 
+        /// <summary>
+        /// Checks if a file is supported for optimization.
+        /// </summary>
+        /// <param name="fileName">The file path to check.</param>
+        /// <returns>True if the file is supported; otherwise, false.</returns>
         public static bool IsFileSupported(string fileName)
         {
             return !string.IsNullOrWhiteSpace(fileName) && FileUtilities.IsImageFileSupported(fileName);

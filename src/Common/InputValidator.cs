@@ -4,15 +4,17 @@ using System.Text.RegularExpressions;
 namespace MadsKristensen.ImageOptimizer.Common
 {
     /// <summary>
-    /// Input validation utilities for ImageOptimizer
+    /// Input validation utilities for ImageOptimizer.
     /// </summary>
     internal static class InputValidator
     {
         private static readonly Regex _unsafePathCharsRegex = new(@"[<>""|?\*]", RegexOptions.Compiled);
 
         /// <summary>
-        /// Validates and sanitizes a file path
+        /// Validates and sanitizes a file path.
         /// </summary>
+        /// <param name="filePath">The file path to validate.</param>
+        /// <returns>A ValidationResult indicating success or failure with the validated path.</returns>
         public static ValidationResult ValidateFilePath(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
@@ -20,10 +22,16 @@ namespace MadsKristensen.ImageOptimizer.Common
                 return ValidationResult.Invalid("File path cannot be null or empty");
             }
 
-            // Check for path length limits
-            if (filePath.Length > 260) // Windows MAX_PATH limitation
+            // Check for path length limits (Windows MAX_PATH limitation)
+            if (filePath.Length > Constants.MaxPathLength)
             {
-                return ValidationResult.Invalid("File path exceeds maximum length (260 characters)");
+                return ValidationResult.Invalid($"File path exceeds maximum length ({Constants.MaxPathLength} characters)");
+            }
+
+            // Check for path traversal attempts
+            if (filePath.Contains(".."))
+            {
+                return ValidationResult.Invalid("Path traversal sequences are not allowed");
             }
 
             // Check for invalid characters
@@ -45,9 +53,13 @@ namespace MadsKristensen.ImageOptimizer.Common
         }
 
         /// <summary>
-        /// Validates numeric input for resizing operations
+        /// Validates numeric input for resizing operations.
         /// </summary>
-        public static ValidationResult ValidateNumericInput(string input, int minValue = 1, int maxValue = 10000)
+        /// <param name="input">The string input to validate.</param>
+        /// <param name="minValue">Minimum allowed value.</param>
+        /// <param name="maxValue">Maximum allowed value.</param>
+        /// <returns>A ValidationResult with the parsed integer value.</returns>
+        public static ValidationResult ValidateNumericInput(string input, int minValue = Constants.MinDimension, int maxValue = Constants.MaxDimension)
         {
             if (string.IsNullOrWhiteSpace(input))
             {
@@ -62,8 +74,10 @@ namespace MadsKristensen.ImageOptimizer.Common
         }
 
         /// <summary>
-        /// Validates DPI input
+        /// Validates DPI input.
         /// </summary>
+        /// <param name="input">The string input to validate.</param>
+        /// <returns>A ValidationResult with the parsed DPI value.</returns>
         public static ValidationResult ValidateDpiInput(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -73,12 +87,16 @@ namespace MadsKristensen.ImageOptimizer.Common
 
             return !float.TryParse(input.Trim(), out var dpi)
                 ? ValidationResult.Invalid("DPI must be a valid number")
-                : dpi is < 1 or > 2400 ? ValidationResult.Invalid("DPI must be between 1 and 2400") : ValidationResult.Valid(dpi);
+                : dpi < Constants.MinDpi || dpi > Constants.MaxDpi 
+                    ? ValidationResult.Invalid($"DPI must be between {Constants.MinDpi} and {Constants.MaxDpi}") 
+                    : ValidationResult.Valid(dpi);
         }
 
         /// <summary>
-        /// Sanitizes a file name by removing or replacing invalid characters
+        /// Sanitizes a file name by removing or replacing invalid characters.
         /// </summary>
+        /// <param name="fileName">The file name to sanitize.</param>
+        /// <returns>A sanitized file name safe for use in file paths.</returns>
         public static string SanitizeFileName(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
