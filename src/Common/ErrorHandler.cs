@@ -118,6 +118,8 @@ namespace MadsKristensen.ImageOptimizer.Common
             }
         }
 
+        private static OutputWindowPane _outputWindowPane;
+
         private static void LogError(Exception ex, string memberName, string sourceFilePath, int sourceLineNumber)
         {
             var fileName = Path.GetFileName(sourceFilePath);
@@ -131,8 +133,8 @@ namespace MadsKristensen.ImageOptimizer.Common
             {
                 try
                 {
-                    OutputWindowPane outputWindow = await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
-                    await outputWindow?.WriteLineAsync($"[ERROR] {message}");
+                    _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
+                    await _outputWindowPane?.WriteLineAsync($"[ERROR] {message}");
                 }
                 catch
                 {

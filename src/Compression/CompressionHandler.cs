@@ -13,8 +13,14 @@ namespace MadsKristensen.ImageOptimizer
     internal class CompressionHandler
     {
         private static readonly RatingPrompt _ratingPrompt = new("MadsKristensen.ImageOptimizer64bit", Vsix.Name, General.Instance);
-        private OutputWindowPane _outputWindowPane;
+        private static readonly object _saveLock = new();
+        private static OutputWindowPane _outputWindowPane;
         private int _processedCount;
+
+        // Fixed column widths for table output
+        private const int FileNameWidth = 40;
+        private const int SizeWidth = 10;
+        private const int PercentWidth = 7;
 
         /// <summary>
         /// Optimizes a collection of images using the specified compression type.
@@ -58,6 +64,12 @@ namespace MadsKristensen.ImageOptimizer
             var compressionResults = new ConcurrentBag<CompressionResult>();
             _processedCount = 0;
 
+            // Initialize output pane (reuse existing static instance) and activate it
+            _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
+            await _outputWindowPane.ActivateAsync();
+            var showDetails = options.ShowDetailedResults;
+            var headerWritten = false;
+
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
@@ -81,6 +93,24 @@ namespace MadsKristensen.ImageOptimizer
 
                             ProcessCompressionResult(compressionResult, cache, options.CreateBackup);
                             compressionResults.Add(compressionResult);
+
+                            // Write result to output window in real-time
+                            if (showDetails && compressionResult.Saving > 0)
+                            {
+                                // Write header on first result (thread-safe)
+                                if (!headerWritten)
+                                {
+                                    lock (_saveLock)
+                                    {
+                                        if (!headerWritten)
+                                        {
+                                            _outputWindowPane.WriteLineAsync(GetTableHeader()).FireAndForget();
+                                            headerWritten = true;
+                                        }
+                                    }
+                                }
+                                _outputWindowPane.WriteLineAsync(FormatResultRow(compressionResult)).FireAndForget();
+                            }
 
                             // Update progress after completion
                             if (options.ShowProgressInStatusBar)
@@ -127,7 +157,7 @@ namespace MadsKristensen.ImageOptimizer
                 await cache.SaveToDiskAsync();
             }
 
-            await DisplayOptimizationResultsAsync(compressionResults, options);
+            await DisplayOptimizationSummaryAsync(compressionResults, options, headerWritten);
 
             _ratingPrompt.RegisterSuccessfulUsage();
         }
@@ -204,7 +234,7 @@ namespace MadsKristensen.ImageOptimizer
             return null;
         }
 
-        private async Task DisplayOptimizationResultsAsync(IEnumerable<CompressionResult> compressionResults, General options)
+        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, bool headerWritten)
         {
             var validResults = compressionResults.Where(r => r?.OriginalFileName != null).ToList();
             if (validResults.Count == 0)
@@ -217,21 +247,12 @@ namespace MadsKristensen.ImageOptimizer
             var totalResultSize = validResults.Sum(r => r.ResultFileSize);
             var successfulOptimizations = validResults.Count(r => r.Saving > 0);
 
-            _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
-
             if (totalSavings > 0)
             {
-                if (options.ShowDetailedResults)
+                // Write separator line if we wrote details
+                if (options.ShowDetailedResults && headerWritten)
                 {
-                    var estimatedCapacity = validResults.Count * Constants.EstimatedCompressionResultLength;
-                    var stringBuilder = new StringBuilder(estimatedCapacity);
-
-                    foreach (CompressionResult result in validResults.Where(r => r.Saving > 0))
-                    {
-                        stringBuilder.AppendLine(result.ToString());
-                    }
-
-                    await _outputWindowPane.WriteLineAsync(stringBuilder.ToString());
+                    await _outputWindowPane.WriteLineAsync(GetTableSeparator());
                 }
 
                 if (successfulOptimizations > 0)
@@ -264,10 +285,50 @@ namespace MadsKristensen.ImageOptimizer
             await _outputWindowPane.ActivateAsync();
         }
 
+
         private async Task ShowAlreadyOptimizedMessageAsync()
         {
             await VS.StatusBar.ShowMessageAsync(Constants.AlreadyOptimizedMessage);
             await _outputWindowPane.WriteLineAsync(Constants.AlreadyOptimizedMessage);
+        }
+
+        /// <summary>
+        /// Gets the table header line with fixed column widths.
+        /// </summary>
+        private static string GetTableHeader()
+        {
+            var header = $"{"File".PadRight(FileNameWidth)}  {"Before".PadLeft(SizeWidth)}  {"After".PadLeft(SizeWidth)}  {"Saved".PadLeft(SizeWidth)}  {"%".PadLeft(PercentWidth)}";
+            var separator = new string('-', FileNameWidth + SizeWidth * 3 + PercentWidth + 8);
+            return header + Environment.NewLine + separator;
+        }
+
+        /// <summary>
+        /// Gets the table separator line.
+        /// </summary>
+        private static string GetTableSeparator()
+        {
+            return new string('-', FileNameWidth + SizeWidth * 3 + PercentWidth + 8);
+        }
+
+        /// <summary>
+        /// Formats a single compression result as an aligned table row.
+        /// </summary>
+        private static string FormatResultRow(CompressionResult result)
+        {
+            var fileName = Path.GetFileName(result.OriginalFileName);
+            
+            // Truncate long filenames with ellipsis
+            if (fileName.Length > FileNameWidth)
+            {
+                fileName = fileName.Substring(0, FileNameWidth - 3) + "...";
+            }
+
+            var before = CompressionResult.ToFileSize(result.OriginalFileSize);
+            var after = CompressionResult.ToFileSize(result.ResultFileSize);
+            var saved = CompressionResult.ToFileSize(result.Saving);
+            var percent = result.Percent.ToString("F1") + "%";
+
+            return $"{fileName.PadRight(FileNameWidth)}  {before.PadLeft(SizeWidth)}  {after.PadLeft(SizeWidth)}  {saved.PadLeft(SizeWidth)}  {percent.PadLeft(PercentWidth)}";
         }
     }
 }

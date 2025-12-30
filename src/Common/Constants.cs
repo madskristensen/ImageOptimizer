@@ -30,8 +30,8 @@ namespace MadsKristensen.ImageOptimizer
         public const string AllFilesPattern = "*.*";
 
         // StringBuilder capacity estimates
-        public const int EstimatedResultStringLength = 200;
-        public const int EstimatedCompressionResultLength = 150;
+        public const int EstimatedResultStringLength = 80; // Single-line format
+        public const int EstimatedCompressionResultLength = 100;
         public const int EstimatedFilePathCapacity = 100;
 
         // Parallel processing

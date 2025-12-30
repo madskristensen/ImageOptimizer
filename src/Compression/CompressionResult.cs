@@ -125,19 +125,14 @@ namespace MadsKristensen.ImageOptimizer
         public override string ToString()
         {
             var fileName = Path.GetFileName(OriginalFileName);
-            var elapsedSeconds = Math.Round(Elapsed.TotalSeconds, 2);
             var originalSizeStr = ToFileSize(OriginalFileSize);
             var resultSizeStr = ToFileSize(ResultFileSize);
             var savingStr = ToFileSize(Saving);
             var percentStr = Percent.ToString("F1");
 
-            var sb = new StringBuilder(Constants.EstimatedResultStringLength);
-            sb.AppendLine($"Optimized {fileName} in {elapsedSeconds} seconds");
-            sb.AppendLine($"Before: {originalSizeStr}");
-            sb.AppendLine($"After: {resultSizeStr}");
-            sb.AppendLine($"Saving: {savingStr} / {percentStr}%");
-
-            return sb.ToString();
+            // Compact single-line format for easier scanning
+            // Example: "logo.png: 32.3 KB → 11.0 KB (saved 21.3 KB / 65.3%)"
+            return $"{fileName}: {originalSizeStr} → {resultSizeStr} (saved {savingStr} / {percentStr}%)";
         }
 
         /// <summary>
