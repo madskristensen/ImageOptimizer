@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using MadsKristensen.ImageOptimizer.Common;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -25,8 +24,8 @@ namespace MadsKristensen.ImageOptimizer
         /// <param name="solutionFullName">Optional solution path for cache location.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         public async Task OptimizeImagesAsync(
-            IEnumerable<string> imageFilePaths, 
-            CompressionType type, 
+            IEnumerable<string> imageFilePaths,
+            CompressionType type,
             string solutionFullName = null,
             CancellationToken cancellationToken = default)
         {
@@ -39,14 +38,14 @@ namespace MadsKristensen.ImageOptimizer
             }
 
             // Load options
-            var options = await General.GetLiveInstanceAsync();
+            General options = await General.GetLiveInstanceAsync();
             var compressor = new Compressor(options.ProcessTimeoutMs);
             var cacheRoot = string.IsNullOrEmpty(solutionFullName) ? imageFilesList[0] : solutionFullName;
-            var cache = options.EnableCaching ? new Cache(cacheRoot, type) : null;
+            Cache cache = options.EnableCaching ? new Cache(cacheRoot, type) : null;
 
             // Calculate parallelism based on options
             var maxDegreeOfParallelism = Math.Min(
-                options.EffectiveMaxParallelThreads, 
+                options.EffectiveMaxParallelThreads,
                 Math.Max(1, imageCount / Constants.MinParallelismDivider));
 
             var parallelOptions = new ParallelOptions
@@ -62,7 +61,7 @@ namespace MadsKristensen.ImageOptimizer
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-                await VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, 0, imageCount));
+                await VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, 1, imageCount));
             }
 
             try
@@ -83,11 +82,13 @@ namespace MadsKristensen.ImageOptimizer
                             ProcessCompressionResult(compressionResult, cache, options.CreateBackup);
                             compressionResults.Add(compressionResult);
 
-                            // Update progress
+                            // Update progress after completion
                             if (options.ShowProgressInStatusBar)
                             {
                                 var processed = Interlocked.Increment(ref _processedCount);
-                                VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, processed, imageCount)).FireAndForget();
+                                // Show next item being processed (processed + 1), capped at total
+                                var currentItem = Math.Min(processed + 1, imageCount);
+                                VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, currentItem, imageCount)).FireAndForget();
                             }
                         }
                         catch (OperationCanceledException)
@@ -168,7 +169,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 var directory = Path.GetDirectoryName(originalFilePath);
                 var vsDir = FindVsDirectory(directory);
-                
+
                 if (vsDir != null)
                 {
                     var backupDir = Path.Combine(vsDir, Vsix.Name, "backups");
@@ -240,8 +241,8 @@ namespace MadsKristensen.ImageOptimizer
                         : 0;
 
                     var imageLabel = successfulOptimizations == 1 ? "image" : "images";
-                    var message = string.Format(Constants.OptimizationCompleteFormat, 
-                        successfulOptimizations, imageLabel, 
+                    var message = string.Format(Constants.OptimizationCompleteFormat,
+                        successfulOptimizations, imageLabel,
                         CompressionResult.ToFileSize(totalSavings), totalPercentageReduction);
 
                     await VS.StatusBar.ShowMessageAsync(message);

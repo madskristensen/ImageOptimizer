@@ -3,6 +3,19 @@ using System.Runtime.InteropServices;
 
 namespace MadsKristensen.ImageOptimizer
 {
+
+    /// <summary>
+    /// Provides the options page for the Image Optimizer extension.
+    /// </summary>
+    public class OptionsProvider
+    {
+        /// <summary>
+        /// Provides the General options page in Tools > Options > Image Optimizer.
+        /// </summary>
+        [ComVisible(true)]
+        public class GeneralOptions : BaseOptionPage<General> { }
+    }
+
     /// <summary>
     /// Configuration options for ImageOptimizer.
     /// Provides user-configurable settings for performance, caching, UI, and error handling.

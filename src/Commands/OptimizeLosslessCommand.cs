@@ -2,8 +2,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using MadsKristensen.ImageOptimizer.Common;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -89,7 +87,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 // Sequential enumeration is more efficient for I/O-bound operations
                 // as PLINQ adds overhead without benefit for file system access
-                var supportedFiles = Directory.EnumerateFiles(directoryPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
+                IEnumerable<string> supportedFiles = Directory.EnumerateFiles(directoryPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
                     .Where(Compressor.IsFileSupported);
 
                 foreach (var file in supportedFiles)

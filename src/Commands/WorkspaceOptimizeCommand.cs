@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using MadsKristensen.ImageOptimizer.Common;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Workspace.VSIntegration.UI;
@@ -38,7 +37,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
     {
         /// <inheritdoc/>
         public bool IgnoreOnMultiselect => false;
-        
+
         /// <inheritdoc/>
         public int Priority => 100;
 
@@ -79,7 +78,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
                         try
                         {
                             // Sequential enumeration is more efficient for I/O-bound operations
-                            var images = Directory.EnumerateFiles(folder.FullPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
+                            IEnumerable<string> images = Directory.EnumerateFiles(folder.FullPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
                                 .Where(Compressor.IsFileSupported);
 
                             foreach (var image in images)

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -94,7 +95,7 @@ namespace MadsKristensen.ImageOptimizer
         }
 
         /// <summary>
-        /// Saves the cache to disk asynchronously.
+        /// Saves the cache to disk asynchronously using async file I/O.
         /// </summary>
         public async Task SaveToDiskAsync()
         {
@@ -103,13 +104,8 @@ namespace MadsKristensen.ImageOptimizer
                 return;
             }
 
-            await Task.Run(() =>
-            {
-                lock (_saveLock)
-                {
-                    SaveToDiskInternal();
-                }
-            });
+            // Use async file I/O for better performance
+            await SaveToDiskInternalAsync();
         }
 
         private void SaveToDiskInternal()
@@ -128,97 +124,176 @@ namespace MadsKristensen.ImageOptimizer
                     _ = sb.AppendLine($"{kvp.Key}|{kvp.Value}");
                 }
 
-                // Write all content at once instead of line by line
-                                File.WriteAllText(_cacheFile.FullName, sb.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                ex.LogAsync().FireAndForget();
-                            }
-                        }
+                // Write all content at once using async I/O
+                File.WriteAllText(_cacheFile.FullName, sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                ex.LogAsync().FireAndForget();
+            }
+        }
 
-                        private ConcurrentDictionary<string, long> ReadCacheFromDisk()
-                        {
-                            var dic = new ConcurrentDictionary<string, long>();
 
-                            if (_cacheFile?.FullName == null || !_cacheFile.Exists)
-                            {
-                                return dic;
-                            }
-
-                            try
-                            {
-                                var content = File.ReadAllText(_cacheFile.FullName);
-                                if (string.IsNullOrEmpty(content))
-                                {
-                                    return dic;
-                                }
-
-                                var lines = content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-
-                                foreach (var line in lines)
-                                {
-                                    var separatorIndex = line.LastIndexOf('|');
-                                    if (separatorIndex <= 0 || separatorIndex == line.Length - 1)
-                                    {
-                                        continue;
-                                    }
-
-                                    var filePath = line.Substring(0, separatorIndex);
-                                    var lengthStr = line.Substring(separatorIndex + 1);
-
-                                    if (long.TryParse(lengthStr, out var length))
-                                    {
-                                        dic[filePath] = length;
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                // If cache is corrupted, start fresh and log the error
-                                ex.LogAsync().FireAndForget();
-                                return new ConcurrentDictionary<string, long>();
-                            }
-
-                            return dic;
-                        }
-
-                        /// <summary>
-                        /// Determines the cache file path based on the solution/folder structure.
-                        /// </summary>
-                        internal FileInfo LoadCacheFileName(string fileName)
-                        {
-                            if (string.IsNullOrEmpty(fileName))
-                            {
-                                return null;
-                            }
-
-                            try
-                            {
-                                var file = new FileInfo(fileName);
-                                DirectoryInfo directory = file.Directory;
-
-                                while (directory != null)
-                                {
-                                    var vsDirPath = Path.Combine(directory.FullName, Constants.VsDirectoryName);
-
-                                    if (Directory.Exists(vsDirPath))
-                                    {
-                                        var cacheFileName = _type is CompressionType.Lossy 
-                                            ? Constants.LossyCacheFileName 
-                                            : Constants.LosslessCacheFileName;
-                                        return new FileInfo(Path.Combine(vsDirPath, Vsix.Name, cacheFileName));
-                                    }
-
-                                    directory = directory.Parent;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                ex.LogAsync().FireAndForget();
-                            }
-
-                            return null;
-                        }
-                    }
+        /// <summary>
+        /// Saves the cache to disk using async file I/O.
+        /// </summary>
+        private async Task SaveToDiskInternalAsync()
+        {
+            try
+            {
+                if (!_cacheFile.Directory.Exists)
+                {
+                    _cacheFile.Directory.Create();
                 }
+
+                // Use StringBuilder for better performance with large caches
+                var sb = new StringBuilder(_cache.Count * 50);
+                foreach (KeyValuePair<string, long> kvp in _cache)
+                {
+                    _ = sb.AppendLine($"{kvp.Key}|{kvp.Value}");
+                }
+
+                // Use async StreamWriter for .NET Framework compatibility
+                using (var writer = new StreamWriter(_cacheFile.FullName, false, Encoding.UTF8))
+                {
+                    await writer.WriteAsync(sb.ToString()).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.LogAsync().FireAndForget();
+            }
+        }
+
+        private ConcurrentDictionary<string, long> ReadCacheFromDisk()
+        {
+            var dic = new ConcurrentDictionary<string, long>();
+
+            if (_cacheFile?.FullName == null || !_cacheFile.Exists)
+            {
+                return dic;
+            }
+
+            try
+            {
+                var content = File.ReadAllText(_cacheFile.FullName);
+                if (string.IsNullOrEmpty(content))
+                {
+                    return dic;
+                }
+
+                ParseCacheContent(content, dic);
+            }
+            catch (Exception ex)
+            {
+                // If cache is corrupted, start fresh and log the error
+                ex.LogAsync().FireAndForget();
+                return new ConcurrentDictionary<string, long>();
+            }
+
+            return dic;
+        }
+
+        /// <summary>
+        /// Reads the cache from disk using async file I/O.
+        /// </summary>
+        internal async Task<ConcurrentDictionary<string, long>> ReadCacheFromDiskAsync()
+        {
+            var dic = new ConcurrentDictionary<string, long>();
+
+            if (_cacheFile?.FullName == null || !_cacheFile.Exists)
+            {
+                return dic;
+            }
+
+            try
+            {
+                // Use async StreamReader for .NET Framework compatibility
+                string content;
+                using (var reader = new StreamReader(_cacheFile.FullName, Encoding.UTF8))
+                {
+                    content = await reader.ReadToEndAsync().ConfigureAwait(false);
+                }
+                
+                if (string.IsNullOrEmpty(content))
+                {
+                    return dic;
+                }
+
+                ParseCacheContent(content, dic);
+            }
+            catch (Exception ex)
+            {
+                ex.LogAsync().FireAndForget();
+                return new ConcurrentDictionary<string, long>();
+            }
+
+
+
+            return dic;
+        }
+
+        /// <summary>
+        /// Parses cache content into a dictionary.
+        /// </summary>
+        private static void ParseCacheContent(string content, ConcurrentDictionary<string, long> dic)
+        {
+            var lines = content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var line in lines)
+            {
+                var separatorIndex = line.LastIndexOf('|');
+                if (separatorIndex <= 0 || separatorIndex == line.Length - 1)
+                {
+                    continue;
+                }
+
+                var filePath = line.Substring(0, separatorIndex);
+                var lengthStr = line.Substring(separatorIndex + 1);
+
+                if (long.TryParse(lengthStr, out var length))
+                {
+                    dic[filePath] = length;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines the cache file path based on the solution/folder structure.
+        /// </summary>
+        internal FileInfo LoadCacheFileName(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return null;
+            }
+
+            try
+            {
+                var file = new FileInfo(fileName);
+                DirectoryInfo directory = file.Directory;
+
+                while (directory != null)
+                {
+                    var vsDirPath = Path.Combine(directory.FullName, Constants.VsDirectoryName);
+
+                    if (Directory.Exists(vsDirPath))
+                    {
+                        var cacheFileName = _type is CompressionType.Lossy 
+                            ? Constants.LossyCacheFileName 
+                            : Constants.LosslessCacheFileName;
+                        return new FileInfo(Path.Combine(vsDirPath, Vsix.Name, cacheFileName));
+                    }
+
+                    directory = directory.Parent;
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.LogAsync().FireAndForget();
+            }
+
+            return null;
+        }
+    }
+}

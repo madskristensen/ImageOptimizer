@@ -57,6 +57,8 @@
     <Compile Include="CacheTest.cs" />
     <Compile Include="CompressionResultTests.cs" />
     <Compile Include="CompressionTest.cs" />
+    <Compile Include="FileUtilitiesTests.cs" />
+    <Compile Include="InputValidatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

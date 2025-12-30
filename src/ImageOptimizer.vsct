@@ -160,11 +160,9 @@
   <!-- Keyboard shortcuts for quick access -->
   <KeyBindings>
     <!-- Ctrl+Shift+Alt+Q for lossless optimization (Quality) -->
-    <KeyBinding guid="guidImageOptimizerCmdSet" id="cmdOptimizelossless" 
-                editor="guidVSStd97" key1="Q" mod1="Control Shift Alt" />
+    <KeyBinding guid="guidImageOptimizerCmdSet" id="cmdOptimizelossless" editor="guidVSStd97" key1="Q" mod1="Control Shift Alt" />
     <!-- Ctrl+Shift+Alt+O for lossy optimization (Optimize for size) -->
-    <KeyBinding guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" 
-                editor="guidVSStd97" key1="O" mod1="Control Shift Alt" />
+    <KeyBinding guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" editor="guidVSStd97" key1="L" mod1="Control Shift Alt" />
   </KeyBindings>
 
   <Symbols>
