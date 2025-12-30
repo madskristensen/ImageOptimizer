@@ -24,7 +24,11 @@ namespace ImageOptimizer.Test
             var vsixDir = Path.Combine(vsDir, Vsix.Name);
             Directory.CreateDirectory(vsixDir);
 
-            _cache = new Cache(_rootFolder, _type);
+            // Cache constructor expects a file path, not a directory path
+            // It walks up from the file's directory looking for .vs folder
+            var dummyFilePath = Path.Combine(_rootFolder, "dummy.txt");
+            File.WriteAllText(dummyFilePath, "");
+            _cache = new Cache(dummyFilePath, _type);
         }
 
         [TestCleanup]
@@ -205,8 +209,8 @@ namespace ImageOptimizer.Test
 
             await _cache.SaveToDiskAsync();
 
-            // Create new cache instance to verify persistence
-            var newCache = new Cache(_rootFolder, _type);
+            // Create new cache instance to verify persistence (use file path, not directory)
+            var newCache = new Cache(filePath1, _type);
             Assert.IsTrue(newCache.ContainsFile(filePath1), "File 1 should be persisted");
             Assert.IsTrue(newCache.ContainsFile(filePath2), "File 2 should be persisted");
         }
@@ -228,7 +232,8 @@ namespace ImageOptimizer.Test
             _cache.AddToCache(filePath);
             await _cache.SaveToDiskAsync();
 
-            var newCache = new Cache(_rootFolder, _type);
+            // Create new cache instance to verify persistence (use file path, not directory)
+            var newCache = new Cache(filePath, _type);
             Assert.AreEqual(originalSize, newCache.GetCachedFileSize(filePath), "File size should be preserved after save");
         }
 
@@ -253,7 +258,9 @@ namespace ImageOptimizer.Test
         [TestMethod]
         public void LoadCacheFileName_ValidPath_ReturnsFileInfo()
         {
-            FileInfo result = _cache.LoadCacheFileName(_rootFolder);
+            var filePath = Path.Combine(_rootFolder, "testfile.txt");
+            File.WriteAllText(filePath, "test");
+            FileInfo result = _cache.LoadCacheFileName(filePath);
             Assert.IsNotNull(result, "Valid path should return FileInfo");
             Assert.IsTrue(result.Name.Contains("cache"), "Cache file name should contain 'cache'");
         }
@@ -265,8 +272,10 @@ namespace ImageOptimizer.Test
         [TestMethod]
         public void Cache_LossyType_UsesLossyCacheFile()
         {
-            var lossyCache = new Cache(_rootFolder, CompressionType.Lossy);
-            FileInfo cacheFile = lossyCache.LoadCacheFileName(_rootFolder);
+            var filePath = Path.Combine(_rootFolder, "testfile.txt");
+            File.WriteAllText(filePath, "test");
+            var lossyCache = new Cache(filePath, CompressionType.Lossy);
+            FileInfo cacheFile = lossyCache.LoadCacheFileName(filePath);
 
             Assert.IsTrue(cacheFile.Name.Contains("lossy"), "Lossy cache should use lossy cache file");
         }
@@ -274,8 +283,10 @@ namespace ImageOptimizer.Test
         [TestMethod]
         public void Cache_LosslessType_UsesLosslessCacheFile()
         {
-            var losslessCache = new Cache(_rootFolder, CompressionType.Lossless);
-            FileInfo cacheFile = losslessCache.LoadCacheFileName(_rootFolder);
+            var filePath = Path.Combine(_rootFolder, "testfile.txt");
+            File.WriteAllText(filePath, "test");
+            var losslessCache = new Cache(filePath, CompressionType.Lossless);
+            FileInfo cacheFile = losslessCache.LoadCacheFileName(filePath);
 
             Assert.IsTrue(cacheFile.Name.Contains("lossless"), "Lossless cache should use lossless cache file");
         }
@@ -286,18 +297,18 @@ namespace ImageOptimizer.Test
             var filePath = Path.Combine(_rootFolder, "testfile.jpg");
             File.WriteAllText(filePath, "test content");
 
-            var lossyCache = new Cache(_rootFolder, CompressionType.Lossy);
-            var losslessCache = new Cache(_rootFolder, CompressionType.Lossless);
+            var lossyCache = new Cache(filePath, CompressionType.Lossy);
+            var losslessCache = new Cache(filePath, CompressionType.Lossless);
 
             lossyCache.AddToCache(filePath);
             await lossyCache.SaveToDiskAsync();
 
             // Lossless cache should not see the file
-            var newLosslessCache = new Cache(_rootFolder, CompressionType.Lossless);
+            var newLosslessCache = new Cache(filePath, CompressionType.Lossless);
             Assert.IsFalse(newLosslessCache.ContainsFile(filePath), "Lossless cache should not contain lossy cached files");
 
             // Lossy cache should see the file
-            var newLossyCache = new Cache(_rootFolder, CompressionType.Lossy);
+            var newLossyCache = new Cache(filePath, CompressionType.Lossy);
             Assert.IsTrue(newLossyCache.ContainsFile(filePath), "Lossy cache should contain lossy cached files");
         }
 
