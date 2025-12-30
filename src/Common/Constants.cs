@@ -12,6 +12,11 @@ namespace MadsKristensen.ImageOptimizer
         public const int ProcessKillGracePeriodMs = 5000; // 5 seconds for graceful termination
         public const string CommandExecutor = "cmd";
 
+        // Compression settings
+        public const int DefaultLossyQuality = 85; // Quality level for lossy compression (60-100)
+        public const int MinLossyQuality = 60;
+        public const int MaxLossyQuality = 100;
+
         // Path validation
         public const int MaxPathLength = 260; // Windows MAX_PATH limitation
 

@@ -12,11 +12,12 @@ namespace MadsKristensen.ImageOptimizer
     {
         private static readonly string _cwd = Path.Combine(Path.GetDirectoryName(typeof(Compressor).Assembly.Location), @"Resources\Tools\");
         private readonly int _processTimeoutMs;
+        private readonly int _lossyQuality;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Compressor"/> class with default timeout.
+        /// Initializes a new instance of the <see cref="Compressor"/> class with default timeout and quality.
         /// </summary>
-        public Compressor() : this(Constants.DefaultProcessTimeoutMs)
+        public Compressor() : this(Constants.DefaultProcessTimeoutMs, Constants.DefaultLossyQuality)
         {
         }
 
@@ -24,9 +25,19 @@ namespace MadsKristensen.ImageOptimizer
         /// Initializes a new instance of the <see cref="Compressor"/> class with specified timeout.
         /// </summary>
         /// <param name="processTimeoutMs">The process timeout in milliseconds.</param>
-        public Compressor(int processTimeoutMs)
+        public Compressor(int processTimeoutMs) : this(processTimeoutMs, Constants.DefaultLossyQuality)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Compressor"/> class with specified timeout and quality.
+        /// </summary>
+        /// <param name="processTimeoutMs">The process timeout in milliseconds.</param>
+        /// <param name="lossyQuality">The quality level for lossy compression (60-100).</param>
+        public Compressor(int processTimeoutMs, int lossyQuality)
         {
             _processTimeoutMs = processTimeoutMs > 0 ? processTimeoutMs : Constants.DefaultProcessTimeoutMs;
+            _lossyQuality = Math.Max(60, Math.Min(lossyQuality, 100));
         }
 
         /// <summary>
@@ -141,7 +152,7 @@ namespace MadsKristensen.ImageOptimizer
             throw new TimeoutException($"Process timed out after {_processTimeoutMs}ms while compressing {Path.GetFileName(sourceFile)}");
         }
 
-        private static string GetCompressionArguments(string sourceFile, string targetFile, CompressionType type)
+        private string GetCompressionArguments(string sourceFile, string targetFile, CompressionType type)
         {
             if (!ErrorHandler.ValidateFilePath(sourceFile, out _))
             {
@@ -152,19 +163,28 @@ namespace MadsKristensen.ImageOptimizer
 
             return ext switch
             {
-                ".png" or ".jpg" or ".jpeg" or ".webp" => GetPingoArguments(sourceFile, targetFile, type),
+                ".png" or ".jpg" or ".jpeg" or ".webp" => GetPingoArguments(sourceFile, targetFile, type, ext),
                 ".gif" => GetGifsicleArguments(sourceFile, targetFile, type),
                 _ => null
             };
         }
 
-        private static string GetPingoArguments(string sourceFile, string targetFile, CompressionType type)
+        private string GetPingoArguments(string sourceFile, string targetFile, CompressionType type, string extension)
         {
-            return !FileUtilities.SafeCopyFile(sourceFile, targetFile)
-                ? null
-                : type is CompressionType.Lossy
-                ? $"/c pingo -s4 -q \"{targetFile}\""
-                : $"/c pingo -lossless -s4 -q \"{targetFile}\"";
+            if (!FileUtilities.SafeCopyFile(sourceFile, targetFile))
+            {
+                return null;
+            }
+
+            if (type is CompressionType.Lossy)
+            {
+                // Lossy: use quality parameter for better control
+                return $"/c pingo -s4 -quality={_lossyQuality} -q \"{targetFile}\"";
+            }
+
+            // Lossless: use -s3 for JPEG (optimal per pingo docs), -s4 for others
+            var optimizationLevel = (extension == ".jpg" || extension == ".jpeg") ? "s3" : "s4";
+            return $"/c pingo -lossless -{optimizationLevel} -q \"{targetFile}\"";
         }
 
         private static string GetGifsicleArguments(string sourceFile, string targetFile, CompressionType type)

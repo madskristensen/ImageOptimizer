@@ -75,6 +75,13 @@ namespace MadsKristensen.ImageOptimizer
         [DefaultValue(true)]
         public bool LogErrorsToOutput { get; set; } = true;
 
+        // Compression settings
+        [Category("Compression")]
+        [DisplayName("Lossy Quality (60-100)")]
+        [Description("Quality level for lossy compression. Higher values preserve more quality but reduce savings. Range: 60-100. Default: 85.")]
+        [DefaultValue(85)]
+        public int LossyQuality { get; set; } = 85;
+
         // Safety settings
         [Category("Safety")]
         [DisplayName("Create Backup Before Optimization")]
@@ -105,6 +112,11 @@ namespace MadsKristensen.ImageOptimizer
         public int EffectiveMaxParallelThreads => MaxParallelThreads <= 0
             ? Environment.ProcessorCount
             : Math.Min(MaxParallelThreads, Environment.ProcessorCount * 2);
+
+        /// <summary>
+        /// Gets the lossy quality clamped to valid range (60-100).
+        /// </summary>
+        public int EffectiveLossyQuality => Math.Max(60, Math.Min(LossyQuality, 100));
 
         /// <summary>
         /// Updates statistics after a successful optimization.

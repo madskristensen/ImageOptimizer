@@ -39,7 +39,7 @@ namespace MadsKristensen.ImageOptimizer
 
             // Load options
             General options = await General.GetLiveInstanceAsync();
-            var compressor = new Compressor(options.ProcessTimeoutMs);
+            var compressor = new Compressor(options.ProcessTimeoutMs, options.EffectiveLossyQuality);
             var cacheRoot = string.IsNullOrEmpty(solutionFullName) ? imageFilesList[0] : solutionFullName;
             Cache cache = options.EnableCaching ? new Cache(cacheRoot, type) : null;
 
