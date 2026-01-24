@@ -24,7 +24,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 Solution solution = await VS.Solutions.GetCurrentSolutionAsync();
                 CompressionHandler optimizer = new();
-                optimizer.OptimizeImagesAsync(images, CompressionType.Lossless, solution.FullPath).FireAndForget();
+                optimizer.OptimizeImagesAsync(images, CompressionType.Lossless, solution?.FullPath).FireAndForget();
             }
         }
 

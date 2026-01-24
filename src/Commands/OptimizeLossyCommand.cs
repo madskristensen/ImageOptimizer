@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using MadsKristensen.ImageOptimizer.Common;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -23,7 +22,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 Solution solution = await VS.Solutions.GetCurrentSolutionAsync();
                 CompressionHandler optimizer = new();
-                optimizer.OptimizeImagesAsync(images, CompressionType.Lossy, solution.FullPath).FireAndForget();
+                optimizer.OptimizeImagesAsync(images, CompressionType.Lossy, solution?.FullPath).FireAndForget();
             }
         }
     }

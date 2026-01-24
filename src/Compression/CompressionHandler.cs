@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace MadsKristensen.ImageOptimizer
@@ -18,9 +17,9 @@ namespace MadsKristensen.ImageOptimizer
         private int _processedCount;
 
         // Fixed column widths for table output
-        private const int FileNameWidth = 40;
-        private const int SizeWidth = 10;
-        private const int PercentWidth = 7;
+        private const int _fileNameWidth = 40;
+        private const int _sizeWidth = 10;
+        private const int _percentWidth = 7;
 
         /// <summary>
         /// Optimizes a collection of images using the specified compression type.
@@ -297,8 +296,8 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         private static string GetTableHeader()
         {
-            var header = $"{"File".PadRight(FileNameWidth)}  {"Before".PadLeft(SizeWidth)}  {"After".PadLeft(SizeWidth)}  {"Saved".PadLeft(SizeWidth)}  {"%".PadLeft(PercentWidth)}";
-            var separator = new string('-', FileNameWidth + SizeWidth * 3 + PercentWidth + 8);
+            var header = $"{"File",-_fileNameWidth}  {"Before",_sizeWidth}  {"After",_sizeWidth}  {"Saved",_sizeWidth}  {"%",_percentWidth}";
+            var separator = new string('-', _fileNameWidth + _sizeWidth * 3 + _percentWidth + 8);
             return header + Environment.NewLine + separator;
         }
 
@@ -307,7 +306,7 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         private static string GetTableSeparator()
         {
-            return new string('-', FileNameWidth + SizeWidth * 3 + PercentWidth + 8);
+            return new string('-', _fileNameWidth + _sizeWidth * 3 + _percentWidth + 8);
         }
 
         /// <summary>
@@ -316,11 +315,11 @@ namespace MadsKristensen.ImageOptimizer
         private static string FormatResultRow(CompressionResult result)
         {
             var fileName = Path.GetFileName(result.OriginalFileName);
-            
+
             // Truncate long filenames with ellipsis
-            if (fileName.Length > FileNameWidth)
+            if (fileName.Length > _fileNameWidth)
             {
-                fileName = fileName.Substring(0, FileNameWidth - 3) + "...";
+                fileName = fileName.Substring(0, _fileNameWidth - 3) + "...";
             }
 
             var before = CompressionResult.ToFileSize(result.OriginalFileSize);
@@ -328,7 +327,7 @@ namespace MadsKristensen.ImageOptimizer
             var saved = CompressionResult.ToFileSize(result.Saving);
             var percent = result.Percent.ToString("F1") + "%";
 
-            return $"{fileName.PadRight(FileNameWidth)}  {before.PadLeft(SizeWidth)}  {after.PadLeft(SizeWidth)}  {saved.PadLeft(SizeWidth)}  {percent.PadLeft(PercentWidth)}";
+            return $"{fileName,-_fileNameWidth}  {before,_sizeWidth}  {after,_sizeWidth}  {saved,_sizeWidth}  {percent,_percentWidth}";
         }
     }
 }
