@@ -124,7 +124,7 @@ Configure the extension via **Tools > Options > Image Optimizer**.
 | **Log Errors to Output** | Log detailed error information to the Output Window. | On |
 
 ## API for Extenders
-Any extension can call the commands provided in the Image Optimizer extension to optimize any image. 
+Any extension can call the commands provided in the Image Optimizer extension to optimize any image. The [Markdown Editor v2](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.MarkdownEditor2) extension uses this API.
 
 ```c#
 public void OptimizeImage(string filePath)
