@@ -51,6 +51,8 @@ namespace MadsKristensen.ImageOptimizer
         public const int cmdWorkspaceOptimizelossless = 0x0007;
         public const int cmdWorkspaceOptimizelossy = 0x0008;
         public const int cmdWorkspaceResize = 0x0009;
+        public const int WorkspaceClipboardGroup = 0x000A;
+        public const int cmdWorkspaceCopyDataUri = 0x000B;
         public const int idmWSE_ContextMenu = 0x0002;
         public const int idgWSE_ContextMenu_BuildDebugActions = 0x0014;
         public const int idgWSE_ContextMenu_FileContextActions = 0x0017;

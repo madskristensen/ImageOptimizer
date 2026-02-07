@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\ResizeCommand.cs" />
+    <Compile Include="Commands\WorkspaceCopyBase64Command.cs" />
     <Compile Include="Commands\WorkspaceResizeCommand.cs" />
     <Compile Include="Common\Constants.cs" />
     <Compile Include="Common\ErrorHandler.cs" />

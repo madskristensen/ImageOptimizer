@@ -23,6 +23,9 @@
       <Group guid="guidImageOptimizerCmdSet" id="WorkspaceOptimizeGroup" priority="0x0001">
         <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenu"/>
       </Group>
+      <Group guid="guidImageOptimizerCmdSet" id="WorkspaceClipboardGroup" priority="0x0002">
+        <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenu"/>
+      </Group>
     </Groups>
 
     <Menus>
@@ -124,6 +127,18 @@
           <LocCanonicalName>.ImageOptimizer.WorkspaceResizeImage</LocCanonicalName>
         </Strings>
       </Button>
+
+      <Button guid="guidImageOptimizerCmdSet" id="cmdWorkspaceCopyDataUri" priority="0x0200" type="Button">
+        <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceClipboardGroup" />
+        <Icon guid="ImageCatalogGuid" id="Copy" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Copy base64 DataURI</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.WorkspaceCopyAsBase64</LocCanonicalName>
+        </Strings>
+      </Button>
     </Buttons>
   </Commands>
 
@@ -189,6 +204,8 @@
       <IDSymbol name="cmdWorkspaceOptimizelossless" value="7" />
       <IDSymbol name="cmdWorkspaceOptimizelossy" value="8" />
       <IDSymbol name="cmdWorkspaceResize" value="9" />
+      <IDSymbol name="WorkspaceClipboardGroup" value="10" />
+      <IDSymbol name="cmdWorkspaceCopyDataUri" value="11" />
     </GuidSymbol>
 
     <GuidSymbol name="guidWorkspaceExplorerToolWindowPackageCmdSet" value="{cfb400f1-5c60-4f3c-856e-180d28def0b7}">
