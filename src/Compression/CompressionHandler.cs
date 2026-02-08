@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using MadsKristensen.ImageOptimizer.Resx;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -328,6 +329,140 @@ namespace MadsKristensen.ImageOptimizer
             var percent = result.Percent.ToString("F1") + "%";
 
             return $"{fileName,-_fileNameWidth}  {before,_sizeWidth}  {after,_sizeWidth}  {saved,_sizeWidth}  {percent,_percentWidth}";
+        }
+
+        /// <summary>
+        /// Optimizes embedded images within .resx resource files.
+        /// </summary>
+        /// <param name="resxFilePaths">Paths to the .resx files to process.</param>
+        /// <param name="type">The type of compression to apply.</param>
+        /// <param name="solutionFullName">Optional solution path for context.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        public async Task OptimizeResxImagesAsync(
+            IEnumerable<string> resxFilePaths,
+            CompressionType type,
+            string solutionFullName = null,
+            CancellationToken cancellationToken = default)
+        {
+            var resxList = resxFilePaths.ToList();
+            if (resxList.Count == 0)
+            {
+                return;
+            }
+
+            General options = await General.GetLiveInstanceAsync();
+            var compressor = new Compressor(options.ProcessTimeoutMs, options.EffectiveLossyQuality);
+            var extractor = new ResxImageExtractor();
+
+            _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
+            await _outputWindowPane.ActivateAsync();
+
+            if (options.ShowProgressInStatusBar)
+            {
+                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
+            }
+
+            var allResults = new List<ResxCompressionResult>();
+            var resxFileCount = 0;
+
+            try
+            {
+                foreach (var resxPath in resxList)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (options.ShowProgressInStatusBar)
+                    {
+                        await VS.StatusBar.ShowMessageAsync(
+                            string.Format(Constants.ResxOptimizingMessageFormat, Path.GetFileName(resxPath)));
+                    }
+
+                    try
+                    {
+                        IReadOnlyList<ResxCompressionResult> results =
+                            extractor.OptimizeResxImages(resxPath, compressor, type);
+
+                        if (results.Count > 0)
+                        {
+                            resxFileCount++;
+                            allResults.AddRange(results);
+
+                            foreach (ResxCompressionResult result in results.Where(r => r.Saving > 0))
+                            {
+                                await _outputWindowPane.WriteLineAsync(FormatResxResultRow(result));
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.LogAsync().FireAndForget();
+                        if (!options.ContinueOnError)
+                        {
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                await VS.StatusBar.ShowMessageAsync("Resx image optimization cancelled");
+                return;
+            }
+            finally
+            {
+                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+            }
+
+            await DisplayResxSummaryAsync(allResults, resxFileCount);
+        }
+
+        private async Task DisplayResxSummaryAsync(List<ResxCompressionResult> results, int resxFileCount)
+        {
+            var optimized = results.Where(r => r.Saving > 0).ToList();
+
+            if (optimized.Count == 0)
+            {
+                await VS.StatusBar.ShowMessageAsync(Constants.NoResxImagesFoundMessage);
+                await _outputWindowPane.WriteLineAsync(Constants.NoResxImagesFoundMessage);
+                return;
+            }
+
+            var totalSavings = optimized.Sum(r => r.Saving);
+            var totalOriginal = optimized.Sum(r => r.OriginalSize);
+            var totalPercent = totalOriginal > 0
+                ? Math.Round((1.0 - (double)(totalOriginal - totalSavings) / totalOriginal) * 100, 1, MidpointRounding.AwayFromZero)
+                : 0;
+
+            var imageLabel = optimized.Count == 1 ? "image" : "images";
+            var fileLabel = resxFileCount == 1 ? "file" : "files";
+            var message = string.Format(Constants.ResxOptimizationCompleteFormat,
+                optimized.Count, imageLabel, resxFileCount, fileLabel,
+                CompressionResult.ToFileSize(totalSavings), totalPercent);
+
+            await VS.StatusBar.ShowMessageAsync(message);
+            await _outputWindowPane.WriteLineAsync(message + Environment.NewLine);
+            await _outputWindowPane.ActivateAsync();
+        }
+
+        /// <summary>
+        /// Formats a single .resx compression result for the output window.
+        /// </summary>
+        private static string FormatResxResultRow(ResxCompressionResult result)
+        {
+            var resxName = Path.GetFileName(result.ResxFilePath);
+            var label = $"{resxName}/{result.ResourceName}";
+
+            if (label.Length > _fileNameWidth)
+            {
+                label = label.Substring(0, _fileNameWidth - 3) + "...";
+            }
+
+            var before = CompressionResult.ToFileSize(result.OriginalSize);
+            var after = CompressionResult.ToFileSize(result.OptimizedSize);
+            var saved = CompressionResult.ToFileSize(result.Saving);
+            var percent = result.PercentSaved.ToString("F1") + "%";
+
+            return $"{label,-_fileNameWidth}  {before,_sizeWidth}  {after,_sizeWidth}  {saved,_sizeWidth}  {percent,_percentWidth}";
         }
     }
 }

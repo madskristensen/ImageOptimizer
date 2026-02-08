@@ -55,6 +55,12 @@ namespace MadsKristensen.ImageOptimizer
         public const string NoConvertibleImagesMessage = "No images found to convert (PNG and JPG only)";
         public const string AlreadyConvertedMessage = "Selected files are already in the target format";
 
+        // .resx optimization messages
+        public const string ResxExtension = ".resx";
+        public const string ResxOptimizingMessageFormat = "Optimizing images in {0}...";
+        public const string ResxOptimizationCompleteFormat = "{0} embedded {1} optimized in {2} .resx {3}. Total saving of {4} / {5}%";
+        public const string NoResxImagesFoundMessage = "No embedded images found in .resx files";
+
         // DPI validation
         public const float MinDpi = 1f;
         public const float MaxDpi = 2400f;

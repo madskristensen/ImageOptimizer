@@ -26,6 +26,22 @@ namespace MadsKristensen.ImageOptimizer.Common
         }
 
         /// <summary>
+        /// Checks if a file is a .resx resource file that may contain embedded images.
+        /// </summary>
+        /// <param name="fileName">The file path to check.</param>
+        /// <returns>True if the file has a .resx extension; otherwise, false.</returns>
+        public static bool IsResxFile(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return false;
+            }
+
+            var ext = Path.GetExtension(fileName);
+            return string.Equals(ext, Constants.ResxExtension, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
         /// Safely deletes a file with error handling.
         /// </summary>
         /// <param name="filePath">The path to the file to delete.</param>
