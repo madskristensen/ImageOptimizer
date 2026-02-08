@@ -12,7 +12,7 @@ or get the [CI build][vsixgallery]
 
 --------------------------------
 
-Uses industry standard tools to optimize any JPEG, PNG, WebP, SVG,
+Uses industry standard tools to optimize any JPEG, PNG, WebP, AVIF, SVG,
 and GIFs - including animated GIFs. It can do both lossy
 and lossless optimization.
 
@@ -21,7 +21,8 @@ and lossless optimization.
 Adds a right-click menu to any folder and image in Solution Explorer
 that lets you optimize all images in that folder. 
 
-- **Optimize** PNG, JPG, WebP, SVG, and GIF (including animated GIFs) images
+- **Optimize** PNG, JPG, WebP, AVIF, SVG, and GIF (including animated GIFs) images
+- **Convert** PNG and JPG images to **WebP** or **AVIF** format
 - Works on single image files or entire folders
 - **Resize** images easily
 - Copy any image as **base64 dataURI** to clipboard
@@ -53,6 +54,20 @@ optimization will give you outstanding results with just a
 fraction of image quality loss.
 
 You can control the quality level (60-100) in the options.
+
+## Convert to WebP / AVIF
+
+Right-click any PNG or JPG file (or a folder containing them) and choose
+**Convert to WebP** or **Convert to AVIF** from the Image Optimizer menu.
+
+- Creates a `.webp` or `.avif` file next to the original
+- Original file is preserved — you decide when to remove it
+- New file is automatically added to the project
+- Works on single files, folders, projects, and solutions
+- Uses the lossy quality setting from Options (default: 85)
+
+WebP and AVIF typically offer significantly better compression than PNG/JPG,
+making them ideal for web assets.
 
 ## Image Resize
 
@@ -150,6 +165,8 @@ The commands are:
 
 * ImageOptimizer.OptimizeLossless - *Optimize for best quality*
 * ImageOptimizer.OptimizeLossy - *Optimize for best compression*
+* ImageOptimizer.ConvertToWebP - *Convert PNG/JPG to WebP*
+* ImageOptimizer.ConvertToAvif - *Convert PNG/JPG to AVIF*
 
 ## How can I help?
 If you enjoy using the extension, please give it a ★★★★★ rating on the [Visual Studio Marketplace][marketplace].

@@ -28,6 +28,9 @@ namespace MadsKristensen.ImageOptimizer
         public const string guidConvertibleToWebpUiContextString = "e8b6c5a1-2d3f-4a5b-9c7e-1f2a3b4c5d6e";
         public static Guid guidConvertibleToWebpUiContext = new Guid(guidConvertibleToWebpUiContextString);
 
+        public const string guidConvertibleToAvifUiContextString = "b7d4e2f3-6a8c-4b9d-ae5f-3c1d2e4f5a6b";
+        public static Guid guidConvertibleToAvifUiContext = new Guid(guidConvertibleToAvifUiContextString);
+
         public const string guidImageOptimizerCmdSetString = "d3662d85-2693-4ff5-97aa-3878453c787b";
         public static Guid guidImageOptimizerCmdSet = new Guid(guidImageOptimizerCmdSetString);
 
@@ -58,6 +61,8 @@ namespace MadsKristensen.ImageOptimizer
         public const int cmdWorkspaceCopyDataUri = 0x000B;
         public const int cmdConvertToWebp = 0x0300;
         public const int cmdWorkspaceConvertToWebp = 0x000C;
+        public const int cmdConvertToAvif = 0x0310;
+        public const int cmdWorkspaceConvertToAvif = 0x000D;
         public const int idmWSE_ContextMenu = 0x0002;
         public const int idgWSE_ContextMenu_BuildDebugActions = 0x0014;
         public const int idgWSE_ContextMenu_FileContextActions = 0x0017;

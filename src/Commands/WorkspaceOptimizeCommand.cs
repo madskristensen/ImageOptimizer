@@ -62,12 +62,27 @@ namespace MadsKristensen.ImageOptimizer.Commands
             }
             else if (IsConvertToWebpCommand(pguidCmdGroup, nCmdID))
             {
-                var files = GetConvertibleFiles(selection).ToList();
+                var files = GetConvertibleFiles(selection, Compressor.IsConvertibleToWebp).ToList();
 
                 if (files.Count > 0)
                 {
                     ConversionHandler handler = new();
                     handler.ConvertToWebpAsync(files).FireAndForget();
+                    return VSConstants.S_OK;
+                }
+                else
+                {
+                    VS.StatusBar.ShowMessageAsync(Constants.NoConvertibleImagesMessage).FireAndForget();
+                }
+            }
+            else if (IsConvertToAvifCommand(pguidCmdGroup, nCmdID))
+            {
+                var files = GetConvertibleFiles(selection, Compressor.IsConvertibleToAvif).ToList();
+
+                if (files.Count > 0)
+                {
+                    ConversionHandler handler = new();
+                    handler.ConvertToAvifAsync(files).FireAndForget();
                     return VSConstants.S_OK;
                 }
                 else
@@ -126,7 +141,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
             return resultFiles;
         }
 
-        private static IEnumerable<string> GetConvertibleFiles(List<WorkspaceVisualNodeBase> selectedNodes)
+        private static IEnumerable<string> GetConvertibleFiles(List<WorkspaceVisualNodeBase> selectedNodes, Func<string, bool> isConvertible)
         {
             var processedFiles = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
             var resultFiles = new List<string>();
@@ -139,7 +154,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
                         try
                         {
                             IEnumerable<string> images = Directory.EnumerateFiles(folder.FullPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
-                                .Where(Compressor.IsConvertibleToWebp);
+                                .Where(isConvertible);
 
                             foreach (var image in images)
                             {
@@ -159,7 +174,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
                         }
                         break;
 
-                    case IFileNode file when Compressor.IsConvertibleToWebp(file.FullPath):
+                    case IFileNode file when isConvertible(file.FullPath):
                         if (processedFiles.TryAdd(file.FullPath, 0))
                         {
                             resultFiles.Add(file.FullPath);
@@ -203,7 +218,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
                     return true;
                 }
             }
-            else if (IsConvertToWebpCommand(pguidCmdGroup, nCmdID))
+            else if (IsConvertToWebpCommand(pguidCmdGroup, nCmdID) || IsConvertToAvifCommand(pguidCmdGroup, nCmdID))
             {
                 var hasConvertibleFiles = false;
                 var hasFolders = false;
@@ -246,6 +261,12 @@ namespace MadsKristensen.ImageOptimizer.Commands
         {
             return pguidCmdGroup == PackageGuids.guidImageOptimizerCmdSet &&
                    nCmdID == PackageIds.cmdWorkspaceConvertToWebp;
+        }
+
+        private static bool IsConvertToAvifCommand(Guid pguidCmdGroup, uint nCmdID)
+        {
+            return pguidCmdGroup == PackageGuids.guidImageOptimizerCmdSet &&
+                   nCmdID == PackageIds.cmdWorkspaceConvertToAvif;
         }
     }
 }

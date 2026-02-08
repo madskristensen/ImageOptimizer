@@ -33,6 +33,7 @@
         <Parent guid="guidImageOptimizerCmdSet" id="MyMenuGroup" />
         <Strings>
           <ButtonText>Image Optimizer</ButtonText>
+          <LocCanonicalName>ImageOptimizerMenu</LocCanonicalName>
         </Strings>
       </Menu>
 
@@ -40,6 +41,7 @@
         <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenuGroup" />
         <Strings>
           <ButtonText>Image Optimizer</ButtonText>
+          <LocCanonicalName>ImageOptimizerWorkspaceContextMenu</LocCanonicalName>
         </Strings>
       </Menu>
     </Menus>
@@ -88,6 +90,17 @@
         <Strings>
           <ButtonText>Convert to WebP</ButtonText>
           <LocCanonicalName>.ImageOptimizer.ConvertToWebP</LocCanonicalName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidImageOptimizerCmdSet" id="cmdConvertToAvif" priority="0x0130" type="Button">
+        <Parent guid="guidImageOptimizerCmdSet" id="ClipboardGroup" />
+        <Icon guid="ImageCatalogGuid" id="ConvertToCodeWebTest" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Convert to AVIF</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.ConvertToAvif</LocCanonicalName>
         </Strings>
       </Button>
 
@@ -151,6 +164,18 @@
         </Strings>
       </Button>
 
+      <Button guid="guidImageOptimizerCmdSet" id="cmdWorkspaceConvertToAvif" priority="0x0140" type="Button">
+        <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceOptimizeGroup" />
+        <Icon guid="ImageCatalogGuid" id="ConvertToCodeWebTest" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Convert to AVIF</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.WorkspaceConvertToAvif</LocCanonicalName>
+        </Strings>
+      </Button>
+
       <Button guid="guidImageOptimizerCmdSet" id="cmdWorkspaceCopyDataUri" priority="0x0200" type="Button">
         <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceClipboardGroup" />
         <Icon guid="ImageCatalogGuid" id="Copy" />
@@ -193,6 +218,7 @@
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdCopyDataUri" context="guidAutoloadImages" />
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdResize" context="guidBitmapOnlyUiContext" />
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdConvertToWebp" context="guidConvertibleToWebpUiContext" />
+    <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdConvertToAvif" context="guidConvertibleToAvifUiContext" />
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdWorkspaceResize" context="guidBitmapOnlyUiContext" />
   </VisibilityConstraints>
 
@@ -211,6 +237,7 @@
     <GuidSymbol name="guidAutoloadFolders" value="{ca4b4a68-7c99-489f-8245-8eb13f2ac2f9}" />
     <GuidSymbol name="guidBitmapOnlyUiContext" value="{a076dc84-3c1c-45c2-ae98-f5f1a43ab976}" />
     <GuidSymbol name="guidConvertibleToWebpUiContext" value="{e8b6c5a1-2d3f-4a5b-9c7e-1f2a3b4c5d6e}" />
+    <GuidSymbol name="guidConvertibleToAvifUiContext" value="{b7d4e2f3-6a8c-4b9d-ae5f-3c1d2e4f5a6b}" />
 
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidImageOptimizerCmdSet" value="{d3662d85-2693-4ff5-97aa-3878453c787b}">
@@ -233,6 +260,8 @@
       <IDSymbol name="cmdWorkspaceCopyDataUri" value="11" />
       <IDSymbol name="cmdConvertToWebp" value="0x0300" />
       <IDSymbol name="cmdWorkspaceConvertToWebp" value="12" />
+      <IDSymbol name="cmdConvertToAvif" value="0x0310" />
+      <IDSymbol name="cmdWorkspaceConvertToAvif" value="13" />
     </GuidSymbol>
 
     <GuidSymbol name="guidWorkspaceExplorerToolWindowPackageCmdSet" value="{cfb400f1-5c60-4f3c-856e-180d28def0b7}">

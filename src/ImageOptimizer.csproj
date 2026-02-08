@@ -58,6 +58,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\ConvertToAvifCommand.cs" />
     <Compile Include="Commands\ConvertToWebpCommand.cs" />
     <Compile Include="Commands\ResizeCommand.cs" />
     <Compile Include="Commands\WorkspaceCopyBase64Command.cs" />

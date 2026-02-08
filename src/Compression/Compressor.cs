@@ -8,11 +8,16 @@ namespace MadsKristensen.ImageOptimizer
     /// <summary>
     /// Handles image compression using external tools (pingo, gifsicle) and built-in SVG minification.
     /// </summary>
-    public class Compressor
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="Compressor"/> class with specified timeout and quality.
+    /// </remarks>
+    /// <param name="processTimeoutMs">The process timeout in milliseconds.</param>
+    /// <param name="lossyQuality">The quality level for lossy compression (60-100).</param>
+    public class Compressor(int processTimeoutMs, int lossyQuality)
     {
         private static readonly string _cwd = Path.Combine(Path.GetDirectoryName(typeof(Compressor).Assembly.Location), @"Resources\Tools\");
-        private readonly int _processTimeoutMs;
-        private readonly int _lossyQuality;
+        private readonly int _processTimeoutMs = processTimeoutMs > 0 ? processTimeoutMs : Constants.DefaultProcessTimeoutMs;
+        private readonly int _lossyQuality = Math.Max(60, Math.Min(lossyQuality, 100));
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Compressor"/> class with default timeout and quality.
@@ -27,17 +32,6 @@ namespace MadsKristensen.ImageOptimizer
         /// <param name="processTimeoutMs">The process timeout in milliseconds.</param>
         public Compressor(int processTimeoutMs) : this(processTimeoutMs, Constants.DefaultLossyQuality)
         {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Compressor"/> class with specified timeout and quality.
-        /// </summary>
-        /// <param name="processTimeoutMs">The process timeout in milliseconds.</param>
-        /// <param name="lossyQuality">The quality level for lossy compression (60-100).</param>
-        public Compressor(int processTimeoutMs, int lossyQuality)
-        {
-            _processTimeoutMs = processTimeoutMs > 0 ? processTimeoutMs : Constants.DefaultProcessTimeoutMs;
-            _lossyQuality = Math.Max(60, Math.Min(lossyQuality, 100));
         }
 
         /// <summary>
@@ -165,6 +159,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 ".png" or ".jpg" or ".jpeg" or ".webp" => GetPingoArguments(sourceFile, targetFile, type, ext),
                 ".gif" => GetGifsicleArguments(sourceFile, targetFile, type),
+                ".avif" => GetAvifencOptimizeArguments(sourceFile, targetFile, type),
                 _ => null
             };
         }
@@ -192,6 +187,17 @@ namespace MadsKristensen.ImageOptimizer
             return type is CompressionType.Lossy
                 ? $"/c gifsicle -O3 --lossy \"{sourceFile}\" --output=\"{targetFile}\""
                 : $"/c gifsicle -O3 \"{sourceFile}\" --output=\"{targetFile}\"";
+        }
+
+        private string GetAvifencOptimizeArguments(string sourceFile, string targetFile, CompressionType type)
+        {
+            // avifenc reads the source and writes to a separate output file
+            if (type is CompressionType.Lossy)
+            {
+                return $"/c avifenc -q {_lossyQuality} -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
+            }
+
+            return $"/c avifenc --lossless -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
         }
 
         /// <summary>
@@ -294,6 +300,87 @@ namespace MadsKristensen.ImageOptimizer
 
             // pingo creates the .webp file next to the source
             return new CompressionResult(validatedPath, expectedWebpFile, stopwatch.Elapsed);
+        }
+
+        /// <summary>
+        /// Checks if a file can be converted to AVIF (PNG and JPEG only).
+        /// </summary>
+        /// <param name="fileName">The file path to check.</param>
+        /// <returns>True if the file can be converted to AVIF; otherwise, false.</returns>
+        public static bool IsConvertibleToAvif(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return false;
+            }
+
+            var ext = Path.GetExtension(fileName);
+            return !string.IsNullOrEmpty(ext) && Constants.ConvertibleToAvifExtensions.Contains(ext);
+        }
+
+        /// <summary>
+        /// Converts an image file to AVIF format using avifenc.
+        /// </summary>
+        /// <param name="fileName">The path to the source image file (PNG or JPEG).</param>
+        /// <returns>A <see cref="CompressionResult"/> with the AVIF file as the result.</returns>
+        /// <exception cref="ArgumentException">Thrown when the file path is invalid or not convertible.</exception>
+        public CompressionResult ConvertToAvif(string fileName)
+        {
+            ValidationResult validation = InputValidator.ValidateFilePath(fileName);
+            if (!validation.IsValid)
+            {
+                throw new ArgumentException(validation.ErrorMessage, nameof(fileName));
+            }
+
+            var validatedPath = validation.GetValue<string>();
+            if (!IsConvertibleToAvif(validatedPath))
+            {
+                throw new ArgumentException($"File type not supported for AVIF conversion: {Path.GetExtension(validatedPath)}", nameof(fileName));
+            }
+
+            // avifenc writes to a specified output file, so use a temp .avif path
+            var targetAvifFile = Path.ChangeExtension(Path.GetTempFileName(), ".avif");
+            var stopwatch = Stopwatch.StartNew();
+
+            try
+            {
+                var arguments = $"/c avifenc -q {_lossyQuality} -s 6 -j all \"{validatedPath}\" \"{targetAvifFile}\"";
+
+                var processStartInfo = new ProcessStartInfo(Constants.CommandExecutor)
+                {
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    WorkingDirectory = _cwd,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true
+                };
+
+                using var process = Process.Start(processStartInfo);
+                if (process != null && !process.WaitForExit(_processTimeoutMs))
+                {
+                    KillProcessSafely(process, validatedPath);
+                }
+            }
+            catch (TimeoutException ex)
+            {
+                FileUtilities.SafeDeleteFile(targetAvifFile);
+                ex.LogAsync().FireAndForget();
+                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+            }
+            catch (Exception ex)
+            {
+                FileUtilities.SafeDeleteFile(targetAvifFile);
+                ex.LogAsync().FireAndForget();
+                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+            }
+            finally
+            {
+                stopwatch.Stop();
+            }
+
+            return new CompressionResult(validatedPath, targetAvifFile, stopwatch.Elapsed);
         }
     }
 }

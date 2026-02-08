@@ -97,7 +97,7 @@ namespace ImageOptimizer.Test
 
             try
             {
-                var result = compressor.ConvertToWebp(tempFile);
+                CompressionResult result = compressor.ConvertToWebp(tempFile);
 
                 Assert.IsNotNull(result);
                 Assert.IsTrue(result.ResultFileSize > 0, "WebP result should have non-zero size");
@@ -134,7 +134,7 @@ namespace ImageOptimizer.Test
 
             try
             {
-                var result = compressor.ConvertToWebp(tempFile);
+                CompressionResult result = compressor.ConvertToWebp(tempFile);
 
                 Assert.IsNotNull(result);
                 Assert.IsTrue(result.ResultFileSize > 0, "WebP result should have non-zero size");

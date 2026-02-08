@@ -85,6 +85,44 @@ namespace ImageOptimizer.Test
             Console.Write($"Savings: {savings}");
         }
 
+        [TestMethod, TestCategory("WebP")]
+        public void Webp_Lossless()
+        {
+            var savings = ExecuteTest("*.webp", CompressionType.Lossless);
+
+            // WebP files may already be well-optimized; verify pipeline handles them without error
+            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
+            Console.Write($"Savings: {savings}");
+        }
+
+        [TestMethod, TestCategory("WebP")]
+        public void Webp_Lossy()
+        {
+            var savings = ExecuteTest("*.webp", CompressionType.Lossy);
+
+            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
+            Console.Write($"Savings: {savings}");
+        }
+
+        [TestMethod, TestCategory("AVIF")]
+        public void Avif_Lossless()
+        {
+            var savings = ExecuteTest("*.avif", CompressionType.Lossless);
+
+            // AVIF re-encoding may not always produce savings on already-optimized files
+            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
+            Console.Write($"Savings: {savings}");
+        }
+
+        [TestMethod, TestCategory("AVIF")]
+        public void Avif_Lossy()
+        {
+            var savings = ExecuteTest("*.avif", CompressionType.Lossy);
+
+            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
+            Console.Write($"Savings: {savings}");
+        }
+
         private long ExecuteTest(string searchFilter, CompressionType type)
         {
             FileInfo[] files = _folder.GetFiles(searchFilter, SearchOption.AllDirectories);

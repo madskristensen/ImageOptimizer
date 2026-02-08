@@ -7,7 +7,7 @@ using System.Threading;
 namespace MadsKristensen.ImageOptimizer
 {
     /// <summary>
-    /// Handles batch WebP conversion operations with progress reporting.
+    /// Handles batch format conversion operations (WebP, AVIF) with progress reporting.
     /// </summary>
     internal class ConversionHandler
     {
@@ -21,13 +21,38 @@ namespace MadsKristensen.ImageOptimizer
         /// <summary>
         /// Converts a collection of images to WebP format.
         /// </summary>
-        /// <param name="imageFilePaths">Paths to the image files to convert.</param>
-        /// <param name="cancellationToken">Optional cancellation token.</param>
         public async Task ConvertToWebpAsync(
             IEnumerable<string> imageFilePaths,
             CancellationToken cancellationToken = default)
         {
-            var imageFilesList = imageFilePaths.ToList();
+            await ConvertAsync(imageFilePaths, "WebP", ".webp",
+                (compressor, file) => compressor.ConvertToWebp(file),
+                Compressor.IsConvertibleToWebp,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Converts a collection of images to AVIF format.
+        /// </summary>
+        public async Task ConvertToAvifAsync(
+            IEnumerable<string> imageFilePaths,
+            CancellationToken cancellationToken = default)
+        {
+            await ConvertAsync(imageFilePaths, "AVIF", ".avif",
+                (compressor, file) => compressor.ConvertToAvif(file),
+                Compressor.IsConvertibleToAvif,
+                cancellationToken);
+        }
+
+        private async Task ConvertAsync(
+            IEnumerable<string> imageFilePaths,
+            string formatName,
+            string targetExtension,
+            Func<Compressor, string, CompressionResult> convertFunc,
+            Func<string, bool> isConvertible,
+            CancellationToken cancellationToken)
+        {
+            var imageFilesList = imageFilePaths.Where(isConvertible).ToList();
             var imageCount = imageFilesList.Count;
 
             if (imageCount == 0)
@@ -60,7 +85,7 @@ namespace MadsKristensen.ImageOptimizer
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-                await VS.StatusBar.ShowMessageAsync(string.Format(Constants.ConvertingToWebpMessageFormat, 1, imageCount));
+                await VS.StatusBar.ShowMessageAsync(string.Format(Constants.ConvertingMessageFormat, 1, imageCount, formatName));
             }
 
             try
@@ -73,8 +98,8 @@ namespace MadsKristensen.ImageOptimizer
 
                         try
                         {
-                            CompressionResult result = compressor.ConvertToWebp(filePath);
-                            ProcessConversionResult(result, options.CreateBackup);
+                            CompressionResult result = convertFunc(compressor, filePath);
+                            ProcessConversionResult(result, targetExtension);
                             conversionResults.Add(result);
 
                             if (showDetails && result.Saving > 0)
@@ -90,14 +115,14 @@ namespace MadsKristensen.ImageOptimizer
                                         }
                                     }
                                 }
-                                _outputWindowPane.WriteLineAsync(FormatResultRow(result)).FireAndForget();
+                                _outputWindowPane.WriteLineAsync(FormatResultRow(result, targetExtension)).FireAndForget();
                             }
 
                             if (options.ShowProgressInStatusBar)
                             {
                                 var processed = Interlocked.Increment(ref _processedCount);
                                 var currentItem = Math.Min(processed + 1, imageCount);
-                                VS.StatusBar.ShowMessageAsync(string.Format(Constants.ConvertingToWebpMessageFormat, currentItem, imageCount)).FireAndForget();
+                                VS.StatusBar.ShowMessageAsync(string.Format(Constants.ConvertingMessageFormat, currentItem, imageCount, formatName)).FireAndForget();
                             }
                         }
                         catch (OperationCanceledException)
@@ -121,7 +146,7 @@ namespace MadsKristensen.ImageOptimizer
             }
             catch (OperationCanceledException)
             {
-                await VS.StatusBar.ShowMessageAsync("WebP conversion cancelled");
+                await VS.StatusBar.ShowMessageAsync($"{formatName} conversion cancelled");
                 return;
             }
             finally
@@ -129,10 +154,10 @@ namespace MadsKristensen.ImageOptimizer
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
 
-            await DisplayConversionSummaryAsync(conversionResults, options, headerWritten);
+            await DisplayConversionSummaryAsync(conversionResults, options, headerWritten, formatName);
         }
 
-        private static void ProcessConversionResult(CompressionResult result, bool createBackup)
+        private static void ProcessConversionResult(CompressionResult result, string targetExtension)
         {
             if (result.Saving > 0 &&
                 result.ResultFileSize > 0 &&
@@ -141,13 +166,11 @@ namespace MadsKristensen.ImageOptimizer
             {
                 try
                 {
-                    // Place the .webp file next to the original
-                    var webpDestination = Path.ChangeExtension(result.OriginalFileName, ".webp");
-                    File.Copy(result.ResultFileName, webpDestination, true);
+                    var destination = Path.ChangeExtension(result.OriginalFileName, targetExtension);
+                    File.Copy(result.ResultFileName, destination, true);
                     File.Delete(result.ResultFileName);
 
-                    // Add the new file to the project if possible
-                    AddFileToProjectAsync(webpDestination, result.OriginalFileName).FireAndForget();
+                    AddFileToProjectAsync(destination, result.OriginalFileName).FireAndForget();
                 }
                 catch (Exception ex)
                 {
@@ -182,7 +205,7 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private async Task DisplayConversionSummaryAsync(IEnumerable<CompressionResult> results, General options, bool headerWritten)
+        private async Task DisplayConversionSummaryAsync(IEnumerable<CompressionResult> results, General options, bool headerWritten, string formatName)
         {
             var validResults = results.Where(r => r?.OriginalFileName != null).ToList();
             if (validResults.Count == 0)
@@ -210,7 +233,7 @@ namespace MadsKristensen.ImageOptimizer
 
                     var imageLabel = successfulConversions == 1 ? "image" : "images";
                     var message = string.Format(Constants.ConversionCompleteFormat,
-                        successfulConversions, imageLabel,
+                        successfulConversions, imageLabel, formatName,
                         CompressionResult.ToFileSize(totalSavings), totalPercentageReduction);
 
                     await VS.StatusBar.ShowMessageAsync(message);
@@ -218,14 +241,14 @@ namespace MadsKristensen.ImageOptimizer
                 }
                 else
                 {
-                    await VS.StatusBar.ShowMessageAsync(Constants.AlreadyWebpMessage);
-                    await _outputWindowPane.WriteLineAsync(Constants.AlreadyWebpMessage);
+                    await VS.StatusBar.ShowMessageAsync(Constants.AlreadyConvertedMessage);
+                    await _outputWindowPane.WriteLineAsync(Constants.AlreadyConvertedMessage);
                 }
             }
             else
             {
-                await VS.StatusBar.ShowMessageAsync(Constants.AlreadyWebpMessage);
-                await _outputWindowPane.WriteLineAsync(Constants.AlreadyWebpMessage);
+                await VS.StatusBar.ShowMessageAsync(Constants.AlreadyConvertedMessage);
+                await _outputWindowPane.WriteLineAsync(Constants.AlreadyConvertedMessage);
             }
 
             await _outputWindowPane.ActivateAsync();
@@ -243,11 +266,11 @@ namespace MadsKristensen.ImageOptimizer
             return new string('-', _fileNameWidth + _sizeWidth * 3 + _percentWidth + 8);
         }
 
-        private static string FormatResultRow(CompressionResult result)
+        private static string FormatResultRow(CompressionResult result, string targetExtension)
         {
             var fileName = Path.GetFileName(result.OriginalFileName);
-            var webpName = Path.ChangeExtension(fileName, ".webp");
-            var displayName = $"{fileName} → {webpName}";
+            var targetName = Path.ChangeExtension(fileName, targetExtension);
+            var displayName = $"{fileName} → {targetName}";
 
             if (displayName.Length > _fileNameWidth)
             {

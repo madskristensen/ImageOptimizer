@@ -50,11 +50,10 @@ namespace MadsKristensen.ImageOptimizer
         public const string Base64CopiedFormat = "Base64 DataURI copied to clipboard ({0:N0} characters)";
         public const string Base64FailedMessage = "Failed to create Base64 string";
         public const string InvalidFileFormat = "Invalid file: {0}";
-        public const string ConvertingToWebpMessageFormat = "Converting {0} of {1} to WebP...";
-        public const string ConvertedToWebpFormat = "Converted {0} → {1} ({2} → {3}, {4}% reduction)";
-        public const string ConversionCompleteFormat = "{0} {1} converted to WebP. Total saving of {2} / {3}%";
+        public const string ConvertingMessageFormat = "Converting {0} of {1} to {2}...";
+        public const string ConversionCompleteFormat = "{0} {1} converted to {2}. Total saving of {3} / {4}%";
         public const string NoConvertibleImagesMessage = "No images found to convert (PNG and JPG only)";
-        public const string AlreadyWebpMessage = "Selected files are already in WebP format";
+        public const string AlreadyConvertedMessage = "Selected files are already in the target format";
 
         // DPI validation
         public const float MinDpi = 1f;
@@ -67,17 +66,23 @@ namespace MadsKristensen.ImageOptimizer
         // File extensions - use HashSet for O(1) lookup
         public static readonly HashSet<string> SupportedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"
+            ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif"
         };
 
         // Bitmap-only extensions (no SVG for resize operations)
         public static readonly HashSet<string> BitmapOnlyExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".png", ".jpg", ".jpeg", ".gif", ".webp"
+            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif"
         };
 
         // Extensions that can be converted to WebP (pingo supports PNG/JPEG → WebP)
         public static readonly HashSet<string> ConvertibleToWebpExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".png", ".jpg", ".jpeg"
+        };
+
+        // Extensions that can be converted to AVIF (avifenc supports PNG/JPEG → AVIF)
+        public static readonly HashSet<string> ConvertibleToAvifExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".png", ".jpg", ".jpeg"
         };
@@ -90,7 +95,8 @@ namespace MadsKristensen.ImageOptimizer
             { "svg", "image/svg+xml" },
             { "png", "image/png" },
             { "gif", "image/gif" },
-            { "webp", "image/webp" }
+            { "webp", "image/webp" },
+            { "avif", "image/avif" }
         };
     }
 }
