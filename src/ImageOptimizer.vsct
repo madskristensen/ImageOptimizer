@@ -80,6 +80,17 @@
         </Strings>
       </Button>
 
+      <Button guid="guidImageOptimizerCmdSet" id="cmdConvertToWebp" priority="0x0120" type="Button">
+        <Parent guid="guidImageOptimizerCmdSet" id="ClipboardGroup" />
+        <Icon guid="ImageCatalogGuid" id="ConvertToCodeWebTest" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Convert to WebP</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.ConvertToWebP</LocCanonicalName>
+        </Strings>
+      </Button>
+
       <Button guid="guidImageOptimizerCmdSet" id="cmdCopyDataUri" priority="0x0200" type="Button">
         <Parent guid="guidImageOptimizerCmdSet" id="ClipboardGroup" />
         <Icon guid="ImageCatalogGuid" id="Copy" />
@@ -128,6 +139,18 @@
         </Strings>
       </Button>
 
+      <Button guid="guidImageOptimizerCmdSet" id="cmdWorkspaceConvertToWebp" priority="0x0130" type="Button">
+        <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceOptimizeGroup" />
+        <Icon guid="ImageCatalogGuid" id="ConvertToCodeWebTest" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Convert to WebP</ButtonText>
+          <LocCanonicalName>.ImageOptimizer.WorkspaceConvertToWebP</LocCanonicalName>
+        </Strings>
+      </Button>
+
       <Button guid="guidImageOptimizerCmdSet" id="cmdWorkspaceCopyDataUri" priority="0x0200" type="Button">
         <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceClipboardGroup" />
         <Icon guid="ImageCatalogGuid" id="Copy" />
@@ -169,6 +192,7 @@
   <VisibilityConstraints>
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdCopyDataUri" context="guidAutoloadImages" />
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdResize" context="guidBitmapOnlyUiContext" />
+    <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdConvertToWebp" context="guidConvertibleToWebpUiContext" />
     <VisibilityItem guid="guidImageOptimizerCmdSet" id="cmdWorkspaceResize" context="guidBitmapOnlyUiContext" />
   </VisibilityConstraints>
 
@@ -186,6 +210,7 @@
     <GuidSymbol name="guidAutoloadImages" value="{ca4b4a68-7c99-489f-8245-8eb13f2ac2f8}" />
     <GuidSymbol name="guidAutoloadFolders" value="{ca4b4a68-7c99-489f-8245-8eb13f2ac2f9}" />
     <GuidSymbol name="guidBitmapOnlyUiContext" value="{a076dc84-3c1c-45c2-ae98-f5f1a43ab976}" />
+    <GuidSymbol name="guidConvertibleToWebpUiContext" value="{e8b6c5a1-2d3f-4a5b-9c7e-1f2a3b4c5d6e}" />
 
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidImageOptimizerCmdSet" value="{d3662d85-2693-4ff5-97aa-3878453c787b}">
@@ -206,6 +231,8 @@
       <IDSymbol name="cmdWorkspaceResize" value="9" />
       <IDSymbol name="WorkspaceClipboardGroup" value="10" />
       <IDSymbol name="cmdWorkspaceCopyDataUri" value="11" />
+      <IDSymbol name="cmdConvertToWebp" value="0x0300" />
+      <IDSymbol name="cmdWorkspaceConvertToWebp" value="12" />
     </GuidSymbol>
 
     <GuidSymbol name="guidWorkspaceExplorerToolWindowPackageCmdSet" value="{cfb400f1-5c60-4f3c-856e-180d28def0b7}">

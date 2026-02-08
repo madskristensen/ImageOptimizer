@@ -203,5 +203,97 @@ namespace MadsKristensen.ImageOptimizer
         {
             return !string.IsNullOrWhiteSpace(fileName) && FileUtilities.IsImageFileSupported(fileName);
         }
+
+        /// <summary>
+        /// Checks if a file can be converted to WebP (PNG and JPEG only).
+        /// </summary>
+        /// <param name="fileName">The file path to check.</param>
+        /// <returns>True if the file can be converted to WebP; otherwise, false.</returns>
+        public static bool IsConvertibleToWebp(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return false;
+            }
+
+            var ext = Path.GetExtension(fileName);
+            return !string.IsNullOrEmpty(ext) && Constants.ConvertibleToWebpExtensions.Contains(ext);
+        }
+
+        /// <summary>
+        /// Converts an image file to WebP format using pingo.
+        /// </summary>
+        /// <param name="fileName">The path to the source image file (PNG or JPEG).</param>
+        /// <returns>A <see cref="CompressionResult"/> with the WebP file as the result.</returns>
+        /// <exception cref="ArgumentException">Thrown when the file path is invalid or not convertible.</exception>
+        public CompressionResult ConvertToWebp(string fileName)
+        {
+            ValidationResult validation = InputValidator.ValidateFilePath(fileName);
+            if (!validation.IsValid)
+            {
+                throw new ArgumentException(validation.ErrorMessage, nameof(fileName));
+            }
+
+            var validatedPath = validation.GetValue<string>();
+            if (!IsConvertibleToWebp(validatedPath))
+            {
+                throw new ArgumentException($"File type not supported for WebP conversion: {Path.GetExtension(validatedPath)}", nameof(fileName));
+            }
+
+            // pingo -webp creates a .webp file alongside the input, so we work on a temp copy
+            var tempSource = FileUtilities.CreateTempFileWithExtension(validatedPath);
+            var expectedWebpFile = Path.ChangeExtension(tempSource, ".webp");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            try
+            {
+                if (!FileUtilities.SafeCopyFile(validatedPath, tempSource))
+                {
+                    return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+                }
+
+                var arguments = $"/c pingo -webp -quality={_lossyQuality} -q \"{tempSource}\"";
+
+                var processStartInfo = new ProcessStartInfo(Constants.CommandExecutor)
+                {
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    WorkingDirectory = _cwd,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true
+                };
+
+                using var process = Process.Start(processStartInfo);
+                if (process != null && !process.WaitForExit(_processTimeoutMs))
+                {
+                    KillProcessSafely(process, validatedPath);
+                }
+            }
+            catch (TimeoutException ex)
+            {
+                FileUtilities.SafeDeleteFile(tempSource);
+                FileUtilities.SafeDeleteFile(expectedWebpFile);
+                ex.LogAsync().FireAndForget();
+                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+            }
+            catch (Exception ex)
+            {
+                FileUtilities.SafeDeleteFile(tempSource);
+                FileUtilities.SafeDeleteFile(expectedWebpFile);
+                ex.LogAsync().FireAndForget();
+                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+            }
+            finally
+            {
+                // Always clean up the temp source copy
+                FileUtilities.SafeDeleteFile(tempSource);
+                stopwatch.Stop();
+            }
+
+            // pingo creates the .webp file next to the source
+            return new CompressionResult(validatedPath, expectedWebpFile, stopwatch.Elapsed);
+        }
     }
 }

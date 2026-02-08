@@ -22,6 +22,11 @@ namespace MadsKristensen.ImageOptimizer
         expression: "Images",
         termNames: ["Images"],
         termValues: ["HierSingleSelectionName:.(png|jpg|jpeg|gif)$"])]
+    [ProvideUIContextRule(PackageGuids.guidConvertibleToWebpUiContextString,
+        name: "Convertible to WebP",
+        expression: "Images",
+        termNames: ["Images"],
+        termValues: ["HierSingleSelectionName:.(png|jpg|jpeg)$"])]
     public sealed class ImageOptimizerPackage : ToolkitPackage
     {
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)

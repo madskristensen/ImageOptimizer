@@ -44,7 +44,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
         /// <inheritdoc/>
         public int Exec(List<WorkspaceVisualNodeBase> selection, Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
-            if (IsSupportedCommand(pguidCmdGroup, nCmdID))
+            if (IsOptimizeCommand(pguidCmdGroup, nCmdID))
             {
                 var files = GetImageFiles(selection).ToList();
                 CompressionType compressionType = nCmdID == PackageIds.cmdWorkspaceOptimizelossless ? CompressionType.Lossless : CompressionType.Lossy;
@@ -58,6 +58,21 @@ namespace MadsKristensen.ImageOptimizer.Commands
                 else
                 {
                     VS.StatusBar.ShowMessageAsync(Constants.NoImagesSelectedMessage).FireAndForget();
+                }
+            }
+            else if (IsConvertToWebpCommand(pguidCmdGroup, nCmdID))
+            {
+                var files = GetConvertibleFiles(selection).ToList();
+
+                if (files.Count > 0)
+                {
+                    ConversionHandler handler = new();
+                    handler.ConvertToWebpAsync(files).FireAndForget();
+                    return VSConstants.S_OK;
+                }
+                else
+                {
+                    VS.StatusBar.ShowMessageAsync(Constants.NoConvertibleImagesMessage).FireAndForget();
                 }
             }
 
@@ -111,12 +126,56 @@ namespace MadsKristensen.ImageOptimizer.Commands
             return resultFiles;
         }
 
+        private static IEnumerable<string> GetConvertibleFiles(List<WorkspaceVisualNodeBase> selectedNodes)
+        {
+            var processedFiles = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            var resultFiles = new List<string>();
+
+            foreach (WorkspaceVisualNodeBase selection in selectedNodes)
+            {
+                switch (selection)
+                {
+                    case IFolderNode folder:
+                        try
+                        {
+                            IEnumerable<string> images = Directory.EnumerateFiles(folder.FullPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
+                                .Where(Compressor.IsConvertibleToWebp);
+
+                            foreach (var image in images)
+                            {
+                                if (processedFiles.TryAdd(image, 0))
+                                {
+                                    resultFiles.Add(image);
+                                }
+                            }
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            ex.LogAsync().FireAndForget();
+                        }
+                        catch (IOException ex)
+                        {
+                            ex.LogAsync().FireAndForget();
+                        }
+                        break;
+
+                    case IFileNode file when Compressor.IsConvertibleToWebp(file.FullPath):
+                        if (processedFiles.TryAdd(file.FullPath, 0))
+                        {
+                            resultFiles.Add(file.FullPath);
+                        }
+                        break;
+                }
+            }
+
+            return resultFiles;
+        }
+
         /// <inheritdoc/>
         public bool QueryStatus(List<WorkspaceVisualNodeBase> selection, Guid pguidCmdGroup, uint nCmdID, ref uint cmdf, ref string customTitle)
         {
-            if (IsSupportedCommand(pguidCmdGroup, nCmdID))
+            if (IsOptimizeCommand(pguidCmdGroup, nCmdID))
             {
-                // Optimize the check to avoid multiple LINQ evaluations
                 var hasImageFiles = false;
                 var hasFolders = false;
 
@@ -132,7 +191,6 @@ namespace MadsKristensen.ImageOptimizer.Commands
                             break;
                     }
 
-                    // Early exit if we found what we need
                     if (hasImageFiles || hasFolders)
                     {
                         break;
@@ -145,14 +203,49 @@ namespace MadsKristensen.ImageOptimizer.Commands
                     return true;
                 }
             }
+            else if (IsConvertToWebpCommand(pguidCmdGroup, nCmdID))
+            {
+                var hasConvertibleFiles = false;
+                var hasFolders = false;
+
+                foreach (WorkspaceVisualNodeBase item in selection)
+                {
+                    switch (item)
+                    {
+                        case IFileNode file when Compressor.IsConvertibleToWebp(file.FullPath):
+                            hasConvertibleFiles = true;
+                            break;
+                        case IFolderNode:
+                            hasFolders = true;
+                            break;
+                    }
+
+                    if (hasConvertibleFiles || hasFolders)
+                    {
+                        break;
+                    }
+                }
+
+                if (hasConvertibleFiles || hasFolders)
+                {
+                    cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
+                    return true;
+                }
+            }
 
             return false;
         }
 
-        private static bool IsSupportedCommand(Guid pguidCmdGroup, uint nCmdID)
+        private static bool IsOptimizeCommand(Guid pguidCmdGroup, uint nCmdID)
         {
             return pguidCmdGroup == PackageGuids.guidImageOptimizerCmdSet &&
                    (nCmdID == PackageIds.cmdWorkspaceOptimizelossless || nCmdID == PackageIds.cmdWorkspaceOptimizelossy);
+        }
+
+        private static bool IsConvertToWebpCommand(Guid pguidCmdGroup, uint nCmdID)
+        {
+            return pguidCmdGroup == PackageGuids.guidImageOptimizerCmdSet &&
+                   nCmdID == PackageIds.cmdWorkspaceConvertToWebp;
         }
     }
 }

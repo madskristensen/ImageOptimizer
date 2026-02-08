@@ -58,6 +58,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\ConvertToWebpCommand.cs" />
     <Compile Include="Commands\ResizeCommand.cs" />
     <Compile Include="Commands\WorkspaceCopyBase64Command.cs" />
     <Compile Include="Commands\WorkspaceResizeCommand.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Compression\CompressionResult.cs" />
     <Compile Include="Compression\CompressionType.cs" />
     <Compile Include="Compression\Compressor.cs" />
+    <Compile Include="Compression\ConversionHandler.cs" />
     <Compile Include="ImageOptimizer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

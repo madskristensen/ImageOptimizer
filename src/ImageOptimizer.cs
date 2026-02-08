@@ -25,6 +25,9 @@ namespace MadsKristensen.ImageOptimizer
         public const string guidBitmapOnlyUiContextString = "a076dc84-3c1c-45c2-ae98-f5f1a43ab976";
         public static Guid guidBitmapOnlyUiContext = new Guid(guidBitmapOnlyUiContextString);
 
+        public const string guidConvertibleToWebpUiContextString = "e8b6c5a1-2d3f-4a5b-9c7e-1f2a3b4c5d6e";
+        public static Guid guidConvertibleToWebpUiContext = new Guid(guidConvertibleToWebpUiContextString);
+
         public const string guidImageOptimizerCmdSetString = "d3662d85-2693-4ff5-97aa-3878453c787b";
         public static Guid guidImageOptimizerCmdSet = new Guid(guidImageOptimizerCmdSetString);
 
@@ -53,6 +56,8 @@ namespace MadsKristensen.ImageOptimizer
         public const int cmdWorkspaceResize = 0x0009;
         public const int WorkspaceClipboardGroup = 0x000A;
         public const int cmdWorkspaceCopyDataUri = 0x000B;
+        public const int cmdConvertToWebp = 0x0300;
+        public const int cmdWorkspaceConvertToWebp = 0x000C;
         public const int idmWSE_ContextMenu = 0x0002;
         public const int idgWSE_ContextMenu_BuildDebugActions = 0x0014;
         public const int idgWSE_ContextMenu_FileContextActions = 0x0017;
