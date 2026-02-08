@@ -64,6 +64,7 @@
     <Compile Include="FileUtilitiesTests.cs" />
     <Compile Include="InputValidatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResxCompressionResultTests.cs" />
     <Compile Include="ResxImageExtractorTests.cs" />
   </ItemGroup>
   <ItemGroup>

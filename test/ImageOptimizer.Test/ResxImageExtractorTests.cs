@@ -177,6 +177,117 @@ namespace ImageOptimizer.Test
             }
         }
 
+        [TestMethod, TestCategory("Resx")]
+        public void WhenResxContainsGifThenImageIsDetected()
+        {
+            var gifPath = Path.Combine("artifacts", "gif", "logo.gif");
+            var resxPath = CreateResxWithByteArrayImage("TestGif", gifPath, "System.Drawing.Bitmap, System.Drawing");
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless);
+
+            Assert.IsTrue(results.Count > 0, "Should find at least one GIF image in .resx");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenLossyCompressionThenImageIsOptimized()
+        {
+            var pngPath = Path.Combine("artifacts", "png", "logo.png");
+            var resxPath = CreateResxWithByteArrayImage("TestLossy", pngPath, "System.Drawing.Bitmap, System.Drawing");
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossy);
+
+            Assert.IsTrue(results.Count > 0, "Should find at least one image for lossy compression");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenTypeIsIconThenImageIsDetected()
+        {
+            var pngPath = Path.Combine("artifacts", "png", "logo.png");
+            var resxPath = CreateResxWithByteArrayImage("TestIcon", pngPath, "System.Drawing.Icon, System.Drawing");
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless);
+
+            Assert.IsTrue(results.Count > 0, "Should detect Icon type entries");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenResxContainsFileRefThenItIsSkipped()
+        {
+            var resxPath = CreateResxWithFileRef();
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless);
+
+            Assert.AreEqual(0, results.Count, "FileRef entries should not be processed");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenResxContainsInvalidBase64ThenEntryIsSkipped()
+        {
+            var resxPath = CreateResxWithInvalidBase64();
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless);
+
+            // The entry is detected but produces zero savings since the base64 is invalid
+            Assert.AreEqual(1, results.Count, "Entry should be reported");
+            Assert.AreEqual(0, results[0].Saving, "Invalid base64 should produce zero savings");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenResxHasEmptyValueThenEntryIsSkipped()
+        {
+            var resxPath = CreateResxWithEmptyValue();
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless);
+
+            Assert.AreEqual(0, results.Count, "Empty value elements should be skipped");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenResxHasMixedContentThenOnlyImagesAreProcessed()
+        {
+            var pngPath = Path.Combine("artifacts", "png", "logo.png");
+            byte[] imageBytes = File.ReadAllBytes(pngPath);
+            var base64 = Convert.ToBase64String(imageBytes);
+
+            var doc = new XDocument(
+                new XElement("root",
+                    new XElement("data",
+                        new XAttribute("name", "MyString"),
+                        new XAttribute(XNamespace.Xml + "space", "preserve"),
+                        new XElement("value", "just a string")),
+                    new XElement("data",
+                        new XAttribute("name", "MyImage"),
+                        new XAttribute("type", "System.Drawing.Bitmap, System.Drawing"),
+                        new XAttribute("mimetype", "application/x-microsoft.net.object.bytearray.base64"),
+                        new XElement("value", base64)),
+                    new XElement("data",
+                        new XAttribute("name", "FileRef"),
+                        new XAttribute("type", "System.Resources.ResXFileRef, System.Windows.Forms"),
+                        new XElement("value", @"Resources\icon.png;System.Byte[], mscorlib"))));
+
+            var resxPath = Path.Combine(_tempDir, "mixed.resx");
+            doc.Save(resxPath);
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless);
+
+            Assert.AreEqual(1, results.Count, "Should only process the embedded image, not strings or file refs");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        [ExpectedException(typeof(ArgumentException))]
+        public void WhenResxPathIsEmptyThenThrowsArgumentException()
+        {
+            var extractor = new ResxImageExtractor();
+            extractor.OptimizeResxImages("", _compressor, CompressionType.Lossless);
+        }
+
         /// <summary>
         /// Creates a .resx file with a single image embedded as a bytearray.base64 data node.
         /// </summary>
@@ -236,6 +347,59 @@ namespace ImageOptimizer.Test
                         new XElement("value", "Hello World!"))));
 
             var resxPath = Path.Combine(_tempDir, "strings.resx");
+            doc.Save(resxPath);
+            return resxPath;
+        }
+
+        /// <summary>
+        /// Creates a .resx file with a ResXFileRef entry (external file reference, not embedded).
+        /// </summary>
+        private string CreateResxWithFileRef()
+        {
+            var doc = new XDocument(
+                new XElement("root",
+                    new XElement("data",
+                        new XAttribute("name", "icon"),
+                        new XAttribute("type", "System.Resources.ResXFileRef, System.Windows.Forms"),
+                        new XElement("value", @"Resources\icon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"))));
+
+            var resxPath = Path.Combine(_tempDir, "fileref.resx");
+            doc.Save(resxPath);
+            return resxPath;
+        }
+
+        /// <summary>
+        /// Creates a .resx file with an image entry containing invalid base64 data.
+        /// </summary>
+        private string CreateResxWithInvalidBase64()
+        {
+            var doc = new XDocument(
+                new XElement("root",
+                    new XElement("data",
+                        new XAttribute("name", "BadImage"),
+                        new XAttribute("type", "System.Drawing.Bitmap, System.Drawing"),
+                        new XAttribute("mimetype", "application/x-microsoft.net.object.bytearray.base64"),
+                        new XElement("value", "this-is-not-valid-base64!!!"))));
+
+            var resxPath = Path.Combine(_tempDir, "badbase64.resx");
+            doc.Save(resxPath);
+            return resxPath;
+        }
+
+        /// <summary>
+        /// Creates a .resx file with an image entry that has an empty value element.
+        /// </summary>
+        private string CreateResxWithEmptyValue()
+        {
+            var doc = new XDocument(
+                new XElement("root",
+                    new XElement("data",
+                        new XAttribute("name", "EmptyImage"),
+                        new XAttribute("type", "System.Drawing.Bitmap, System.Drawing"),
+                        new XAttribute("mimetype", "application/x-microsoft.net.object.bytearray.base64"),
+                        new XElement("value", ""))));
+
+            var resxPath = Path.Combine(_tempDir, "empty.resx");
             doc.Save(resxPath);
             return resxPath;
         }

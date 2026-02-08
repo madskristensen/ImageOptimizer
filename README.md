@@ -22,6 +22,7 @@ Adds a right-click menu to any folder and image in Solution Explorer
 that lets you optimize all images in that folder. 
 
 - **Optimize** PNG, JPG, WebP, AVIF, SVG, and GIF (including animated GIFs) images
+- **Optimize embedded images** inside `.resx` resource files
 - **Convert** PNG and JPG images to **WebP** or **AVIF** format
 - Works on single image files or entire folders
 - **Resize** images easily
@@ -68,6 +69,22 @@ Right-click any PNG or JPG file (or a folder containing them) and choose
 
 WebP and AVIF typically offer significantly better compression than PNG/JPG,
 making them ideal for web assets.
+
+## Optimize .resx Embedded Images
+
+WinForms and WPF projects often embed images directly inside `.resx` resource
+files as base64-encoded data. Image Optimizer can extract these embedded
+images, optimize them, and re-embed the optimized versions back into the
+`.resx` file.
+
+Simply right-click a `.resx` file (or a folder/project containing them)
+and choose **Optimize for Best Quality** or **Optimize for Best Compression**.
+
+- Supports PNG, JPG, and GIF images embedded as `bytearray.base64`
+- Handles `BinaryFormatter`-serialized image resources (`binary.base64`)
+- File-reference entries (`ResXFileRef`) are ignored — those files are
+  already optimized through the normal image optimization path
+- Results are shown per-resource in the Output Window
 
 ## Image Resize
 
