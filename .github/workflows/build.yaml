@@ -57,15 +57,7 @@ jobs:
       run: msbuild /v:m /p:OutDir=\_built
 
     - name: Run tests
-      shell: pwsh
-      run: |
-        $testAssemblies = Get-ChildItem -Path .\_built -Filter *.Test.dll -File -Recurse | Select-Object -ExpandProperty FullName
-
-        if (-not $testAssemblies) {
-          throw "No test assemblies were found in .\\_built"
-        }
-
-        dotnet vstest $testAssemblies --logger:"trx;LogFileName=test-results.trx"
+      run: dotnet vstest \_built\ImageOptimizer.Test.dll --logger:"trx;LogFileName=test-results.trx"
 
     - name: Report test results
       uses: dorny/test-reporter@v1
