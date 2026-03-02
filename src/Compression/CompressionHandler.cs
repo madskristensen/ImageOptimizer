@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TaskStatusCenter;
 using MadsKristensen.ImageOptimizer.Resx;
 
 namespace MadsKristensen.ImageOptimizer
@@ -41,6 +44,54 @@ namespace MadsKristensen.ImageOptimizer
             {
                 return;
             }
+
+            IVsTaskStatusCenterService taskStatusCenter = await GetTaskStatusCenterServiceAsync(cancellationToken);
+            if (taskStatusCenter == null)
+            {
+                await OptimizeImagesCoreAsync(imageFilesList, type, solutionFullName, cancellationToken);
+                return;
+            }
+
+            using CancellationTokenSource linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var initialProgress = new TaskProgressData
+            {
+                CanBeCanceled = true,
+                PercentComplete = 0,
+                ProgressText = string.Format(Constants.TaskStatusCenterOptimizingProgressFormat, 0, imageCount)
+            };
+
+            TaskHandlerOptions options = default;
+            options.Title = Constants.TaskStatusCenterOptimizingTitle;
+            options.ActionsAfterCompletion = CompletionActions.None;
+
+            ITaskHandler taskHandler = taskStatusCenter.PreRegister(options, initialProgress);
+            using CancellationTokenRegistration cancellationRegistration = taskHandler.UserCancellation.Register(() => linkedCancellation.Cancel());
+
+            Task optimizationTask = OptimizeImagesCoreAsync(imageFilesList, type, solutionFullName, linkedCancellation.Token, taskHandler.Progress);
+            taskHandler.RegisterTask(optimizationTask);
+            var taskStatusCenterVisible = await TryToggleTaskStatusCenterAsync(CancellationToken.None);
+
+            try
+            {
+                await optimizationTask;
+            }
+            finally
+            {
+                if (taskStatusCenterVisible)
+                {
+                    _ = TryToggleTaskStatusCenterAsync(CancellationToken.None);
+                }
+            }
+        }
+
+        private async Task OptimizeImagesCoreAsync(
+            List<string> imageFilesList,
+            CompressionType type,
+            string solutionFullName,
+            CancellationToken cancellationToken,
+            IProgress<TaskProgressData> taskProgressReporter = null)
+        {
+            var imageCount = imageFilesList.Count;
 
             // Load options
             General options = await General.GetLiveInstanceAsync();
@@ -97,16 +148,6 @@ namespace MadsKristensen.ImageOptimizer
                             {
                                 detailRows.Enqueue(FormatResultRow(compressionResult));
                             }
-
-                            // Update progress after completion
-                            if (options.ShowProgressInStatusBar)
-                            {
-                                var processed = Interlocked.Increment(ref _processedCount);
-                                if (processed == imageCount || processed % Constants.ProgressUpdateBatchSize == 0)
-                                {
-                                    VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, processed, imageCount)).FireAndForget();
-                                }
-                            }
                         }
                         catch (OperationCanceledException)
                         {
@@ -124,6 +165,34 @@ namespace MadsKristensen.ImageOptimizer
                             if (!options.ContinueOnError)
                             {
                                 throw;
+                            }
+                        }
+                        finally
+                        {
+                            if (!cancellationToken.IsCancellationRequested)
+                            {
+                                var processed = Interlocked.Increment(ref _processedCount);
+
+                                if (options.ShowProgressInStatusBar)
+                                {
+                                    if (processed == imageCount || processed % Constants.ProgressUpdateBatchSize == 0)
+                                    {
+                                        VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, processed, imageCount)).FireAndForget();
+                                    }
+                                }
+
+                                if (taskProgressReporter != null)
+                                {
+                                    var currentFileName = Path.GetFileName(filePath);
+                                    var percentComplete = Math.Min(100, Math.Max(0, (int)Math.Round((processed / (double)imageCount) * 100, MidpointRounding.AwayFromZero)));
+
+                                    taskProgressReporter.Report(new TaskProgressData
+                                    {
+                                        CanBeCanceled = true,
+                                        PercentComplete = percentComplete,
+                                        ProgressText = string.Format(Constants.TaskStatusCenterOptimizingFileProgressFormat, processed, imageCount, currentFileName)
+                                    });
+                                }
                             }
                         }
                     });
@@ -147,6 +216,28 @@ namespace MadsKristensen.ImageOptimizer
             await DisplayOptimizationSummaryAsync(compressionResults, options, detailRows);
 
             _ratingPrompt.RegisterSuccessfulUsage();
+        }
+
+        private static async Task<IVsTaskStatusCenterService> GetTaskStatusCenterServiceAsync(CancellationToken cancellationToken)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            return ServiceProvider.GlobalProvider.GetService(typeof(SVsTaskStatusCenterService)) as IVsTaskStatusCenterService;
+        }
+
+        private static async Task<bool> TryToggleTaskStatusCenterAsync(CancellationToken cancellationToken)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
+            try
+            {
+                await VS.Commands.ExecuteAsync("View.ShowTaskStatusCenter");
+                return true;
+            }
+            catch (Exception)
+            {
+                // Best effort only; optimization should continue even if the UI command is unavailable.
+                return false;
+            }
         }
 
         private static void ProcessCompressionResult(CompressionResult compressionResult, Cache cache, bool createBackup)

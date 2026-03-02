@@ -44,12 +44,16 @@ namespace MadsKristensen.ImageOptimizer
         public const int MinParallelismDivider = 4; // imageCount / 4 for optimal thread count
         public const int DefaultMaxParallelThreads = 0; // 0 = auto
         public const int ProgressUpdateBatchSize = 10;
+        public const int TaskStatusCenterMinImageCount = 4;
 
         // User messages
         public const string NoImagesFoundMessage = "No images found to optimize";
         public const string NoImagesSelectedMessage = "No images selected";
         public const string OptimizingMessageFormat = "Optimizing {0} of {1} images...";
         public const string AlreadyOptimizedMessage = "The images were already optimized";
+        public const string TaskStatusCenterOptimizingTitle = "Image optimization";
+        public const string TaskStatusCenterOptimizingProgressFormat = "Optimizing {0} of {1} images...";
+        public const string TaskStatusCenterOptimizingFileProgressFormat = "Optimizing {0} of {1}: {2}";
         public const string OnlyNumericValuesMessage = "Only numeric values are allowed";
         public const string OptimizationCompleteFormat = "{0} {1} optimized. Total saving of {2} / {3}%";
         public const string ResizingMessageFormat = "Resizing {0}...";
