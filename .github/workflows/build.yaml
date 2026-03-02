@@ -65,7 +65,7 @@ jobs:
           throw "No test assemblies were found in .\\_built"
         }
 
-        vstest.console.exe $testAssemblies /Logger:"trx;LogFileName=test-results.trx"
+        dotnet vstest $testAssemblies --logger:"trx;LogFileName=test-results.trx"
 
     - name: Report test results
       uses: dorny/test-reporter@v1

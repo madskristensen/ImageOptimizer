@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using MadsKristensen.ImageOptimizer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -148,23 +147,6 @@ namespace ImageOptimizer.Test
                     File.Delete(result.ResultFileName);
                 }
             }
-
-            IEnumerable<IGrouping<string, CompressionResult>> grouped = list.GroupBy(r => Path.GetExtension(r.OriginalFileName).ToLowerInvariant());
-
-            var sb = new StringBuilder();
-            sb.AppendLine("Type\t#\tSavings\tTime");
-            sb.AppendLine();
-
-            foreach (IGrouping<string, CompressionResult> group in grouped)
-            {
-                var sum = group.Sum(g => g.Saving);
-                var time = group.Average(g => g.Elapsed.TotalSeconds);
-                sb.AppendLine(group.Key + "\t" + group.Count() + "\t" + sum + "\t" + Math.Round(time, 2));
-            }
-
-            var testName = searchFilter.Replace("*.*", "all").Trim('.', '*');
-
-            File.WriteAllText("../../" + testName + "-" + (type is CompressionType.Lossy ? "lossy" : "lossless") + ".txt", sb.ToString());
 
             return list.Sum(r => r.Saving);
         }
