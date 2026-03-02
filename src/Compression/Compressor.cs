@@ -100,21 +100,18 @@ namespace MadsKristensen.ImageOptimizer
 
         private void CompressImageFile(string sourceFile, string targetFile, CompressionType type)
         {
-            var arguments = GetCompressionArguments(sourceFile, targetFile, type);
-            if (string.IsNullOrEmpty(arguments))
+            if (!TryGetCompressionCommand(sourceFile, targetFile, type, out var executablePath, out var arguments))
             {
                 return;
             }
 
-            var processStartInfo = new ProcessStartInfo(Constants.CommandExecutor)
+            var processStartInfo = new ProcessStartInfo(executablePath)
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = _cwd,
                 Arguments = arguments,
                 UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
+                CreateNoWindow = true
             };
 
             using var process = Process.Start(processStartInfo);
@@ -146,22 +143,43 @@ namespace MadsKristensen.ImageOptimizer
             throw new TimeoutException($"Process timed out after {_processTimeoutMs}ms while compressing {Path.GetFileName(sourceFile)}");
         }
 
-        private string GetCompressionArguments(string sourceFile, string targetFile, CompressionType type)
+        private bool TryGetCompressionCommand(string sourceFile, string targetFile, CompressionType type, out string executablePath, out string arguments)
         {
+            executablePath = null;
+            arguments = null;
+
             if (!ErrorHandler.ValidateFilePath(sourceFile, out _))
             {
-                return null;
+                return false;
             }
 
             var ext = Path.GetExtension(sourceFile).ToLowerInvariant();
 
-            return ext switch
+            switch (ext)
             {
-                ".png" or ".jpg" or ".jpeg" or ".webp" => GetPingoArguments(sourceFile, targetFile, type, ext),
-                ".gif" => GetGifsicleArguments(sourceFile, targetFile, type),
-                ".avif" => GetAvifencOptimizeArguments(sourceFile, targetFile, type),
-                _ => null
-            };
+                case ".png":
+                case ".jpg":
+                case ".jpeg":
+                case ".webp":
+                    arguments = GetPingoArguments(sourceFile, targetFile, type, ext);
+                    executablePath = GetToolPath("pingo.exe");
+                    break;
+
+                case ".gif":
+                    arguments = GetGifsicleArguments(sourceFile, targetFile, type);
+                    executablePath = GetToolPath("gifsicle.exe");
+                    break;
+
+                case ".avif":
+                    arguments = GetAvifencOptimizeArguments(sourceFile, targetFile, type);
+                    executablePath = GetToolPath("avifenc.exe");
+                    break;
+
+                default:
+                    return false;
+            }
+
+            return !string.IsNullOrEmpty(arguments);
         }
 
         private string GetPingoArguments(string sourceFile, string targetFile, CompressionType type, string extension)
@@ -174,19 +192,19 @@ namespace MadsKristensen.ImageOptimizer
             if (type is CompressionType.Lossy)
             {
                 // Lossy: use quality parameter for better control
-                return $"/c pingo -s4 -quality={_lossyQuality} -q \"{targetFile}\"";
+                return $"-s4 -quality={_lossyQuality} -q \"{targetFile}\"";
             }
 
             // Lossless: use -s3 for JPEG (optimal per pingo docs), -s4 for others
             var optimizationLevel = (extension == ".jpg" || extension == ".jpeg") ? "s3" : "s4";
-            return $"/c pingo -lossless -{optimizationLevel} -q \"{targetFile}\"";
+            return $"-lossless -{optimizationLevel} -q \"{targetFile}\"";
         }
 
         private static string GetGifsicleArguments(string sourceFile, string targetFile, CompressionType type)
         {
             return type is CompressionType.Lossy
-                ? $"/c gifsicle -O3 --lossy \"{sourceFile}\" --output=\"{targetFile}\""
-                : $"/c gifsicle -O3 \"{sourceFile}\" --output=\"{targetFile}\"";
+                ? $"-O3 --lossy \"{sourceFile}\" --output=\"{targetFile}\""
+                : $"-O3 \"{sourceFile}\" --output=\"{targetFile}\"";
         }
 
         private string GetAvifencOptimizeArguments(string sourceFile, string targetFile, CompressionType type)
@@ -194,10 +212,15 @@ namespace MadsKristensen.ImageOptimizer
             // avifenc reads the source and writes to a separate output file
             if (type is CompressionType.Lossy)
             {
-                return $"/c avifenc -q {_lossyQuality} -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
+                return $"-q {_lossyQuality} -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
             }
 
-            return $"/c avifenc --lossless -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
+            return $"--lossless -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
+        }
+
+        private static string GetToolPath(string executableName)
+        {
+            return Path.Combine(_cwd, executableName);
         }
 
         /// <summary>
@@ -258,17 +281,15 @@ namespace MadsKristensen.ImageOptimizer
                     return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
                 }
 
-                var arguments = $"/c pingo -webp -quality={_lossyQuality} -q \"{tempSource}\"";
+                var arguments = $"-webp -quality={_lossyQuality} -q \"{tempSource}\"";
 
-                var processStartInfo = new ProcessStartInfo(Constants.CommandExecutor)
+                var processStartInfo = new ProcessStartInfo(GetToolPath("pingo.exe"))
                 {
                     WindowStyle = ProcessWindowStyle.Hidden,
                     WorkingDirectory = _cwd,
                     Arguments = arguments,
                     UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true
+                    CreateNoWindow = true
                 };
 
                 using var process = Process.Start(processStartInfo);
@@ -344,17 +365,15 @@ namespace MadsKristensen.ImageOptimizer
 
             try
             {
-                var arguments = $"/c avifenc -q {_lossyQuality} -s 6 -j all \"{validatedPath}\" \"{targetAvifFile}\"";
+                var arguments = $"-q {_lossyQuality} -s 6 -j all \"{validatedPath}\" \"{targetAvifFile}\"";
 
-                var processStartInfo = new ProcessStartInfo(Constants.CommandExecutor)
+                var processStartInfo = new ProcessStartInfo(GetToolPath("avifenc.exe"))
                 {
                     WindowStyle = ProcessWindowStyle.Hidden,
                     WorkingDirectory = _cwd,
                     Arguments = arguments,
                     UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true
+                    CreateNoWindow = true
                 };
 
                 using var process = Process.Start(processStartInfo);
