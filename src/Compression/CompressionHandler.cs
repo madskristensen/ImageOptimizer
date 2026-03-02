@@ -13,7 +13,6 @@ namespace MadsKristensen.ImageOptimizer
     internal class CompressionHandler
     {
         private static readonly RatingPrompt _ratingPrompt = new("MadsKristensen.ImageOptimizer64bit", Vsix.Name, General.Instance);
-        private static readonly object _saveLock = new();
         private static OutputWindowPane _outputWindowPane;
         private int _processedCount;
 
@@ -47,7 +46,7 @@ namespace MadsKristensen.ImageOptimizer
             General options = await General.GetLiveInstanceAsync();
             var compressor = new Compressor(options.ProcessTimeoutMs, options.EffectiveLossyQuality);
             var cacheRoot = string.IsNullOrEmpty(solutionFullName) ? imageFilesList[0] : solutionFullName;
-            Cache cache = options.EnableCaching ? new Cache(cacheRoot, type) : null;
+            Cache cache = options.EnableCaching ? new Cache(cacheRoot, type, options.ValidateCachedFiles) : null;
 
             // Calculate parallelism based on options
             var maxDegreeOfParallelism = Math.Min(
@@ -62,13 +61,13 @@ namespace MadsKristensen.ImageOptimizer
             };
 
             var compressionResults = new ConcurrentBag<CompressionResult>();
+            var detailRows = new ConcurrentQueue<string>();
             _processedCount = 0;
 
             // Initialize output pane (reuse existing static instance) and activate it
             _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
             await _outputWindowPane.ActivateAsync();
             var showDetails = options.ShowDetailedResults;
-            var headerWritten = false;
 
             if (options.ShowProgressInStatusBar)
             {
@@ -94,31 +93,19 @@ namespace MadsKristensen.ImageOptimizer
                             ProcessCompressionResult(compressionResult, cache, options.CreateBackup);
                             compressionResults.Add(compressionResult);
 
-                            // Write result to output window in real-time
                             if (showDetails && compressionResult.Saving > 0)
                             {
-                                // Write header on first result (thread-safe)
-                                if (!headerWritten)
-                                {
-                                    lock (_saveLock)
-                                    {
-                                        if (!headerWritten)
-                                        {
-                                            _outputWindowPane.WriteLineAsync(GetTableHeader()).FireAndForget();
-                                            headerWritten = true;
-                                        }
-                                    }
-                                }
-                                _outputWindowPane.WriteLineAsync(FormatResultRow(compressionResult)).FireAndForget();
+                                detailRows.Enqueue(FormatResultRow(compressionResult));
                             }
 
                             // Update progress after completion
                             if (options.ShowProgressInStatusBar)
                             {
                                 var processed = Interlocked.Increment(ref _processedCount);
-                                // Show next item being processed (processed + 1), capped at total
-                                var currentItem = Math.Min(processed + 1, imageCount);
-                                VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, currentItem, imageCount)).FireAndForget();
+                                if (processed == imageCount || processed % Constants.ProgressUpdateBatchSize == 0)
+                                {
+                                    VS.StatusBar.ShowMessageAsync(string.Format(Constants.OptimizingMessageFormat, processed, imageCount)).FireAndForget();
+                                }
                             }
                         }
                         catch (OperationCanceledException)
@@ -157,7 +144,7 @@ namespace MadsKristensen.ImageOptimizer
                 await cache.SaveToDiskAsync();
             }
 
-            await DisplayOptimizationSummaryAsync(compressionResults, options, headerWritten);
+            await DisplayOptimizationSummaryAsync(compressionResults, options, detailRows);
 
             _ratingPrompt.RegisterSuccessfulUsage();
         }
@@ -234,13 +221,15 @@ namespace MadsKristensen.ImageOptimizer
             return null;
         }
 
-        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, bool headerWritten)
+        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, IEnumerable<string> detailRows)
         {
             var validResults = compressionResults.Where(r => r?.OriginalFileName != null).ToList();
             if (validResults.Count == 0)
             {
                 return;
             }
+
+            var detailRowsList = detailRows.ToList();
 
             var totalSavings = validResults.Sum(r => r.Saving);
             var totalOriginalSize = validResults.Sum(r => r.OriginalFileSize);
@@ -249,9 +238,15 @@ namespace MadsKristensen.ImageOptimizer
 
             if (totalSavings > 0)
             {
-                // Write separator line if we wrote details
-                if (options.ShowDetailedResults && headerWritten)
+                if (options.ShowDetailedResults && detailRowsList.Count > 0)
                 {
+                    await _outputWindowPane.WriteLineAsync(GetTableHeader());
+
+                    foreach (var row in detailRowsList)
+                    {
+                        await _outputWindowPane.WriteLineAsync(row);
+                    }
+
                     await _outputWindowPane.WriteLineAsync(GetTableSeparator());
                 }
 

@@ -75,12 +75,12 @@ namespace MadsKristensen.ImageOptimizer
             };
 
             var conversionResults = new ConcurrentBag<CompressionResult>();
+            var detailRows = new ConcurrentQueue<string>();
             _processedCount = 0;
 
             _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
             await _outputWindowPane.ActivateAsync();
             var showDetails = options.ShowDetailedResults;
-            var headerWritten = false;
 
             if (options.ShowProgressInStatusBar)
             {
@@ -104,25 +104,16 @@ namespace MadsKristensen.ImageOptimizer
 
                             if (showDetails && result.Saving > 0)
                             {
-                                if (!headerWritten)
-                                {
-                                    lock (this)
-                                    {
-                                        if (!headerWritten)
-                                        {
-                                            _outputWindowPane.WriteLineAsync(GetTableHeader()).FireAndForget();
-                                            headerWritten = true;
-                                        }
-                                    }
-                                }
-                                _outputWindowPane.WriteLineAsync(FormatResultRow(result, targetExtension)).FireAndForget();
+                                detailRows.Enqueue(FormatResultRow(result, targetExtension));
                             }
 
                             if (options.ShowProgressInStatusBar)
                             {
                                 var processed = Interlocked.Increment(ref _processedCount);
-                                var currentItem = Math.Min(processed + 1, imageCount);
-                                VS.StatusBar.ShowMessageAsync(string.Format(Constants.ConvertingMessageFormat, currentItem, imageCount, formatName)).FireAndForget();
+                                if (processed == imageCount || processed % Constants.ProgressUpdateBatchSize == 0)
+                                {
+                                    VS.StatusBar.ShowMessageAsync(string.Format(Constants.ConvertingMessageFormat, processed, imageCount, formatName)).FireAndForget();
+                                }
                             }
                         }
                         catch (OperationCanceledException)
@@ -154,7 +145,7 @@ namespace MadsKristensen.ImageOptimizer
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
 
-            await DisplayConversionSummaryAsync(conversionResults, options, headerWritten, formatName);
+            await DisplayConversionSummaryAsync(conversionResults, options, detailRows, formatName);
         }
 
         private static void ProcessConversionResult(CompressionResult result, string targetExtension)
@@ -205,13 +196,15 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private async Task DisplayConversionSummaryAsync(IEnumerable<CompressionResult> results, General options, bool headerWritten, string formatName)
+        private async Task DisplayConversionSummaryAsync(IEnumerable<CompressionResult> results, General options, IEnumerable<string> detailRows, string formatName)
         {
             var validResults = results.Where(r => r?.OriginalFileName != null).ToList();
             if (validResults.Count == 0)
             {
                 return;
             }
+
+            var detailRowsList = detailRows.ToList();
 
             var totalSavings = validResults.Sum(r => r.Saving);
             var totalOriginalSize = validResults.Sum(r => r.OriginalFileSize);
@@ -220,8 +213,15 @@ namespace MadsKristensen.ImageOptimizer
 
             if (totalSavings > 0)
             {
-                if (options.ShowDetailedResults && headerWritten)
+                if (options.ShowDetailedResults && detailRowsList.Count > 0)
                 {
+                    await _outputWindowPane.WriteLineAsync(GetTableHeader());
+
+                    foreach (var row in detailRowsList)
+                    {
+                        await _outputWindowPane.WriteLineAsync(row);
+                    }
+
                     await _outputWindowPane.WriteLineAsync(GetTableSeparator());
                 }
 

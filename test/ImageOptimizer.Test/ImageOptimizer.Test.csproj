@@ -61,6 +61,7 @@
     <Compile Include="CompressionTest.cs" />
     <Compile Include="ConvertToAvifTests.cs" />
     <Compile Include="ConvertToWebpTests.cs" />
+    <Compile Include="FileDiscoveryTests.cs" />
     <Compile Include="FileUtilitiesTests.cs" />
     <Compile Include="InputValidatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -12,19 +12,20 @@ namespace MadsKristensen.ImageOptimizer
     /// </summary>
     internal class Cache
     {
-        private readonly ConcurrentDictionary<string, long> _cache;
+        private readonly ConcurrentDictionary<string, CacheEntry> _cache;
         private readonly FileInfo _cacheFile;
         private readonly CompressionType _type;
-        private readonly object _saveLock = new();
+        private readonly bool _validateCachedFiles;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Cache"/> class.
         /// </summary>
         /// <param name="rootFolder">The root folder to locate the cache file.</param>
         /// <param name="type">The compression type for this cache.</param>
-        public Cache(string rootFolder, CompressionType type)
+        public Cache(string rootFolder, CompressionType type, bool validateCachedFiles = true)
         {
             _type = type;
+            _validateCachedFiles = validateCachedFiles;
             _cacheFile = LoadCacheFileName(rootFolder);
             _cache = ReadCacheFromDisk();
         }
@@ -36,15 +37,30 @@ namespace MadsKristensen.ImageOptimizer
         /// <returns>True if the file is fully optimized; otherwise, false.</returns>
         public bool IsFullyOptimized(string file)
         {
-            if (!_cache.TryGetValue(file, out var cachedSize))
+            if (!_cache.TryGetValue(file, out var entry))
             {
                 return false;
+            }
+
+            if (!_validateCachedFiles)
+            {
+                return true;
             }
 
             try
             {
                 var fileInfo = new FileInfo(file);
-                return fileInfo.Exists && cachedSize == fileInfo.Length;
+                if (!fileInfo.Exists)
+                {
+                    return false;
+                }
+
+                if (entry.LastWriteTimeUtcTicks == 0)
+                {
+                    return entry.FileSize == fileInfo.Length;
+                }
+
+                return entry.FileSize == fileInfo.Length && entry.LastWriteTimeUtcTicks == fileInfo.LastWriteTimeUtc.Ticks;
             }
             catch (Exception ex)
             {
@@ -69,7 +85,7 @@ namespace MadsKristensen.ImageOptimizer
                 var info = new FileInfo(file);
                 if (info.Exists)
                 {
-                    _cache[file] = info.Length;
+                    _cache[file] = new CacheEntry(info.Length, info.LastWriteTimeUtc.Ticks);
                 }
             }
             catch (Exception ex)
@@ -91,7 +107,7 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         internal long? GetCachedFileSize(string filePath)
         {
-            return _cache.TryGetValue(filePath, out var size) ? size : null;
+            return _cache.TryGetValue(filePath, out var entry) ? entry.FileSize : null;
         }
 
         /// <summary>
@@ -119,9 +135,9 @@ namespace MadsKristensen.ImageOptimizer
 
                 // Use StringBuilder for better performance with large caches
                 var sb = new StringBuilder(_cache.Count * 50); // Estimate average line length
-                foreach (KeyValuePair<string, long> kvp in _cache)
+                foreach (KeyValuePair<string, CacheEntry> kvp in _cache)
                 {
-                    _ = sb.AppendLine($"{kvp.Key}|{kvp.Value}");
+                    _ = sb.AppendLine($"{kvp.Key}|{kvp.Value.FileSize}|{kvp.Value.LastWriteTimeUtcTicks}");
                 }
 
                 // Write all content at once using async I/O
@@ -148,9 +164,9 @@ namespace MadsKristensen.ImageOptimizer
 
                 // Use StringBuilder for better performance with large caches
                 var sb = new StringBuilder(_cache.Count * 50);
-                foreach (KeyValuePair<string, long> kvp in _cache)
+                foreach (KeyValuePair<string, CacheEntry> kvp in _cache)
                 {
-                    _ = sb.AppendLine($"{kvp.Key}|{kvp.Value}");
+                    _ = sb.AppendLine($"{kvp.Key}|{kvp.Value.FileSize}|{kvp.Value.LastWriteTimeUtcTicks}");
                 }
 
                 // Use async StreamWriter for .NET Framework compatibility
@@ -165,9 +181,9 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private ConcurrentDictionary<string, long> ReadCacheFromDisk()
+        private ConcurrentDictionary<string, CacheEntry> ReadCacheFromDisk()
         {
-            var dic = new ConcurrentDictionary<string, long>();
+            var dic = new ConcurrentDictionary<string, CacheEntry>();
 
             if (_cacheFile?.FullName == null || !_cacheFile.Exists)
             {
@@ -188,7 +204,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 // If cache is corrupted, start fresh and log the error
                 ex.LogAsync().FireAndForget();
-                return new ConcurrentDictionary<string, long>();
+                return new ConcurrentDictionary<string, CacheEntry>();
             }
 
             return dic;
@@ -197,9 +213,9 @@ namespace MadsKristensen.ImageOptimizer
         /// <summary>
         /// Reads the cache from disk using async file I/O.
         /// </summary>
-        internal async Task<ConcurrentDictionary<string, long>> ReadCacheFromDiskAsync()
+        internal async Task<ConcurrentDictionary<string, CacheEntry>> ReadCacheFromDiskAsync()
         {
-            var dic = new ConcurrentDictionary<string, long>();
+            var dic = new ConcurrentDictionary<string, CacheEntry>();
 
             if (_cacheFile?.FullName == null || !_cacheFile.Exists)
             {
@@ -225,7 +241,7 @@ namespace MadsKristensen.ImageOptimizer
             catch (Exception ex)
             {
                 ex.LogAsync().FireAndForget();
-                return new ConcurrentDictionary<string, long>();
+                return new ConcurrentDictionary<string, CacheEntry>();
             }
 
 
@@ -236,26 +252,53 @@ namespace MadsKristensen.ImageOptimizer
         /// <summary>
         /// Parses cache content into a dictionary.
         /// </summary>
-        private static void ParseCacheContent(string content, ConcurrentDictionary<string, long> dic)
+        private static void ParseCacheContent(string content, ConcurrentDictionary<string, CacheEntry> dic)
         {
             var lines = content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var line in lines)
             {
-                var separatorIndex = line.LastIndexOf('|');
-                if (separatorIndex <= 0 || separatorIndex == line.Length - 1)
+                var lastSeparatorIndex = line.LastIndexOf('|');
+                if (lastSeparatorIndex <= 0 || lastSeparatorIndex == line.Length - 1)
                 {
                     continue;
                 }
 
-                var filePath = line.Substring(0, separatorIndex);
-                var lengthStr = line.Substring(separatorIndex + 1);
-
-                if (long.TryParse(lengthStr, out var length))
+                var secondLastSeparatorIndex = line.LastIndexOf('|', lastSeparatorIndex - 1);
+                if (secondLastSeparatorIndex <= 0)
                 {
-                    dic[filePath] = length;
+                    var legacyFilePath = line.Substring(0, lastSeparatorIndex);
+                    var legacyLength = line.Substring(lastSeparatorIndex + 1);
+                    if (long.TryParse(legacyLength, out var legacySize))
+                    {
+                        dic[legacyFilePath] = new CacheEntry(legacySize, 0);
+                    }
+
+                    continue;
+                }
+
+                var filePath = line.Substring(0, secondLastSeparatorIndex);
+                var lengthStr = line.Substring(secondLastSeparatorIndex + 1, lastSeparatorIndex - secondLastSeparatorIndex - 1);
+                var timestampStr = line.Substring(lastSeparatorIndex + 1);
+
+                if (long.TryParse(lengthStr, out var length) && long.TryParse(timestampStr, out var lastWriteTicks))
+                {
+                    dic[filePath] = new CacheEntry(length, lastWriteTicks);
                 }
             }
+        }
+
+        internal readonly struct CacheEntry
+        {
+            internal CacheEntry(long fileSize, long lastWriteTimeUtcTicks)
+            {
+                FileSize = fileSize;
+                LastWriteTimeUtcTicks = lastWriteTimeUtcTicks;
+            }
+
+            internal long FileSize { get; }
+
+            internal long LastWriteTimeUtcTicks { get; }
         }
 
         /// <summary>

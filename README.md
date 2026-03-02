@@ -1,6 +1,6 @@
-[marketplace]: https://marketplace.visualstudio.com/items?itemName=MadsKristensen.ImageOptimizer64bit
-[vsixgallery]: http://vsixgallery.com/extension/fc4e241f-57de-4032-9c89-527984c0a0ae/
-[repo]:https://github.com/madskristensen/ImageOptimizer
+[marketplace]: <https://marketplace.visualstudio.com/items?itemName=MadsKristensen.ImageOptimizer64bit>
+[vsixgallery]: <http://vsixgallery.com/extension/fc4e241f-57de-4032-9c89-527984c0a0ae/>
+[repo]:<https://github.com/madskristensen/ImageOptimizer>
 
 # Image Optimizer for Visual Studio
 
@@ -19,7 +19,7 @@ and lossless optimization.
 ## Features
 
 Adds a right-click menu to any folder and image in Solution Explorer
-that lets you optimize all images in that folder. 
+that lets you optimize all images in that folder.
 
 - **Optimize** PNG, JPG, WebP, AVIF, SVG, and GIF (including animated GIFs) images
 - **Optimize embedded images** inside `.resx` resource files
@@ -33,7 +33,7 @@ that lets you optimize all images in that folder.
 
 ## Optimize Images
 
-Simply right-click any file or folder containing images and click 
+Simply right-click any file or folder containing images and click
 one of the image optimization buttons.
 
 ![Context menu](art/context-menu.png)
@@ -117,75 +117,77 @@ Configure the extension via **Tools > Options > Image Optimizer**.
 
 ### Compression
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **Lossy Quality** | Quality level for lossy compression (60-100). Higher values preserve more quality but reduce savings. | 85 |
+| Option            | Description                                                                                           | Default |
+| ----------------- | ----------------------------------------------------------------------------------------------------- | ------- |
+| **Lossy Quality** | Quality level for lossy compression (60-100). Higher values preserve more quality but reduce savings. | 85      |
 
 ### Performance
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **Process Timeout** | Maximum seconds to wait for compression before timing out (10-300). | 60 |
-| **Max Parallel Threads** | Number of parallel threads for processing. 0 = automatic (uses processor count). | 0 |
+| Option                   | Description                                                                      | Default |
+| ------------------------ | -------------------------------------------------------------------------------- | ------- |
+| **Process Timeout**      | Maximum seconds to wait for compression before timing out (10-300).              | 60      |
+| **Max Parallel Threads** | Number of parallel threads for processing. 0 = automatic (uses processor count). | 0       |
 
 ### Cache
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **Enable Caching** | Cache optimization results to avoid reprocessing unchanged files. | On |
-| **Cache Validation** | Validate cached files by checking file size. Disable for faster operation. | On |
+| Option               | Description                                                                | Default |
+| -------------------- | -------------------------------------------------------------------------- | ------- |
+| **Enable Caching**   | Cache optimization results to avoid reprocessing unchanged files.          | On      |
+| **Cache Validation** | Validate cached files by checking file size. Disable for faster operation. | On      |
 
 ### Safety
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **Create Backup** | Create backup copies before optimization. Backups are stored in the `.vs` folder. | Off |
+| Option            | Description                                                                       | Default |
+| ----------------- | --------------------------------------------------------------------------------- | ------- |
+| **Create Backup** | Create backup copies before optimization. Backups are stored in the `.vs` folder. | Off     |
 
 ### User Interface
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **Show Progress in Status Bar** | Display real-time optimization progress in the status bar. | On |
-| **Show Detailed Results** | Show per-file compression results in the Output Window. | On |
+| Option                          | Description                                                | Default |
+| ------------------------------- | ---------------------------------------------------------- | ------- |
+| **Show Progress in Status Bar** | Display real-time optimization progress in the status bar. | On      |
+| **Show Detailed Results**       | Show per-file compression results in the Output Window.    | On      |
 
 ### Error Handling
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **Continue on Error** | Continue processing other images if one fails. | On |
-| **Log Errors to Output** | Log detailed error information to the Output Window. | On |
+| Option                   | Description                                          | Default |
+| ------------------------ | ---------------------------------------------------- | ------- |
+| **Continue on Error**    | Continue processing other images if one fails.       | On      |
+| **Log Errors to Output** | Log detailed error information to the Output Window. | On      |
 
 ## API for Extenders
+
 Any extension can call the commands provided in the Image Optimizer extension to optimize any image. The [Markdown Editor v2](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.MarkdownEditor2) extension uses this API.
 
 ```c#
 public void OptimizeImage(string filePath)
 {
-	try
-	{
-		var DTE = (DTE2)Package.GetGlobalService(typeof(DTE));
-		Command command = DTE.Commands.Item("ImageOptimizer.OptimizeLossless");
+    try
+    {
+        var DTE = (DTE2)Package.GetGlobalService(typeof(DTE));        var DTE = (DTE2)Package.GetGlobalService(typeof(DTE));
+        Command command = DTE.Commands.Item("ImageOptimizer.OptimizeLossless");        Command command = DTE.Commands.Item("ImageOptimizer.OptimizeLossless");
 
-		if (command != null && command.IsAvailable)
-		{
-			DTE.Commands.Raise(command.Guid, command.ID, filePath, null);
-		}
-	}
-	catch (Exception ex)
-	{
-		// Image Optimizer not installed
-	}
+        if (command != null && command.IsAvailable)        if (command != null && command.IsAvailable)
+        {        {
+            DTE.Commands.Raise(command.Guid, command.ID, filePath, null);            DTE.Commands.Raise(command.Guid, command.ID, filePath, null);            DTE.Commands.Raise(command.Guid, command.ID, filePath, null);
+        }        }
+    }
+    catch (Exception ex)
+    {
+        // Image Optimizer not installed        // Image Optimizer not installed
+    }
 }
 ```
 
 The commands are:
 
-* ImageOptimizer.OptimizeLossless - *Optimize for best quality*
-* ImageOptimizer.OptimizeLossy - *Optimize for best compression*
-* ImageOptimizer.ConvertToWebP - *Convert PNG/JPG to WebP*
-* ImageOptimizer.ConvertToAvif - *Convert PNG/JPG to AVIF*
+- ImageOptimizer.OptimizeLossless - *Optimize for best quality*
+- ImageOptimizer.OptimizeLossy - *Optimize for best compression*
+- ImageOptimizer.ConvertToWebP - *Convert PNG/JPG to WebP*
+- ImageOptimizer.ConvertToAvif - *Convert PNG/JPG to AVIF*
 
 ## How can I help?
+
 If you enjoy using the extension, please give it a ★★★★★ rating on the [Visual Studio Marketplace][marketplace].
 
 Should you encounter bugs or if you have feature requests, head on over to the [GitHub repo][repo] to open an issue if one doesn't already exist.

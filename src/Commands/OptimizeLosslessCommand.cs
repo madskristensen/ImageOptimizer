@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -47,8 +46,7 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         public static async Task<IEnumerable<string>> GetImageFilesAsync(OleMenuCmdEventArgs e)
         {
-            // Use thread-safe ConcurrentDictionary as a set (value is ignored)
-            var files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Check command parameters first
             if (e.InValue is string arg)
@@ -57,7 +55,7 @@ namespace MadsKristensen.ImageOptimizer
 
                 if (Compressor.IsFileSupported(filePath) && File.Exists(filePath))
                 {
-                    files.TryAdd(filePath, 0);
+                    _ = files.Add(filePath);
                 }
             }
             // Then check selected nodes in Solution Explorer
@@ -72,7 +70,7 @@ namespace MadsKristensen.ImageOptimizer
                         case SolutionItemType.PhysicalFile:
                             if (Compressor.IsFileSupported(item.FullPath))
                             {
-                                files.TryAdd(item.FullPath, 0);
+                                _ = files.Add(item.FullPath);
                             }
                             break;
 
@@ -92,30 +90,14 @@ namespace MadsKristensen.ImageOptimizer
                 }
             }
 
-            return files.Keys;
+            return files;
         }
 
-        private static void AddSupportedFilesFromDirectory(string directoryPath, ConcurrentDictionary<string, byte> files)
+        private static void AddSupportedFilesFromDirectory(string directoryPath, HashSet<string> files)
         {
-            try
+            foreach (var file in FileDiscovery.EnumerateFiles(directoryPath, Compressor.IsFileSupported))
             {
-                // Sequential enumeration is more efficient for I/O-bound operations
-                // as PLINQ adds overhead without benefit for file system access
-                IEnumerable<string> supportedFiles = Directory.EnumerateFiles(directoryPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
-                    .Where(Compressor.IsFileSupported);
-
-                foreach (var file in supportedFiles)
-                {
-                    files.TryAdd(file, 0);
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                ex.LogAsync().FireAndForget();
-            }
-            catch (IOException ex)
-            {
-                ex.LogAsync().FireAndForget();
+                _ = files.Add(file);
             }
         }
 
@@ -124,14 +106,14 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         public static async Task<IEnumerable<string>> GetResxFilesAsync(OleMenuCmdEventArgs e)
         {
-            var files = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             if (e.InValue is string arg)
             {
                 var filePath = arg.Trim('"', '\'');
                 if (FileUtilities.IsResxFile(filePath) && File.Exists(filePath))
                 {
-                    files.TryAdd(filePath, 0);
+                    _ = files.Add(filePath);
                 }
             }
             else
@@ -145,7 +127,7 @@ namespace MadsKristensen.ImageOptimizer
                         case SolutionItemType.PhysicalFile:
                             if (FileUtilities.IsResxFile(item.FullPath))
                             {
-                                files.TryAdd(item.FullPath, 0);
+                                _ = files.Add(item.FullPath);
                             }
                             break;
 
@@ -165,27 +147,14 @@ namespace MadsKristensen.ImageOptimizer
                 }
             }
 
-            return files.Keys;
+            return files;
         }
 
-        private static void AddResxFilesFromDirectory(string directoryPath, ConcurrentDictionary<string, byte> files)
+        private static void AddResxFilesFromDirectory(string directoryPath, HashSet<string> files)
         {
-            try
+            foreach (var file in FileDiscovery.EnumerateFiles(directoryPath, FileUtilities.IsResxFile))
             {
-                IEnumerable<string> resxFiles = Directory.EnumerateFiles(directoryPath, "*" + Constants.ResxExtension, SearchOption.AllDirectories);
-
-                foreach (var file in resxFiles)
-                {
-                    files.TryAdd(file, 0);
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                ex.LogAsync().FireAndForget();
-            }
-            catch (IOException ex)
-            {
-                ex.LogAsync().FireAndForget();
+                _ = files.Add(file);
             }
         }
     }

@@ -29,6 +29,12 @@ namespace MadsKristensen.ImageOptimizer
         // File search patterns
         public const string AllFilesPattern = "*.*";
 
+        // Directories to skip during recursive file discovery
+        public static readonly HashSet<string> ExcludedDirectoryNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".git", ".vs", "bin", "obj", "node_modules", "packages"
+        };
+
         // StringBuilder capacity estimates
         public const int EstimatedResultStringLength = 80; // Single-line format
         public const int EstimatedCompressionResultLength = 100;
@@ -37,6 +43,7 @@ namespace MadsKristensen.ImageOptimizer
         // Parallel processing
         public const int MinParallelismDivider = 4; // imageCount / 4 for optimal thread count
         public const int DefaultMaxParallelThreads = 0; // 0 = auto
+        public const int ProgressUpdateBatchSize = 10;
 
         // User messages
         public const string NoImagesFoundMessage = "No images found to optimize";

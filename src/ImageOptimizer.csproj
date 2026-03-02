@@ -66,6 +66,7 @@
     <Compile Include="Commands\WorkspaceResizeCommand.cs" />
     <Compile Include="Common\Constants.cs" />
     <Compile Include="Common\ErrorHandler.cs" />
+    <Compile Include="Common\FileDiscovery.cs" />
     <Compile Include="Common\FileUtilities.cs" />
     <Compile Include="Common\InputValidator.cs" />
     <Compile Include="Common\ValidationResult.cs" />

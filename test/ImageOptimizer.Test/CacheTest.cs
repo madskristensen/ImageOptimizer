@@ -97,6 +97,33 @@ namespace ImageOptimizer.Test
             Assert.IsFalse(result, "Deleted file should not be marked as optimized");
         }
 
+        [TestMethod]
+        public void IsFullyOptimized_FileTimestampChanges_ReturnsFalse()
+        {
+            var filePath = Path.Combine(_rootFolder, "timestamp-test.jpg");
+            File.WriteAllText(filePath, "same length");
+            _cache.AddToCache(filePath);
+
+            var currentTimestamp = File.GetLastWriteTimeUtc(filePath);
+            File.SetLastWriteTimeUtc(filePath, currentTimestamp.AddSeconds(10));
+
+            var result = _cache.IsFullyOptimized(filePath);
+            Assert.IsFalse(result, "File with updated timestamp should not be marked as optimized");
+        }
+
+        [TestMethod]
+        public void IsFullyOptimized_ValidationDisabled_ReturnsTrueWhenCached()
+        {
+            var filePath = Path.Combine(_rootFolder, "validation-off-test.jpg");
+            File.WriteAllText(filePath, "test content");
+            var cacheWithoutValidation = new Cache(filePath, CompressionType.Lossy, validateCachedFiles: false);
+            cacheWithoutValidation.AddToCache(filePath);
+            File.WriteAllText(filePath, "changed content with different length");
+
+            var result = cacheWithoutValidation.IsFullyOptimized(filePath);
+            Assert.IsTrue(result, "Cached file should be treated as optimized when validation is disabled");
+        }
+
         #endregion
 
         #region AddToCache Tests
@@ -235,6 +262,23 @@ namespace ImageOptimizer.Test
             // Create new cache instance to verify persistence (use file path, not directory)
             var newCache = new Cache(filePath, _type);
             Assert.AreEqual(originalSize, newCache.GetCachedFileSize(filePath), "File size should be preserved after save");
+        }
+
+        [TestMethod]
+        public void Cache_LegacyFileFormat_LoadsAndValidatesBySize()
+        {
+            var filePath = Path.Combine(_rootFolder, "legacy.jpg");
+            File.WriteAllText(filePath, "legacy-content");
+            var fileSize = new FileInfo(filePath).Length;
+
+            var cacheFile = _cache.LoadCacheFileName(filePath);
+            Directory.CreateDirectory(cacheFile.DirectoryName);
+            File.WriteAllText(cacheFile.FullName, filePath + "|" + fileSize);
+
+            var loadedCache = new Cache(filePath, CompressionType.Lossy, validateCachedFiles: true);
+            var isFullyOptimized = loadedCache.IsFullyOptimized(filePath);
+
+            Assert.IsTrue(isFullyOptimized, "Legacy cache entries should still be treated as valid when file size matches.");
         }
 
         #endregion

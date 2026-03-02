@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using MadsKristensen.ImageOptimizer.Common;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Workspace.VSIntegration.UI;
@@ -96,94 +96,50 @@ namespace MadsKristensen.ImageOptimizer.Commands
 
         private static IEnumerable<string> GetImageFiles(List<WorkspaceVisualNodeBase> selectedNodes)
         {
-            // Use thread-safe ConcurrentDictionary as a set for deduplication
-            var processedFiles = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-            var resultFiles = new List<string>();
+            var processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (WorkspaceVisualNodeBase selection in selectedNodes)
             {
                 switch (selection)
                 {
                     case IFolderNode folder:
-                        try
+                        foreach (var image in FileDiscovery.EnumerateFiles(folder.FullPath, Compressor.IsFileSupported))
                         {
-                            // Sequential enumeration is more efficient for I/O-bound operations
-                            IEnumerable<string> images = Directory.EnumerateFiles(folder.FullPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
-                                .Where(Compressor.IsFileSupported);
-
-                            foreach (var image in images)
-                            {
-                                if (processedFiles.TryAdd(image, 0))
-                                {
-                                    resultFiles.Add(image);
-                                }
-                            }
-                        }
-                        catch (UnauthorizedAccessException ex)
-                        {
-                            ex.LogAsync().FireAndForget();
-                        }
-                        catch (IOException ex)
-                        {
-                            ex.LogAsync().FireAndForget();
+                            _ = processedFiles.Add(image);
                         }
                         break;
 
                     case IFileNode file when Compressor.IsFileSupported(file.FullPath):
-                        if (processedFiles.TryAdd(file.FullPath, 0))
-                        {
-                            resultFiles.Add(file.FullPath);
-                        }
+                        _ = processedFiles.Add(file.FullPath);
                         break;
                 }
             }
 
-            return resultFiles;
+            return processedFiles;
         }
 
         private static IEnumerable<string> GetConvertibleFiles(List<WorkspaceVisualNodeBase> selectedNodes, Func<string, bool> isConvertible)
         {
-            var processedFiles = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-            var resultFiles = new List<string>();
+            var processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (WorkspaceVisualNodeBase selection in selectedNodes)
             {
                 switch (selection)
                 {
                     case IFolderNode folder:
-                        try
+                        foreach (var image in FileDiscovery.EnumerateFiles(folder.FullPath, isConvertible))
                         {
-                            IEnumerable<string> images = Directory.EnumerateFiles(folder.FullPath, Constants.AllFilesPattern, SearchOption.AllDirectories)
-                                .Where(isConvertible);
-
-                            foreach (var image in images)
-                            {
-                                if (processedFiles.TryAdd(image, 0))
-                                {
-                                    resultFiles.Add(image);
-                                }
-                            }
-                        }
-                        catch (UnauthorizedAccessException ex)
-                        {
-                            ex.LogAsync().FireAndForget();
-                        }
-                        catch (IOException ex)
-                        {
-                            ex.LogAsync().FireAndForget();
+                            _ = processedFiles.Add(image);
                         }
                         break;
 
                     case IFileNode file when isConvertible(file.FullPath):
-                        if (processedFiles.TryAdd(file.FullPath, 0))
-                        {
-                            resultFiles.Add(file.FullPath);
-                        }
+                        _ = processedFiles.Add(file.FullPath);
                         break;
                 }
             }
 
-            return resultFiles;
+            return processedFiles;
         }
 
         /// <inheritdoc/>
