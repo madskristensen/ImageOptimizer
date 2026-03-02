@@ -27,7 +27,8 @@ that lets you optimize all images in that folder.
 - Works on single image files or entire folders
 - **Resize** images easily
 - Copy any image as **base64 dataURI** to clipboard
-- **Real-time progress** in the Output Window and status bar
+- **Task Status Center progress** with cancellation support during optimization
+- Progress updates in the status bar
 - **Smart caching** to skip already-optimized files
 - **Backup support** to preserve original files
 
@@ -94,8 +95,9 @@ You can resize images by using the *Resize Image* dialog. You get to it by right
 
 ## Output Window
 
-The Output Window shows detailed results in a formatted table as files
-are optimized in real-time. Progress is also displayed in the status bar.
+The Output Window shows detailed results in a formatted table after
+optimization completes. Progress is displayed in Task Status Center and
+the status bar.
 
 ![Output window](art/output-window.png)
 
@@ -110,6 +112,7 @@ significantly.
 
 Additionally, the smart caching feature remembers which files have
 already been optimized, so subsequent runs skip unchanged files entirely.
+Cache validation uses file size and last write timestamp to detect changes.
 
 ## Options
 
@@ -130,10 +133,10 @@ Configure the extension via **Tools > Options > Image Optimizer**.
 
 ### Cache
 
-| Option               | Description                                                                | Default |
-| -------------------- | -------------------------------------------------------------------------- | ------- |
-| **Enable Caching**   | Cache optimization results to avoid reprocessing unchanged files.          | On      |
-| **Cache Validation** | Validate cached files by checking file size. Disable for faster operation. | On      |
+| Option               | Description                                                                                         | Default |
+| -------------------- | --------------------------------------------------------------------------------------------------- | ------- |
+| **Enable Caching**   | Cache optimization results to avoid reprocessing unchanged files.                                   | On      |
+| **Cache Validation** | Validate cached files by checking file size and last write timestamp. Disable for faster operation. | On      |
 
 ### Safety
 
