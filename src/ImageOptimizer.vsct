@@ -206,6 +206,12 @@
     <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0550">
       <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_FOLDERNODE"/>
     </CommandPlacement>
+    <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0600">
+      <Parent guid="guidWorkspaceFilesCmdSet" id="FileContextMenu"/>
+    </CommandPlacement>
+    <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0550">
+      <Parent guid="guidWorkspaceFilesCmdSet" id="FolderContextMenu"/>
+    </CommandPlacement>
     <CommandPlacement guid="guidImageOptimizerCmdSet" id="MyMenuGroup" priority="0x0780">
       <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
     </CommandPlacement>
@@ -270,6 +276,11 @@
       <IDSymbol name="idgWSE_ContextMenu_FileContextActions" value="0x0017"/>
       <IDSymbol name="idgAddNew_FilesFolders" value="0x2201"/>
       <IDSymbol name="idgWSE_ContextMenu_ScopeActions" value="0x016"/>
+    </GuidSymbol>
+
+    <GuidSymbol name="guidWorkspaceFilesCmdSet" value="{d428d0a0-b960-4617-a7fd-15743d49e72e}">
+      <IDSymbol name="FileContextMenu" value="0x0002" />
+      <IDSymbol name="FolderContextMenu" value="0x0003" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

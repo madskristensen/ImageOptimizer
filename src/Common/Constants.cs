@@ -51,6 +51,7 @@ namespace MadsKristensen.ImageOptimizer
         public const string NoImagesSelectedMessage = "No images selected";
         public const string OptimizingMessageFormat = "Optimizing {0} of {1} images...";
         public const string AlreadyOptimizedMessage = "The images were already optimized";
+        public const string SelectedFolderForOptimizationFormat = "Selected folder: {0}";
         public const string TaskStatusCenterOptimizingTitle = "Image optimization";
         public const string TaskStatusCenterOptimizingProgressFormat = "Optimizing {0} of {1} images...";
         public const string TaskStatusCenterOptimizingFileProgressFormat = "Optimizing {0} of {1}: {2}";

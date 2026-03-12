@@ -35,6 +35,7 @@ namespace MadsKristensen.ImageOptimizer
             IEnumerable<string> imageFilePaths,
             CompressionType type,
             string solutionFullName = null,
+            string selectedFolderPath = null,
             CancellationToken cancellationToken = default)
         {
             var imageFilesList = imageFilePaths.ToList();
@@ -48,7 +49,7 @@ namespace MadsKristensen.ImageOptimizer
             IVsTaskStatusCenterService taskStatusCenter = await GetTaskStatusCenterServiceAsync(cancellationToken);
             if (taskStatusCenter == null)
             {
-                await OptimizeImagesCoreAsync(imageFilesList, type, solutionFullName, cancellationToken);
+                await OptimizeImagesCoreAsync(imageFilesList, type, solutionFullName, selectedFolderPath, cancellationToken);
                 return;
             }
 
@@ -67,7 +68,7 @@ namespace MadsKristensen.ImageOptimizer
             ITaskHandler taskHandler = taskStatusCenter.PreRegister(options, initialProgress);
             using CancellationTokenRegistration cancellationRegistration = taskHandler.UserCancellation.Register(() => linkedCancellation.Cancel());
 
-            Task optimizationTask = OptimizeImagesCoreAsync(imageFilesList, type, solutionFullName, linkedCancellation.Token, taskHandler.Progress);
+            Task optimizationTask = OptimizeImagesCoreAsync(imageFilesList, type, solutionFullName, selectedFolderPath, linkedCancellation.Token, taskHandler.Progress);
             taskHandler.RegisterTask(optimizationTask);
             var taskStatusCenterVisible = await TryToggleTaskStatusCenterAsync(CancellationToken.None);
 
@@ -88,6 +89,7 @@ namespace MadsKristensen.ImageOptimizer
             List<string> imageFilesList,
             CompressionType type,
             string solutionFullName,
+            string selectedFolderPath,
             CancellationToken cancellationToken,
             IProgress<TaskProgressData> taskProgressReporter = null)
         {
@@ -213,7 +215,7 @@ namespace MadsKristensen.ImageOptimizer
                 await cache.SaveToDiskAsync();
             }
 
-            await DisplayOptimizationSummaryAsync(compressionResults, options, detailRows);
+            await DisplayOptimizationSummaryAsync(compressionResults, options, detailRows, selectedFolderPath);
 
             _ratingPrompt.RegisterSuccessfulUsage();
         }
@@ -312,12 +314,18 @@ namespace MadsKristensen.ImageOptimizer
             return null;
         }
 
-        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, IEnumerable<string> detailRows)
+        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, IEnumerable<string> detailRows, string selectedFolderPath)
         {
             var validResults = compressionResults.Where(r => r?.OriginalFileName != null).ToList();
             if (validResults.Count == 0)
             {
                 return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedFolderPath))
+            {
+                await _outputWindowPane.WriteLineAsync(string.Format(Constants.SelectedFolderForOptimizationFormat, selectedFolderPath));
+                await _outputWindowPane.WriteLineAsync(string.Empty);
             }
 
             var detailRowsList = detailRows.ToList();

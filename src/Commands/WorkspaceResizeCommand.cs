@@ -25,7 +25,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
         /// <inheritdoc/>
         public IWorkspaceCommandHandler ProvideCommandHandler(WorkspaceVisualNodeBase parentNode)
         {
-            return parentNode is IFileNode ? _handler : null;
+            return WorkspaceNodePathResolver.TryGetFilePath(parentNode, out _) ? _handler : null;
         }
     }
 
@@ -43,9 +43,11 @@ namespace MadsKristensen.ImageOptimizer.Commands
         /// <inheritdoc/>
         public int Exec(List<WorkspaceVisualNodeBase> selection, Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
-            if (IsSupportedCommand(pguidCmdGroup, nCmdID) && selection[0] is IFileNode fileNode)
+            if (IsSupportedCommand(pguidCmdGroup, nCmdID)
+                && selection.Count > 0
+                && WorkspaceNodePathResolver.TryGetFilePath(selection[0], out var filePath))
             {
-                ResizingDialog resizer = new(fileNode.FullPath);
+                ResizingDialog resizer = new(filePath);
                 resizer.ShowModal();
 
                 return VSConstants.S_OK;
@@ -59,7 +61,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
         {
             if (IsSupportedCommand(pguidCmdGroup, nCmdID))
             {
-                if (selection.Any(s => s is IFileNode file && Compressor.IsFileSupported(file.FullPath)))
+                if (selection.Any(s => WorkspaceNodePathResolver.TryGetFilePath(s, out var filePath) && Compressor.IsFileSupported(filePath)))
                 {
                     cmdf = (uint)(OLECMDF.OLECMDF_SUPPORTED | OLECMDF.OLECMDF_ENABLED);
                     return true;
