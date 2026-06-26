@@ -32,16 +32,14 @@
       <Menu guid="guidImageOptimizerCmdSet" id="MyMenu" priority="0x0200" type="Menu">
         <Parent guid="guidImageOptimizerCmdSet" id="MyMenuGroup" />
         <Strings>
-          <ButtonText>Image Optimizer</ButtonText>
-          <LocCanonicalName>ImageOptimizerMenu</LocCanonicalName>
+          <CommandName>ImageOptimizerMenu</CommandName>
         </Strings>
       </Menu>
 
       <Menu guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenu" priority="0x0200" type="Menu">
         <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenuGroup" />
         <Strings>
-          <ButtonText>Image Optimizer</ButtonText>
-          <LocCanonicalName>ImageOptimizerWorkspaceContextMenu</LocCanonicalName>
+          <CommandName>ImageOptimizerWorkspaceContextMenu</CommandName>
         </Strings>
       </Menu>
     </Menus>

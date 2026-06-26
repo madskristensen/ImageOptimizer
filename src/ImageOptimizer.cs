@@ -36,6 +36,9 @@ namespace MadsKristensen.ImageOptimizer
 
         public const string guidWorkspaceExplorerToolWindowPackageCmdSetString = "cfb400f1-5c60-4f3c-856e-180d28def0b7";
         public static Guid guidWorkspaceExplorerToolWindowPackageCmdSet = new Guid(guidWorkspaceExplorerToolWindowPackageCmdSetString);
+
+        public const string guidWorkspaceFilesCmdSetString = "d428d0a0-b960-4617-a7fd-15743d49e72e";
+        public static Guid guidWorkspaceFilesCmdSet = new Guid(guidWorkspaceFilesCmdSetString);
     }
 
     /// <summary>
@@ -68,5 +71,7 @@ namespace MadsKristensen.ImageOptimizer
         public const int idgWSE_ContextMenu_FileContextActions = 0x0017;
         public const int idgAddNew_FilesFolders = 0x2201;
         public const int idgWSE_ContextMenu_ScopeActions = 0x0016;
+        public const int FileContextMenu = 0x0002;
+        public const int FolderContextMenu = 0x0003;
     }
 }
