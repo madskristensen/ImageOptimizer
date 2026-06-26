@@ -78,21 +78,6 @@ namespace MadsKristensen.ImageOptimizer.Commands
                     VS.StatusBar.ShowMessageAsync(Constants.NoConvertibleImagesMessage).FireAndForget();
                 }
             }
-            else if (IsConvertToAvifCommand(pguidCmdGroup, nCmdID))
-            {
-                var files = GetConvertibleFiles(selection, Compressor.IsConvertibleToAvif).ToList();
-
-                if (files.Count > 0)
-                {
-                    ConversionHandler handler = new();
-                    handler.ConvertToAvifAsync(files).FireAndForget();
-                    return VSConstants.S_OK;
-                }
-                else
-                {
-                    VS.StatusBar.ShowMessageAsync(Constants.NoConvertibleImagesMessage).FireAndForget();
-                }
-            }
 
             return (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
         }
@@ -210,12 +195,8 @@ namespace MadsKristensen.ImageOptimizer.Commands
                     return true;
                 }
             }
-            else if (IsConvertToWebpCommand(pguidCmdGroup, nCmdID) || IsConvertToAvifCommand(pguidCmdGroup, nCmdID))
+            else if (IsConvertToWebpCommand(pguidCmdGroup, nCmdID))
             {
-                var isConvertible = IsConvertToWebpCommand(pguidCmdGroup, nCmdID)
-                    ? (Func<string, bool>)Compressor.IsConvertibleToWebp
-                    : Compressor.IsConvertibleToAvif;
-
                 var hasConvertibleFiles = false;
                 var hasFolders = false;
 
@@ -230,7 +211,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
                     {
                         hasFolders = true;
                     }
-                    else if (isConvertible(path))
+                    else if (Compressor.IsConvertibleToWebp(path))
                     {
                         hasConvertibleFiles = true;
                     }
@@ -261,12 +242,6 @@ namespace MadsKristensen.ImageOptimizer.Commands
         {
             return pguidCmdGroup == PackageGuids.guidImageOptimizerCmdSet &&
                    nCmdID == PackageIds.cmdWorkspaceConvertToWebp;
-        }
-
-        private static bool IsConvertToAvifCommand(Guid pguidCmdGroup, uint nCmdID)
-        {
-            return pguidCmdGroup == PackageGuids.guidImageOptimizerCmdSet &&
-                   nCmdID == PackageIds.cmdWorkspaceConvertToAvif;
         }
     }
 

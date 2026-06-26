@@ -7,7 +7,7 @@ using System.Threading;
 namespace MadsKristensen.ImageOptimizer
 {
     /// <summary>
-    /// Handles batch format conversion operations (WebP, AVIF) with progress reporting.
+    /// Handles batch format conversion operations (WebP) with progress reporting.
     /// </summary>
     internal class ConversionHandler
     {
@@ -28,19 +28,6 @@ namespace MadsKristensen.ImageOptimizer
             await ConvertAsync(imageFilePaths, "WebP", ".webp",
                 (compressor, file) => compressor.ConvertToWebp(file),
                 Compressor.IsConvertibleToWebp,
-                cancellationToken);
-        }
-
-        /// <summary>
-        /// Converts a collection of images to AVIF format.
-        /// </summary>
-        public async Task ConvertToAvifAsync(
-            IEnumerable<string> imageFilePaths,
-            CancellationToken cancellationToken = default)
-        {
-            await ConvertAsync(imageFilePaths, "AVIF", ".avif",
-                (compressor, file) => compressor.ConvertToAvif(file),
-                Compressor.IsConvertibleToAvif,
                 cancellationToken);
         }
 

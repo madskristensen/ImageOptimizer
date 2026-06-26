@@ -84,23 +84,17 @@ namespace MadsKristensen.ImageOptimizer
         // File extensions - use HashSet for O(1) lookup
         public static readonly HashSet<string> SupportedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif"
+            ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"
         };
 
         // Bitmap-only extensions (no SVG for resize operations)
         public static readonly HashSet<string> BitmapOnlyExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif"
+            ".png", ".jpg", ".jpeg", ".gif", ".webp"
         };
 
         // Extensions that can be converted to WebP (pingo supports PNG/JPEG → WebP)
         public static readonly HashSet<string> ConvertibleToWebpExtensions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ".png", ".jpg", ".jpeg"
-        };
-
-        // Extensions that can be converted to AVIF (avifenc supports PNG/JPEG → AVIF)
-        public static readonly HashSet<string> ConvertibleToAvifExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".png", ".jpg", ".jpeg"
         };
@@ -113,8 +107,7 @@ namespace MadsKristensen.ImageOptimizer
             { "svg", "image/svg+xml" },
             { "png", "image/png" },
             { "gif", "image/gif" },
-            { "webp", "image/webp" },
-            { "avif", "image/avif" }
+            { "webp", "image/webp" }
         };
     }
 }

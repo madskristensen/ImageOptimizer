@@ -44,7 +44,7 @@ namespace ImageOptimizer.Test
         {
             var savings = ExecuteTest("*.png", CompressionType.Lossless);
 
-            Assert.IsTrue(savings >= 28966, "Don't compress enough (" + savings + ")");
+            Assert.IsTrue(savings >= 29051, "Don't compress enough (" + savings + ")");
             Console.Write($"Savings: {savings}");
         }
 
@@ -71,7 +71,7 @@ namespace ImageOptimizer.Test
         {
             var savings = ExecuteTest("*.gif", CompressionType.Lossy);
 
-            Assert.IsTrue(savings >= 134854, "Don't compress enough (" + savings + ")");
+            Assert.IsTrue(savings >= 167030, "Don't compress enough (" + savings + ")");
             Console.Write($"Savings: {savings}");
         }
 
@@ -89,8 +89,7 @@ namespace ImageOptimizer.Test
         {
             var savings = ExecuteTest("*.webp", CompressionType.Lossless);
 
-            // WebP files may already be well-optimized; verify pipeline handles them without error
-            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
+            Assert.IsTrue(savings >= 74, "Don't compress enough (" + savings + ")");
             Console.Write($"Savings: {savings}");
         }
 
@@ -99,26 +98,7 @@ namespace ImageOptimizer.Test
         {
             var savings = ExecuteTest("*.webp", CompressionType.Lossy);
 
-            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
-            Console.Write($"Savings: {savings}");
-        }
-
-        [TestMethod, TestCategory("AVIF")]
-        public void Avif_Lossless()
-        {
-            var savings = ExecuteTest("*.avif", CompressionType.Lossless);
-
-            // AVIF re-encoding may not always produce savings on already-optimized files
-            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
-            Console.Write($"Savings: {savings}");
-        }
-
-        [TestMethod, TestCategory("AVIF")]
-        public void Avif_Lossy()
-        {
-            var savings = ExecuteTest("*.avif", CompressionType.Lossy);
-
-            Assert.IsTrue(savings >= 0, "Negative savings (" + savings + ")");
+            Assert.IsTrue(savings >= 20, "Don't compress enough (" + savings + ")");
             Console.Write($"Savings: {savings}");
         }
 

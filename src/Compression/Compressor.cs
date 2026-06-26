@@ -224,11 +224,6 @@ namespace MadsKristensen.ImageOptimizer
                     executablePath = GetToolPath("gifsicle.exe");
                     break;
 
-                case ".avif":
-                    arguments = GetAvifencOptimizeArguments(sourceFile, targetFile, type);
-                    executablePath = GetToolPath("avifenc.exe");
-                    break;
-
                 default:
                     return false;
             }
@@ -245,31 +240,28 @@ namespace MadsKristensen.ImageOptimizer
 
             if (type is CompressionType.Lossy)
             {
-                // Lossy: use quality parameter for better control
-                return $"-s4 -quality={_lossyQuality} -q \"{targetFile}\"";
+                // Lossy: -s4 (max effort) + explicit quality for best compression.
+                return $"-s4 -quality={_lossyQuality} \"{targetFile}\"";
             }
 
-            // Lossless: use -s3 for JPEG (optimal per pingo docs), -s4 for others
+            // Lossless: -s4 gives the smallest PNG/WebP output. JPEG output is
+            // identical at -s3 and -s4, so -s3 is used for JPEG (slightly faster).
             var optimizationLevel = (extension == ".jpg" || extension == ".jpeg") ? "s3" : "s4";
-            return $"-lossless -{optimizationLevel} -q \"{targetFile}\"";
+            return $"-lossless -{optimizationLevel} \"{targetFile}\"";
         }
 
-        private static string GetGifsicleArguments(string sourceFile, string targetFile, CompressionType type)
+        private string GetGifsicleArguments(string sourceFile, string targetFile, CompressionType type)
         {
-            return type is CompressionType.Lossy
-                ? $"-O3 --lossy \"{sourceFile}\" --output=\"{targetFile}\""
-                : $"-O3 \"{sourceFile}\" --output=\"{targetFile}\"";
-        }
-
-        private string GetAvifencOptimizeArguments(string sourceFile, string targetFile, CompressionType type)
-        {
-            // avifenc reads the source and writes to a separate output file
+            // -O3 is gifsicle's highest optimization level (used for both modes).
             if (type is CompressionType.Lossy)
             {
-                return $"-q {_lossyQuality} -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
+                // Map the 60-100 quality scale to gifsicle's lossiness value
+                // (0 = no loss, higher = more loss). quality 100 -> 0, quality 60 -> 80.
+                var lossiness = (Constants.MaxLossyQuality - _lossyQuality) * 2;
+                return $"-O3 --lossy={lossiness} \"{sourceFile}\" --output=\"{targetFile}\"";
             }
 
-            return $"--lossless -s 6 -j all \"{sourceFile}\" \"{targetFile}\"";
+            return $"-O3 \"{sourceFile}\" --output=\"{targetFile}\"";
         }
 
         private static string GetToolPath(string executableName)
@@ -335,7 +327,8 @@ namespace MadsKristensen.ImageOptimizer
                     return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
                 }
 
-                var arguments = $"-webp -quality={_lossyQuality} -q \"{tempSource}\"";
+                // -s4 (max effort) yields smaller WebP than the default for JPEG sources.
+                var arguments = $"-webp -s4 -quality={_lossyQuality} \"{tempSource}\"";
 
                 RunTool(GetToolPath("pingo.exe"), arguments, validatedPath);
             }
@@ -362,72 +355,6 @@ namespace MadsKristensen.ImageOptimizer
 
             // pingo creates the .webp file next to the source
             return new CompressionResult(validatedPath, expectedWebpFile, stopwatch.Elapsed);
-        }
-
-        /// <summary>
-        /// Checks if a file can be converted to AVIF (PNG and JPEG only).
-        /// </summary>
-        /// <param name="fileName">The file path to check.</param>
-        /// <returns>True if the file can be converted to AVIF; otherwise, false.</returns>
-        public static bool IsConvertibleToAvif(string fileName)
-        {
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                return false;
-            }
-
-            var ext = Path.GetExtension(fileName);
-            return !string.IsNullOrEmpty(ext) && Constants.ConvertibleToAvifExtensions.Contains(ext);
-        }
-
-        /// <summary>
-        /// Converts an image file to AVIF format using avifenc.
-        /// </summary>
-        /// <param name="fileName">The path to the source image file (PNG or JPEG).</param>
-        /// <returns>A <see cref="CompressionResult"/> with the AVIF file as the result.</returns>
-        /// <exception cref="ArgumentException">Thrown when the file path is invalid or not convertible.</exception>
-        public CompressionResult ConvertToAvif(string fileName)
-        {
-            ValidationResult validation = InputValidator.ValidateFilePath(fileName);
-            if (!validation.IsValid)
-            {
-                throw new ArgumentException(validation.ErrorMessage, nameof(fileName));
-            }
-
-            var validatedPath = validation.GetValue<string>();
-            if (!IsConvertibleToAvif(validatedPath))
-            {
-                throw new ArgumentException($"File type not supported for AVIF conversion: {Path.GetExtension(validatedPath)}", nameof(fileName));
-            }
-
-            // avifenc writes to a specified output file, so use a temp .avif path
-            var targetAvifFile = Path.ChangeExtension(Path.GetTempFileName(), ".avif");
-            var stopwatch = Stopwatch.StartNew();
-
-            try
-            {
-                var arguments = $"-q {_lossyQuality} -s 6 -j all \"{validatedPath}\" \"{targetAvifFile}\"";
-
-                RunTool(GetToolPath("avifenc.exe"), arguments, validatedPath);
-            }
-            catch (TimeoutException ex)
-            {
-                FileUtilities.SafeDeleteFile(targetAvifFile);
-                ex.LogAsync().FireAndForget();
-                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
-            }
-            catch (Exception ex)
-            {
-                FileUtilities.SafeDeleteFile(targetAvifFile);
-                ex.LogAsync().FireAndForget();
-                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
-            }
-            finally
-            {
-                stopwatch.Stop();
-            }
-
-            return new CompressionResult(validatedPath, targetAvifFile, stopwatch.Elapsed);
         }
     }
 }
