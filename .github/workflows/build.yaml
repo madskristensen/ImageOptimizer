@@ -1,8 +1,8 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 name: "Build"
 permissions:
-  contents: read
-  checks: write
+  actions: write
+  contents: write
 
 on:
   push:
@@ -20,23 +20,19 @@ jobs:
     env:
       Configuration: Release
       DeployExtension: False
+      Solution: ImageOptimizer.sln
+      TestProject: test\ImageOptimizer.Test\ImageOptimizer.Test.csproj
       VsixManifestPath: src\source.extension.vsixmanifest
       VsixManifestSourcePath: src\source.extension.cs
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
+    - uses: actions/checkout@v6
 
-    - name: Setup .NET build dependencies
-      uses: timheuer/bootstrap-dotnet@v1
-      with:
-        nuget: 'false'
-        sdk: 'false'
-        msbuild: 'true'
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v3
 
     - name: Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.slnx', '**/*.sln', '**/*.csproj', '**/packages.config', '**/packages.lock.json', '**/nuget.config') }}
@@ -45,59 +41,57 @@ jobs:
 
     - name: Increment VSIX version
       id: vsix_version
-      uses: timheuer/vsix-version-stamp@v2
+      uses: madskristensen/vsix-version-stamp@v2
       with:
         manifest-file: ${{ env.VsixManifestPath }}
         vsix-token-source-file: ${{ env.VsixManifestSourcePath }}
 
     - name: Restore NuGet packages
-      run: msbuild /v:m /t:restore
+      run: msbuild ${{ env.Solution }} /v:m -restore /t:Restore
 
     - name: Build
-      run: msbuild /v:m /p:OutDir=\_built
+      run: msbuild ${{ env.Solution }} /v:m /m /p:Configuration=${{ env.Configuration }} /p:DeployExtension=${{ env.DeployExtension }}
 
     - name: Run tests
-      run: dotnet vstest \_built\ImageOptimizer.Test.dll --logger:"trx;LogFileName=test-results.trx"
+      run: dotnet test ${{ env.TestProject }} --configuration ${{ env.Configuration }} --no-build --no-restore --verbosity normal --logger:"trx;LogFileName=test-results.trx"
 
     - name: Report test results
-      uses: dorny/test-reporter@v1
-      if: always()
+      uses: dorny/test-reporter@v3
+      if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
       with:
         name: Test Results
         path: '**/test-results.trx'
         reporter: dotnet-trx
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ github.event.repository.name }}.vsix
-        path: /_built/**/*.vsix
+        path: src\bin\${{ env.Configuration }}\ImageOptimizer.vsix
 
   publish:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     needs: build
     runs-on: windows-latest
-    permissions:
-      contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Download Package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ github.event.repository.name }}.vsix
 
       - name: Upload to Open VSIX
-        uses: timheuer/openvsixpublish@v1
+        uses: madskristensen/publish-vsixgallery@v1
         with:
           vsix-file: ${{ github.event.repository.name }}.vsix
 
       - name: Publish extension to Marketplace
         if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]') }}
-        uses: cezarypiatek/VsixPublisherAction@1.0
+        uses: madskristensen/publish-marketplace@v2
         with:
           extension-file: '${{ github.event.repository.name }}.vsix'
           publish-manifest-file: 'vs-publish.json'
@@ -106,7 +100,7 @@ jobs:
       - name: Tag and release
         if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]') }}
         id: tag_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: release ${{ needs.build.outputs.version }}
           generate_release_notes: true

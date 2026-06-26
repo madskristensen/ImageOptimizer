@@ -5,6 +5,7 @@
 # Image Optimizer for Visual Studio
 
 [![Build](https://github.com/madskristensen/ImageOptimizer/actions/workflows/build.yaml/badge.svg)](https://github.com/madskristensen/ImageOptimizer/actions/workflows/build.yaml)
+[![Install from VSIX Gallery](https://www.vsixgallery.com/badge/fc4e241f-57de-4032-9c89-527984c0a0ae.png)][vsixgallery]
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/madskristensen)
 
 Download this extension from the [Visual Studio Marketplace][marketplace]
