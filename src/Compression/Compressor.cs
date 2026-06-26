@@ -105,19 +105,73 @@ namespace MadsKristensen.ImageOptimizer
                 return;
             }
 
+            RunTool(executablePath, arguments, sourceFile);
+        }
+
+        /// <summary>
+        /// Runs an external command-line tool, enforcing the configured timeout and
+        /// capturing standard error / exit code for diagnostics.
+        /// </summary>
+        /// <param name="executablePath">The full path to the tool executable.</param>
+        /// <param name="arguments">The command-line arguments to pass to the tool.</param>
+        /// <param name="sourceFile">The source image file being processed (used for error messages).</param>
+        /// <exception cref="TimeoutException">Thrown when the tool does not exit within the configured timeout.</exception>
+        private void RunTool(string executablePath, string arguments, string sourceFile)
+        {
             var processStartInfo = new ProcessStartInfo(executablePath)
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = _cwd,
                 Arguments = arguments,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
             using var process = Process.Start(processStartInfo);
-            if (process != null && !process.WaitForExit(_processTimeoutMs))
+            if (process == null)
+            {
+                return;
+            }
+
+            // Read the output streams asynchronously so the child process never blocks
+            // when its stdout/stderr buffers fill up while we wait for it to exit.
+            Task<string> stdErrTask = process.StandardError.ReadToEndAsync();
+            Task<string> stdOutTask = process.StandardOutput.ReadToEndAsync();
+
+            if (!process.WaitForExit(_processTimeoutMs))
             {
                 KillProcessSafely(process, sourceFile);
+            }
+
+            if (process.ExitCode != 0)
+            {
+                var error = SafeGetResult(stdErrTask);
+                if (string.IsNullOrWhiteSpace(error))
+                {
+                    error = SafeGetResult(stdOutTask);
+                }
+
+                var message = $"{Path.GetFileName(executablePath)} exited with code {process.ExitCode} while processing {Path.GetFileName(sourceFile)}.";
+                if (!string.IsNullOrWhiteSpace(error))
+                {
+                    message += $" {error.Trim()}";
+                }
+
+                new Exception(message).LogAsync().FireAndForget();
+            }
+        }
+
+        private static string SafeGetResult(Task<string> task)
+        {
+            try
+            {
+                return task?.Result ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
 
@@ -283,20 +337,7 @@ namespace MadsKristensen.ImageOptimizer
 
                 var arguments = $"-webp -quality={_lossyQuality} -q \"{tempSource}\"";
 
-                var processStartInfo = new ProcessStartInfo(GetToolPath("pingo.exe"))
-                {
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    WorkingDirectory = _cwd,
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using var process = Process.Start(processStartInfo);
-                if (process != null && !process.WaitForExit(_processTimeoutMs))
-                {
-                    KillProcessSafely(process, validatedPath);
-                }
+                RunTool(GetToolPath("pingo.exe"), arguments, validatedPath);
             }
             catch (TimeoutException ex)
             {
@@ -367,20 +408,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 var arguments = $"-q {_lossyQuality} -s 6 -j all \"{validatedPath}\" \"{targetAvifFile}\"";
 
-                var processStartInfo = new ProcessStartInfo(GetToolPath("avifenc.exe"))
-                {
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    WorkingDirectory = _cwd,
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using var process = Process.Start(processStartInfo);
-                if (process != null && !process.WaitForExit(_processTimeoutMs))
-                {
-                    KillProcessSafely(process, validatedPath);
-                }
+                RunTool(GetToolPath("avifenc.exe"), arguments, validatedPath);
             }
             catch (TimeoutException ex)
             {

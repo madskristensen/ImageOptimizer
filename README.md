@@ -168,17 +168,17 @@ public void OptimizeImage(string filePath)
 {
     try
     {
-        var DTE = (DTE2)Package.GetGlobalService(typeof(DTE));        var DTE = (DTE2)Package.GetGlobalService(typeof(DTE));
-        Command command = DTE.Commands.Item("ImageOptimizer.OptimizeLossless");        Command command = DTE.Commands.Item("ImageOptimizer.OptimizeLossless");
+        var DTE = (DTE2)Package.GetGlobalService(typeof(DTE));
+        Command command = DTE.Commands.Item("ImageOptimizer.OptimizeLossless");
 
-        if (command != null && command.IsAvailable)        if (command != null && command.IsAvailable)
-        {        {
-            DTE.Commands.Raise(command.Guid, command.ID, filePath, null);            DTE.Commands.Raise(command.Guid, command.ID, filePath, null);            DTE.Commands.Raise(command.Guid, command.ID, filePath, null);
-        }        }
+        if (command != null && command.IsAvailable)
+        {
+            DTE.Commands.Raise(command.Guid, command.ID, filePath, null);
+        }
     }
     catch (Exception ex)
     {
-        // Image Optimizer not installed        // Image Optimizer not installed
+        // Image Optimizer not installed
     }
 }
 ```
