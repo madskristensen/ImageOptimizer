@@ -124,31 +124,6 @@ namespace MadsKristensen.ImageOptimizer
             await SaveToDiskInternalAsync();
         }
 
-        private void SaveToDiskInternal()
-        {
-            try
-            {
-                if (!_cacheFile.Directory.Exists)
-                {
-                    _cacheFile.Directory.Create();
-                }
-
-                // Use StringBuilder for better performance with large caches
-                var sb = new StringBuilder(_cache.Count * 50); // Estimate average line length
-                foreach (KeyValuePair<string, CacheEntry> kvp in _cache)
-                {
-                    _ = sb.AppendLine($"{kvp.Key}|{kvp.Value.FileSize}|{kvp.Value.LastWriteTimeUtcTicks}");
-                }
-
-                // Write all content at once using async I/O
-                File.WriteAllText(_cacheFile.FullName, sb.ToString());
-            }
-            catch (Exception ex)
-            {
-                ex.LogAsync().FireAndForget();
-            }
-        }
-
 
         /// <summary>
         /// Saves the cache to disk using async file I/O.

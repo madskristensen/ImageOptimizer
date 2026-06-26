@@ -110,19 +110,23 @@ namespace MadsKristensen.ImageOptimizer.Common
                 : ErrorHandler.SafeExecute(() =>
             {
                 return Directory.EnumerateFiles(directoryPath, Constants.AllFilesPattern, searchOption)
-                                .AsParallel()
                                 .Where(IsImageFileSupported)
                                 .ToList();
             }, Enumerable.Empty<string>());
         }
 
         /// <summary>
-        /// Creates a unique temporary file with the same extension as the source
+        /// Creates a unique temporary file path with the same extension as the source.
         /// </summary>
+        /// <remarks>
+        /// Unlike <see cref="Path.GetTempFileName"/>, this does not create a zero-byte file on disk,
+        /// avoiding leaked temp files when the returned path is only used as a target name.
+        /// </remarks>
         public static string CreateTempFileWithExtension(string sourceFile)
         {
             var extension = Path.GetExtension(sourceFile);
-            return Path.ChangeExtension(Path.GetTempFileName(), extension);
+            var fileName = Guid.NewGuid().ToString("N") + extension;
+            return Path.Combine(Path.GetTempPath(), fileName);
         }
 
         /// <summary>

@@ -41,7 +41,6 @@ namespace MadsKristensen.ImageOptimizer
         public const int EstimatedFilePathCapacity = 100;
 
         // Parallel processing
-        public const int MinParallelismDivider = 4; // imageCount / 4 for optimal thread count
         public const int DefaultMaxParallelThreads = 0; // 0 = auto
         public const int ProgressUpdateBatchSize = 10;
         public const int TaskStatusCenterMinImageCount = 4;

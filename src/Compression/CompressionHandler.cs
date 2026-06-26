@@ -101,10 +101,9 @@ namespace MadsKristensen.ImageOptimizer
             var cacheRoot = string.IsNullOrEmpty(solutionFullName) ? imageFilesList[0] : solutionFullName;
             Cache cache = options.EnableCaching ? new Cache(cacheRoot, type, options.ValidateCachedFiles) : null;
 
-            // Calculate parallelism based on options
-            var maxDegreeOfParallelism = Math.Min(
-                options.EffectiveMaxParallelThreads,
-                Math.Max(1, imageCount / Constants.MinParallelismDivider));
+            // Each file is compressed by an external, mostly I/O-bound process, so use the
+            // full configured thread budget (capped by the number of images to process).
+            var maxDegreeOfParallelism = Math.Max(1, Math.Min(options.EffectiveMaxParallelThreads, imageCount));
 
             var parallelOptions = new ParallelOptions
             {

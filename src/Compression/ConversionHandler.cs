@@ -50,9 +50,9 @@ namespace MadsKristensen.ImageOptimizer
             General options = await General.GetLiveInstanceAsync();
             var compressor = new Compressor(options.ProcessTimeoutMs, options.EffectiveLossyQuality);
 
-            var maxDegreeOfParallelism = Math.Min(
-                options.EffectiveMaxParallelThreads,
-                Math.Max(1, imageCount / Constants.MinParallelismDivider));
+            // Each file is converted by an external, mostly I/O-bound process, so use the
+            // full configured thread budget (capped by the number of images to process).
+            var maxDegreeOfParallelism = Math.Max(1, Math.Min(options.EffectiveMaxParallelThreads, imageCount));
 
             var parallelOptions = new ParallelOptions
             {

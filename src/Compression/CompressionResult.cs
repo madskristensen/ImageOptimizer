@@ -31,39 +31,32 @@ namespace MadsKristensen.ImageOptimizer
             if (!string.IsNullOrEmpty(originalFileName))
             {
                 OriginalFileName = originalFileName;
-                if (File.Exists(originalFileName))
+                try
                 {
-                    try
+                    var originalInfo = new FileInfo(originalFileName);
+                    if (originalInfo.Exists)
                     {
-                        var originalInfo = new FileInfo(originalFileName);
                         OriginalFileSize = originalInfo.Length;
                     }
-                    catch (Exception ex)
-                    {
-                        ex.LogAsync().FireAndForget();
-                        OriginalFileSize = 0;
-                    }
+                }
+                catch (Exception ex)
+                {
+                    ex.LogAsync().FireAndForget();
+                    OriginalFileSize = 0;
                 }
             }
 
             if (!string.IsNullOrEmpty(resultFileName) && !string.Equals(originalFileName, resultFileName, StringComparison.OrdinalIgnoreCase))
             {
                 ResultFileName = resultFileName;
-                if (File.Exists(resultFileName))
+                try
                 {
-                    try
-                    {
-                        var resultInfo = new FileInfo(resultFileName);
-                        ResultFileSize = resultInfo.Length;
-                    }
-                    catch (Exception ex)
-                    {
-                        ex.LogAsync().FireAndForget();
-                        ResultFileSize = OriginalFileSize;
-                    }
+                    var resultInfo = new FileInfo(resultFileName);
+                    ResultFileSize = resultInfo.Exists ? resultInfo.Length : OriginalFileSize;
                 }
-                else
+                catch (Exception ex)
                 {
+                    ex.LogAsync().FireAndForget();
                     ResultFileSize = OriginalFileSize;
                 }
             }

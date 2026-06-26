@@ -20,7 +20,7 @@ jobs:
     env:
       Configuration: Release
       DeployExtension: False
-      Solution: ImageOptimizer.sln
+      Solution: ImageOptimizer.slnx
       TestProject: test\ImageOptimizer.Test\ImageOptimizer.Test.csproj
       VsixManifestPath: src\source.extension.vsixmanifest
       VsixManifestSourcePath: src\source.extension.cs
