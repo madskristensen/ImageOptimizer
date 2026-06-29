@@ -33,7 +33,6 @@
         <Parent guid="guidImageOptimizerCmdSet" id="MyMenuGroup" />
         <Strings>
           <ButtonText>Image Optimizer</ButtonText>
-          <CommandName>ImageOptimizerMenu</CommandName>
         </Strings>
       </Menu>
 
@@ -41,7 +40,6 @@
         <Parent guid="guidImageOptimizerCmdSet" id="WorkspaceContextMenuGroup" />
         <Strings>
           <ButtonText>Image Optimizer</ButtonText>
-          <CommandName>ImageOptimizerWorkspaceContextMenu</CommandName>
         </Strings>
       </Menu>
     </Menus>
