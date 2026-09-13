@@ -27,6 +27,8 @@ jobs:
       Solution: ImageOptimizer.slnx
       TestProject: test\ImageOptimizer.Test\ImageOptimizer.Test.csproj
       TestResultsDirectory: ${{ github.workspace }}\TestResults
+      MinimumLineCoverage: 40
+      MinimumBranchCoverage: 35
       VsixManifestPath: src\source.extension.vsixmanifest
       VsixManifestSourcePath: src\source.extension.cs
 
@@ -82,7 +84,7 @@ jobs:
         reporter: dotnet-trx
         fail-on-error: true
 
-    - name: Add coverage summary
+    - name: Report production coverage
       if: ${{ !cancelled() }}
       shell: pwsh
       run: |
@@ -93,8 +95,38 @@ jobs:
         }
 
         [xml]$coverage = Get-Content $coverageFile.FullName
-        $lineCoverage = [double]$coverage.coverage.'line-rate'
-        "Code coverage: **$($lineCoverage.ToString('P2'))**" >> $env:GITHUB_STEP_SUMMARY
+        $productionCoverage = @($coverage.coverage.packages.package) |
+          Where-Object { $_.name -eq "ImageOptimizer" } |
+          Select-Object -First 1
+        if (-not $productionCoverage) {
+          throw "The ImageOptimizer production assembly was not found in the coverage report."
+        }
+
+        $lineCoverage = [double]$productionCoverage.'line-rate' * 100
+        $branchCoverage = [double]$productionCoverage.'branch-rate' * 100
+        @"
+        ## Production code coverage
+
+        | Metric | Coverage | Required |
+        | --- | ---: | ---: |
+        | Lines | $($lineCoverage.ToString('F2'))% | ${{ env.MinimumLineCoverage }}% |
+        | Branches | $($branchCoverage.ToString('F2'))% | ${{ env.MinimumBranchCoverage }}% |
+        "@ >> $env:GITHUB_STEP_SUMMARY
+
+        if ($lineCoverage -lt [double]"${{ env.MinimumLineCoverage }}") {
+          throw "Production line coverage $($lineCoverage.ToString('F2'))% is below the required ${{ env.MinimumLineCoverage }}%."
+        }
+        if ($branchCoverage -lt [double]"${{ env.MinimumBranchCoverage }}") {
+          throw "Production branch coverage $($branchCoverage.ToString('F2'))% is below the required ${{ env.MinimumBranchCoverage }}%."
+        }
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v7
+      if: ${{ !cancelled() }}
+      with:
+        name: coverage-report
+        path: TestResults/**/*.cobertura.xml
+        if-no-files-found: error
 
     - name: Upload artifact
       uses: actions/upload-artifact@v7

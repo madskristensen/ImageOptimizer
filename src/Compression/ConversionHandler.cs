@@ -66,14 +66,7 @@ namespace MadsKristensen.ImageOptimizer
             // full configured thread budget (capped by the number of images to process).
             var maxDegreeOfParallelism = Math.Max(1, Math.Min(options.EffectiveMaxParallelThreads, imageCount));
 
-            var parallelOptions = new ParallelOptions
-            {
-                MaxDegreeOfParallelism = maxDegreeOfParallelism,
-                TaskScheduler = TaskScheduler.Default,
-                CancellationToken = cancellationToken
-            };
-
-            var conversionResults = new CompressionResult[imageCount];
+            CompressionResult[] conversionResults = null;
             _processedCount = 0;
 
             _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
@@ -86,17 +79,17 @@ namespace MadsKristensen.ImageOptimizer
 
             try
             {
-                await Task.Run(() =>
-                {
-                    Parallel.For(0, imageCount, parallelOptions, index =>
+                conversionResults = await Task.Run(() =>
+                    OrderedParallelProcessor.Process(
+                        imageFilesList,
+                        maxDegreeOfParallelism,
+                        cancellationToken,
+                        (filePath, token) =>
                     {
-                        var filePath = imageFilesList[index];
-                        cancellationToken.ThrowIfCancellationRequested();
-
                         try
                         {
-                            CompressionResult result = convertFunc(compressor, filePath, cancellationToken);
-                            conversionResults[index] = ProcessConversionResult(result, targetExtension);
+                            CompressionResult result = convertFunc(compressor, filePath, token);
+                            CompressionResult processedResult = ProcessConversionResult(result, targetExtension);
 
                             if (options.ShowProgressInStatusBar)
                             {
@@ -106,6 +99,8 @@ namespace MadsKristensen.ImageOptimizer
                                     VS.StatusBar.ShowMessageAsync(string.Format(Constants.ConvertingMessageFormat, processed, imageCount, formatName)).FireAndForget();
                                 }
                             }
+
+                            return processedResult;
                         }
                         catch (OperationCanceledException)
                         {
@@ -118,22 +113,15 @@ namespace MadsKristensen.ImageOptimizer
                                 ex.LogAsync().FireAndForget();
                             }
 
-                            conversionResults[index] = CompressionResult.Failed(filePath, ex.Message, TimeSpan.Zero);
-
                             if (!options.ContinueOnError)
                             {
                                 throw;
                             }
+
+                            return CompressionResult.Failed(filePath, ex.Message, TimeSpan.Zero);
                         }
-                    });
-                }, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                for (var index = 0; index < conversionResults.Length; index++)
-                {
-                    conversionResults[index] ??= CompressionResult.Cancelled(imageFilesList[index], TimeSpan.Zero);
-                }
+                    },
+                        filePath => CompressionResult.Cancelled(filePath, TimeSpan.Zero)));
             }
             finally
             {
@@ -174,7 +162,7 @@ namespace MadsKristensen.ImageOptimizer
                     !string.Equals(result.ResultFileName, result.OriginalFileName, StringComparison.OrdinalIgnoreCase) &&
                     File.Exists(result.ResultFileName))
                 {
-                    try { File.Delete(result.ResultFileName); } catch { }
+                    FileUtilities.SafeDeleteFile(result.ResultFileName);
                 }
             }
             else if (result.Outcome == CompressionOutcome.Optimized)

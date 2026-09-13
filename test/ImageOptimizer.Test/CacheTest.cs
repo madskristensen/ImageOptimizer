@@ -41,14 +41,7 @@ namespace ImageOptimizer.Test
         {
             if (Directory.Exists(_rootFolder))
             {
-                try
-                {
-                    Directory.Delete(_rootFolder, true);
-                }
-                catch
-                {
-                    // Ignore cleanup errors in tests
-                }
+                Directory.Delete(_rootFolder, true);
             }
         }
 
@@ -195,16 +188,6 @@ namespace ImageOptimizer.Test
             Assert.IsFalse(_cache.ContainsFile("   "), "Whitespace path should return false");
         }
 
-        [TestMethod]
-        public void ContainsFile_CachedFile_ReturnsTrue()
-        {
-            var filePath = Path.Combine(_rootFolder, "testfile.jpg");
-            File.WriteAllText(filePath, "test content");
-            _cache.AddToCache(filePath);
-
-            Assert.IsTrue(_cache.ContainsFile(filePath), "Cached file should return true");
-        }
-
         #endregion
 
         #region GetCachedFileSize Tests
@@ -214,20 +197,6 @@ namespace ImageOptimizer.Test
         {
             var result = _cache.GetCachedFileSize("nonexistent.jpg");
             Assert.IsNull(result, "Non-existent file should return null size");
-        }
-
-        [TestMethod]
-        public void GetCachedFileSize_CachedFile_ReturnsCorrectSize()
-        {
-            var filePath = Path.Combine(_rootFolder, "testfile.jpg");
-            var content = "test content with known length";
-            File.WriteAllText(filePath, content);
-            _cache.AddToCache(filePath);
-
-            var result = _cache.GetCachedFileSize(filePath);
-            var expectedSize = new FileInfo(filePath).Length;
-
-            Assert.AreEqual(expectedSize, result, "Cached size should match file size");
         }
 
         #endregion

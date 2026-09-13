@@ -87,12 +87,11 @@ namespace ImageOptimizer.Test
 
             if (!Directory.Exists(sourceDir))
             {
-                Assert.Inconclusive("Test artifact directory not found: " + sourceDir);
+                Assert.Fail("Test artifact directory not found: " + sourceDir);
             }
 
             var testFile = Directory.GetFiles(sourceDir, "*.png")[0];
-            // Work on a temp copy to avoid modifying test artifacts
-            var tempFile = Path.Combine(Path.GetTempPath(), "webptest_" + Path.GetFileName(testFile));
+            var tempFile = Path.Combine(Path.GetTempPath(), "webptest_" + System.Guid.NewGuid().ToString("N") + Path.GetExtension(testFile));
             File.Copy(testFile, tempFile, true);
 
             try
@@ -102,6 +101,7 @@ namespace ImageOptimizer.Test
                 Assert.IsNotNull(result);
                 Assert.IsTrue(result.ResultFileSize > 0, "WebP result should have non-zero size");
                 Assert.IsTrue(result.Saving > 0, "WebP conversion should produce savings");
+                AssertWebpSignature(result.ResultFileName);
 
                 if (File.Exists(result.ResultFileName))
                 {
@@ -125,11 +125,11 @@ namespace ImageOptimizer.Test
 
             if (!Directory.Exists(sourceDir))
             {
-                Assert.Inconclusive("Test artifact directory not found: " + sourceDir);
+                Assert.Fail("Test artifact directory not found: " + sourceDir);
             }
 
             var testFile = Directory.GetFiles(sourceDir, "*.jpg")[0];
-            var tempFile = Path.Combine(Path.GetTempPath(), "webptest_" + Path.GetFileName(testFile));
+            var tempFile = Path.Combine(Path.GetTempPath(), "webptest_" + System.Guid.NewGuid().ToString("N") + Path.GetExtension(testFile));
             File.Copy(testFile, tempFile, true);
 
             try
@@ -138,6 +138,7 @@ namespace ImageOptimizer.Test
 
                 Assert.IsNotNull(result);
                 Assert.IsTrue(result.ResultFileSize > 0, "WebP result should have non-zero size");
+                AssertWebpSignature(result.ResultFileName);
 
                 if (File.Exists(result.ResultFileName))
                 {
@@ -151,6 +152,14 @@ namespace ImageOptimizer.Test
                     File.Delete(tempFile);
                 }
             }
+        }
+
+        private static void AssertWebpSignature(string filePath)
+        {
+            byte[] bytes = File.ReadAllBytes(filePath);
+            Assert.IsTrue(bytes.Length >= 12);
+            Assert.AreEqual("RIFF", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
+            Assert.AreEqual("WEBP", System.Text.Encoding.ASCII.GetString(bytes, 8, 4));
         }
     }
 }

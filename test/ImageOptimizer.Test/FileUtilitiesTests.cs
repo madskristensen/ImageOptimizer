@@ -27,6 +27,16 @@ namespace ImageOptimizer.Test
             CollectionAssert.AreEqual(paths.Take(2).Concat(paths.Skip(3).Take(1)).ToArray(), result.ToArray());
         }
 
+        [DataTestMethod]
+        [DataRow("resources.resx", true)]
+        [DataRow("RESOURCES.RESX", true)]
+        [DataRow("image.png", false)]
+        [DataRow(null, false)]
+        public void IsResxFile_ReturnsExpectedResult(string path, bool expected)
+        {
+            Assert.AreEqual(expected, FileUtilities.IsResxFile(path));
+        }
+
         private string _testFolder;
 
         [TestInitialize]
@@ -39,16 +49,9 @@ namespace ImageOptimizer.Test
         [TestCleanup]
         public void Cleanup()
         {
-            try
+            if (Directory.Exists(_testFolder))
             {
-                if (Directory.Exists(_testFolder))
-                {
-                    Directory.Delete(_testFolder, true);
-                }
-            }
-            catch
-            {
-                // Ignore cleanup errors
+                Directory.Delete(_testFolder, true);
             }
         }
 
@@ -193,6 +196,40 @@ namespace ImageOptimizer.Test
         }
 
         #endregion
+
+        [TestMethod]
+        public void GetSupportedImageFiles_FiltersUnsupportedFiles()
+        {
+            File.WriteAllText(Path.Combine(_testFolder, "image.png"), "png");
+            File.WriteAllText(Path.Combine(_testFolder, "notes.txt"), "text");
+
+            string[] files = FileUtilities.GetSupportedImageFiles(_testFolder).ToArray();
+
+            Assert.AreEqual(1, files.Length);
+            Assert.AreEqual("image.png", Path.GetFileName(files[0]));
+        }
+
+        [TestMethod]
+        public void CreateTempFileWithExtension_ReturnsUniqueNonexistentPaths()
+        {
+            string first = FileUtilities.CreateTempFileWithExtension("image.png");
+            string second = FileUtilities.CreateTempFileWithExtension("image.png");
+
+            Assert.AreEqual(".png", Path.GetExtension(first));
+            Assert.AreNotEqual(first, second);
+            Assert.IsFalse(File.Exists(first));
+            Assert.IsFalse(File.Exists(second));
+        }
+
+        [TestMethod]
+        public void GetFileSizeBytes_ReturnsSizeOrZero()
+        {
+            string file = Path.Combine(_testFolder, "size.txt");
+            File.WriteAllText(file, "12345");
+
+            Assert.AreEqual(5, FileUtilities.GetFileSizeBytes(file));
+            Assert.AreEqual(0, FileUtilities.GetFileSizeBytes(Path.Combine(_testFolder, "missing.txt")));
+        }
 
         #region SafeDeleteFile Tests
 

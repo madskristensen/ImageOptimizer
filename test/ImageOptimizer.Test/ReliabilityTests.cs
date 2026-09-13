@@ -80,6 +80,57 @@ namespace ImageOptimizer.Test
         }
 
         [TestMethod]
+        public void ProcessCompressionResult_UnchangedDeletesTemporaryFileAndCachesSource()
+        {
+            var resultFile = Path.Combine(_testFolder, "unchanged.png");
+            File.WriteAllText(resultFile, new string('b', 100));
+            var cache = new Cache(_sourceFile, CompressionType.Lossless);
+
+            CompressionResult processed = CompressionResultProcessor.Process(
+                new CompressionResult(_sourceFile, resultFile, TimeSpan.Zero),
+                cache,
+                false);
+
+            Assert.AreEqual(CompressionOutcome.Unchanged, processed.Outcome);
+            Assert.IsFalse(File.Exists(resultFile));
+            Assert.IsTrue(cache.IsFullyOptimized(_sourceFile));
+        }
+
+        [TestMethod]
+        public void ProcessCompressionResult_MissingOptimizedOutputReturnsFailure()
+        {
+            var resultFile = Path.Combine(_testFolder, "missing.png");
+            File.WriteAllText(resultFile, new string('b', 50));
+            var result = new CompressionResult(_sourceFile, resultFile, TimeSpan.Zero);
+            File.Delete(resultFile);
+            var cache = new Cache(_sourceFile, CompressionType.Lossless);
+
+            CompressionResult processed = CompressionResultProcessor.Process(result, cache, false);
+
+            Assert.AreEqual(CompressionOutcome.Failed, processed.Outcome);
+            Assert.IsFalse(cache.ContainsFile(_sourceFile));
+        }
+
+        [TestMethod]
+        public void ProcessCompressionResult_ReplacementFailureCleansOutputAndDoesNotCache()
+        {
+            var resultFile = Path.Combine(_testFolder, "locked-result.png");
+            File.WriteAllText(resultFile, new string('b', 50));
+            var result = new CompressionResult(_sourceFile, resultFile, TimeSpan.Zero);
+            var cache = new Cache(_sourceFile, CompressionType.Lossless);
+
+            CompressionResult processed;
+            using (File.Open(_sourceFile, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                processed = CompressionResultProcessor.Process(result, cache, false);
+            }
+
+            Assert.AreEqual(CompressionOutcome.Failed, processed.Outcome);
+            Assert.IsFalse(File.Exists(resultFile));
+            Assert.IsFalse(cache.ContainsFile(_sourceFile));
+        }
+
+        [TestMethod]
         public void ProcessConversionResult_MissingOutputIsReportedAsFailure()
         {
             var resultFile = Path.Combine(_testFolder, "missing-result.webp");
@@ -91,6 +142,33 @@ namespace ImageOptimizer.Test
 
             Assert.AreEqual(CompressionOutcome.Failed, processed.Outcome);
             StringAssert.Contains(processed.ErrorMessage, "usable output");
+        }
+
+        [TestMethod]
+        public void ProcessConversionResult_SuccessCopiesDestinationAndDeletesTemporaryFile()
+        {
+            var resultFile = Path.Combine(_testFolder, "converted-temp.webp");
+            File.WriteAllText(resultFile, new string('b', 50));
+            var result = new CompressionResult(_sourceFile, resultFile, TimeSpan.Zero);
+
+            CompressionResult processed = ConversionHandler.ProcessConversionResult(result, ".webp");
+
+            Assert.AreEqual(CompressionOutcome.Optimized, processed.Outcome);
+            Assert.IsFalse(File.Exists(resultFile));
+            Assert.AreEqual(50, new FileInfo(Path.ChangeExtension(_sourceFile, ".webp")).Length);
+        }
+
+        [TestMethod]
+        public void ProcessConversionResult_UnchangedDeletesTemporaryFile()
+        {
+            var resultFile = Path.Combine(_testFolder, "unchanged-temp.webp");
+            File.WriteAllText(resultFile, new string('b', 100));
+            var result = new CompressionResult(_sourceFile, resultFile, TimeSpan.Zero);
+
+            CompressionResult processed = ConversionHandler.ProcessConversionResult(result, ".webp");
+
+            Assert.AreEqual(CompressionOutcome.Unchanged, processed.Outcome);
+            Assert.IsFalse(File.Exists(resultFile));
         }
 
         [TestMethod]
@@ -121,6 +199,16 @@ namespace ImageOptimizer.Test
         }
 
         [TestMethod]
+        public void CompressionSummary_NullResultsProducesEmptySummary()
+        {
+            CompressionSummary summary = CompressionSummary.Create(null, TimeSpan.Zero);
+
+            Assert.AreEqual(0, summary.Results.Count);
+            Assert.AreEqual(0, summary.TotalSavings);
+            Assert.AreEqual(0, summary.PercentageSaved);
+        }
+
+        [TestMethod]
         public void OperationCoordinator_RejectsOverlapAndAllowsNextOperation()
         {
             IDisposable firstLease;
@@ -147,6 +235,21 @@ namespace ImageOptimizer.Test
         }
 
         [TestMethod]
+        public void RunTool_NonZeroExitIncludesStandardError()
+        {
+            var compressor = new Compressor();
+
+            InvalidOperationException exception = Assert.ThrowsException<InvalidOperationException>(() =>
+                compressor.RunTool(
+                    Environment.GetEnvironmentVariable("ComSpec"),
+                    "/c echo diagnostic 1>&2 & exit 3",
+                    _sourceFile,
+                    CancellationToken.None));
+
+            StringAssert.Contains(exception.Message, "diagnostic");
+        }
+
+        [TestMethod]
         public void RunTool_TimeoutThrows()
         {
             var compressor = new Compressor(25);
@@ -163,6 +266,31 @@ namespace ImageOptimizer.Test
             {
                 Assert.ThrowsException<OperationCanceledException>(() =>
                     compressor.RunTool(Environment.GetEnvironmentVariable("ComSpec"), "/c ping 127.0.0.1 -n 6 > nul", _sourceFile, cancellation.Token));
+            }
+        }
+
+        [TestMethod]
+        public void CompressFile_UnsupportedExtensionReturnsFailedResult()
+        {
+            string unsupportedFile = Path.Combine(_testFolder, "image.bmp");
+            File.WriteAllText(unsupportedFile, "not an image");
+
+            CompressionResult result = new Compressor().CompressFile(unsupportedFile, CompressionType.Lossless);
+
+            Assert.AreEqual(CompressionOutcome.Failed, result.Outcome);
+            StringAssert.Contains(result.ErrorMessage, "Unable to prepare compression");
+        }
+
+        [TestMethod]
+        public void ConvertToWebp_PreCancelledOperationReturnsCancelledResult()
+        {
+            using (var cancellation = new CancellationTokenSource())
+            {
+                cancellation.Cancel();
+
+                CompressionResult result = new Compressor().ConvertToWebp(_sourceFile, cancellation.Token);
+
+                Assert.AreEqual(CompressionOutcome.Cancelled, result.Outcome);
             }
         }
     }

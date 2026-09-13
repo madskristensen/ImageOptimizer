@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml.Linq;
 using MadsKristensen.ImageOptimizer;
 using MadsKristensen.ImageOptimizer.Resx;
@@ -26,16 +27,9 @@ namespace ImageOptimizer.Test
         [TestCleanup]
         public void Cleanup()
         {
-            try
+            if (Directory.Exists(_tempDir))
             {
-                if (Directory.Exists(_tempDir))
-                {
-                    Directory.Delete(_tempDir, true);
-                }
-            }
-            catch
-            {
-                // Best effort cleanup
+                Directory.Delete(_tempDir, true);
             }
         }
 
@@ -169,12 +163,9 @@ namespace ImageOptimizer.Test
             var extractor = new ResxImageExtractor();
             IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless);
 
-            var optimizedResults = results.Where(r => r.Saving > 0).ToList();
-            if (optimizedResults.Count > 0)
-            {
-                var newContent = File.ReadAllText(resxPath);
-                Assert.AreNotEqual(originalContent, newContent, "Resx file should be modified after optimization");
-            }
+            Assert.IsTrue(results.Any(r => r.Saving > 0), "The test image should produce measurable savings.");
+            var newContent = File.ReadAllText(resxPath);
+            Assert.AreNotEqual(originalContent, newContent, "Resx file should be modified after optimization");
         }
 
         [TestMethod, TestCategory("Resx")]
@@ -198,7 +189,59 @@ namespace ImageOptimizer.Test
             var extractor = new ResxImageExtractor();
             IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossy);
 
-            Assert.IsTrue(results.Count > 0, "Should find at least one image for lossy compression");
+            Assert.IsTrue(results.Any(result => result.Saving > 0), "Lossy compression should optimize the test image.");
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenBinaryPayloadContainsPngThenLengthAndTrailerArePreserved()
+        {
+            byte[] imageBytes = File.ReadAllBytes(Path.Combine("artifacts", "png", "logo.png"));
+            byte[] header = new byte[9];
+            header[0] = 0x00;
+            header[1] = 0x01;
+            Buffer.BlockCopy(BitConverter.GetBytes(imageBytes.Length), 0, header, 5, 4);
+            byte[] trailer = { 0x0B, 0x0C, 0x0D };
+            byte[] payload = header.Concat(imageBytes).Concat(trailer).ToArray();
+            string resxPath = CreateBinaryPayloadResx("BinaryPng", payload);
+
+            var extractor = new ResxImageExtractor();
+            IReadOnlyList<ResxCompressionResult> results = extractor.OptimizeResxImages(
+                resxPath,
+                _compressor,
+                CompressionType.Lossless);
+
+            Assert.AreEqual(1, results.Count);
+            Assert.IsTrue(results[0].Saving > 0);
+
+            byte[] optimizedPayload = ReadResourcePayload(resxPath);
+            CollectionAssert.AreEqual(trailer, optimizedPayload.Skip(optimizedPayload.Length - trailer.Length).ToArray());
+
+            int optimizedImageLength = optimizedPayload.Length - header.Length - trailer.Length;
+            Assert.AreEqual(optimizedImageLength, BitConverter.ToInt32(optimizedPayload, 5));
+            CollectionAssert.AreEqual(
+                new byte[] { 0x89, 0x50, 0x4E, 0x47 },
+                optimizedPayload.Skip(header.Length).Take(4).ToArray());
+        }
+
+        [TestMethod, TestCategory("Resx")]
+        public void WhenCancellationIsAlreadyRequestedThenResxIsNotModified()
+        {
+            string resxPath = CreateResxWithByteArrayImage(
+                "CancelledImage",
+                Path.Combine("artifacts", "png", "logo.png"),
+                "System.Drawing.Bitmap, System.Drawing");
+            string originalContent = File.ReadAllText(resxPath);
+
+            using (var cancellation = new CancellationTokenSource())
+            {
+                cancellation.Cancel();
+                var extractor = new ResxImageExtractor();
+
+                Assert.ThrowsException<OperationCanceledException>(() =>
+                    extractor.OptimizeResxImages(resxPath, _compressor, CompressionType.Lossless, cancellation.Token));
+            }
+
+            Assert.AreEqual(originalContent, File.ReadAllText(resxPath));
         }
 
         [TestMethod, TestCategory("Resx")]
@@ -402,6 +445,27 @@ namespace ImageOptimizer.Test
             var resxPath = Path.Combine(_tempDir, "empty.resx");
             doc.Save(resxPath);
             return resxPath;
+        }
+
+        private string CreateBinaryPayloadResx(string resourceName, byte[] payload)
+        {
+            var doc = new XDocument(
+                new XElement("root",
+                    new XElement("data",
+                        new XAttribute("name", resourceName),
+                        new XAttribute("mimetype", "application/x-microsoft.net.object.binary.base64"),
+                        new XElement("value", Convert.ToBase64String(payload)))));
+
+            string resxPath = Path.Combine(_tempDir, resourceName + ".resx");
+            doc.Save(resxPath);
+            return resxPath;
+        }
+
+        private static byte[] ReadResourcePayload(string resxPath)
+        {
+            XDocument doc = XDocument.Load(resxPath);
+            string base64 = doc.Root.Element("data").Element("value").Value;
+            return Convert.FromBase64String(base64);
         }
     }
 }

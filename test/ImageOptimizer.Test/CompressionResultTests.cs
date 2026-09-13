@@ -58,21 +58,7 @@ namespace ImageOptimizer.Test
             Assert.AreEqual(elapsed, result.Elapsed);
             Assert.IsTrue(result.Processed);
             Assert.AreEqual(CompressionOutcome.Optimized, result.Outcome);
-        }
-
-        [TestMethod]
-        public void Saving_CalculatesCorrectly()
-        {
-            var result = new CompressionResult(_originalFilePath, _resultFilePath, TimeSpan.Zero);
-
             Assert.AreEqual(200, result.Saving);
-        }
-
-        [TestMethod]
-        public void Percent_CalculatesCorrectly()
-        {
-            var result = new CompressionResult(_originalFilePath, _resultFilePath, TimeSpan.Zero);
-
             Assert.AreEqual(20.0, result.Percent);
         }
 

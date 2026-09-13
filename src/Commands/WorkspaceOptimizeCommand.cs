@@ -386,7 +386,7 @@ namespace MadsKristensen.ImageOptimizer.Commands
             return false;
         }
 
-        private static bool TryGetPathFromCandidate(object candidate, out string path, out bool isFolder)
+        internal static bool TryGetPathFromCandidate(object candidate, out string path, out bool isFolder)
         {
             path = null;
             isFolder = false;

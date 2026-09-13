@@ -8,27 +8,11 @@ namespace ImageOptimizer.Test
     public class ResxCompressionResultTests
     {
         [TestMethod, TestCategory("Resx")]
-        public void WhenOptimizedThenSavingIsPositive()
-        {
-            var result = new ResxCompressionResult("img", "test.resx", 1000, 800, "base64data");
-
-            Assert.AreEqual(200, result.Saving);
-        }
-
-        [TestMethod, TestCategory("Resx")]
         public void WhenNoSavingThenSavingIsZero()
         {
             var result = new ResxCompressionResult("img", "test.resx", 1000, 1000, "base64data");
 
             Assert.AreEqual(0, result.Saving);
-        }
-
-        [TestMethod, TestCategory("Resx")]
-        public void PercentSavedCalculatesCorrectly()
-        {
-            var result = new ResxCompressionResult("img", "test.resx", 1000, 750, "base64data");
-
-            Assert.AreEqual(25.0, result.PercentSaved);
         }
 
         [TestMethod, TestCategory("Resx")]

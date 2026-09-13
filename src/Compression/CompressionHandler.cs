@@ -126,14 +126,7 @@ namespace MadsKristensen.ImageOptimizer
             // full configured thread budget (capped by the number of images to process).
             var maxDegreeOfParallelism = Math.Max(1, Math.Min(options.EffectiveMaxParallelThreads, imageCount));
 
-            var parallelOptions = new ParallelOptions
-            {
-                MaxDegreeOfParallelism = maxDegreeOfParallelism,
-                TaskScheduler = TaskScheduler.Default,
-                CancellationToken = cancellationToken
-            };
-
-            var compressionResults = new CompressionResult[imageCount];
+            CompressionResult[] compressionResults = null;
             _processedCount = 0;
 
             // Initialize output pane (reuse existing static instance) and activate it
@@ -147,21 +140,20 @@ namespace MadsKristensen.ImageOptimizer
 
             try
             {
-                await Task.Run(() =>
-                {
-                    Parallel.For(0, imageCount, parallelOptions, index =>
+                compressionResults = await Task.Run(() =>
+                    OrderedParallelProcessor.Process(
+                        imageFilesList,
+                        maxDegreeOfParallelism,
+                        cancellationToken,
+                        (filePath, token) =>
                     {
-                        var filePath = imageFilesList[index];
-                        cancellationToken.ThrowIfCancellationRequested();
-
                         try
                         {
-                            // Check if the file is already optimized (if caching is enabled)
                             CompressionResult compressionResult = cache?.IsFullyOptimized(filePath) == true
                                 ? CompressionResult.Cached(filePath)
-                                : compressor.CompressFile(filePath, type, cancellationToken);
+                                : compressor.CompressFile(filePath, type, token);
 
-                            compressionResults[index] = CompressionResultProcessor.Process(compressionResult, cache, options.CreateBackup);
+                            return CompressionResultProcessor.Process(compressionResult, cache, options.CreateBackup);
                         }
                         catch (OperationCanceledException)
                         {
@@ -174,16 +166,16 @@ namespace MadsKristensen.ImageOptimizer
                                 ex.LogAsync().FireAndForget();
                             }
 
-                            compressionResults[index] = CompressionResult.Failed(filePath, ex.Message, TimeSpan.Zero);
-
                             if (!options.ContinueOnError)
                             {
                                 throw;
                             }
+
+                            return CompressionResult.Failed(filePath, ex.Message, TimeSpan.Zero);
                         }
                         finally
                         {
-                            if (!cancellationToken.IsCancellationRequested)
+                            if (!token.IsCancellationRequested)
                             {
                                 var processed = Interlocked.Increment(ref _processedCount);
 
@@ -209,15 +201,8 @@ namespace MadsKristensen.ImageOptimizer
                                 }
                             }
                         }
-                    });
-                }, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                for (var index = 0; index < compressionResults.Length; index++)
-                {
-                    compressionResults[index] ??= CompressionResult.Cancelled(imageFilesList[index], TimeSpan.Zero);
-                }
+                    },
+                        filePath => CompressionResult.Cancelled(filePath, TimeSpan.Zero)));
             }
             finally
             {

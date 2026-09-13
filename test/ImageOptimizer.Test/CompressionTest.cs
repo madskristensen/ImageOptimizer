@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using MadsKristensen.ImageOptimizer;
@@ -17,8 +18,18 @@ namespace ImageOptimizer.Test
         [TestInitialize]
         public void Initialize()
         {
-            _temp = Path.Combine(Path.GetTempPath(), "image optimizer");
+            _temp = Path.Combine(Path.GetTempPath(), "ImageOptimizer_Compression_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_temp);
             _compressor = new Compressor();
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            if (Directory.Exists(_temp))
+            {
+                Directory.Delete(_temp, true);
+            }
         }
 
         [TestMethod, TestCategory("JPG")]
@@ -102,6 +113,20 @@ namespace ImageOptimizer.Test
             Console.Write($"Savings: {savings}");
         }
 
+        [TestMethod, TestCategory("PNG")]
+        public void Png_Lossless_PreservesDecodedPixels()
+        {
+            string source = Path.Combine("artifacts", "png", "logo.png");
+            string testFile = Path.Combine(_temp, "logo.png");
+            File.Copy(source, testFile);
+
+            CompressionResult result = _compressor.CompressFile(testFile, CompressionType.Lossless);
+
+            Assert.AreEqual(CompressionOutcome.Optimized, result.Outcome);
+            AssertDecodedPixelsEqual(source, result.ResultFileName);
+            File.Delete(result.ResultFileName);
+        }
+
         private long ExecuteTest(string searchFilter, CompressionType type)
         {
             FileInfo[] files = _folder.GetFiles(searchFilter, SearchOption.AllDirectories);
@@ -120,27 +145,72 @@ namespace ImageOptimizer.Test
             {
                 CompressionResult result = _compressor.CompressFile(file, type);
 
-                if (File.Exists(result.ResultFileName))
+                Assert.AreNotEqual(CompressionOutcome.TimedOut, result.Outcome, result.ErrorMessage);
+                Assert.AreNotEqual(CompressionOutcome.Cancelled, result.Outcome);
+
+                if (result.Outcome == CompressionOutcome.Failed)
                 {
-                    list.Add(result);
-                    File.Copy(result.ResultFileName, result.OriginalFileName, true);
-                    File.Delete(result.ResultFileName);
+                    Assert.IsFalse(string.IsNullOrWhiteSpace(result.ErrorMessage));
+                    continue;
                 }
+
+                Assert.IsTrue(File.Exists(result.ResultFileName), $"{Path.GetFileName(file)} did not produce an output file.");
+
+                AssertValidOutput(result.ResultFileName);
+                list.Add(result);
+                File.Copy(result.ResultFileName, result.OriginalFileName, true);
+                File.Delete(result.ResultFileName);
             }
 
             return list.Sum(r => r.Saving);
         }
 
-        private void CopyFiles(IEnumerable<FileInfo> files)
+        private static void AssertValidOutput(string filePath)
         {
-            Directory.CreateDirectory(_temp);
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+            byte[] bytes = File.ReadAllBytes(filePath);
 
-            var oldFiles = Directory.GetFiles(_temp, "*.*");
-            foreach (var file in oldFiles)
+            if (extension == ".webp")
             {
-                File.Delete(file);
+                Assert.IsTrue(bytes.Length >= 12);
+                Assert.AreEqual("RIFF", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
+                Assert.AreEqual("WEBP", System.Text.Encoding.ASCII.GetString(bytes, 8, 4));
+                return;
             }
 
+            if (extension == ".svg")
+            {
+                StringAssert.Contains(File.ReadAllText(filePath), "<svg");
+                return;
+            }
+
+            using (Image image = Image.FromFile(filePath))
+            {
+                Assert.IsTrue(image.Width > 0);
+                Assert.IsTrue(image.Height > 0);
+            }
+        }
+
+        private static void AssertDecodedPixelsEqual(string expectedFile, string actualFile)
+        {
+            using (var expected = new Bitmap(expectedFile))
+            using (var actual = new Bitmap(actualFile))
+            {
+                Assert.AreEqual(expected.Width, actual.Width);
+                Assert.AreEqual(expected.Height, actual.Height);
+
+                for (var y = 0; y < expected.Height; y++)
+                {
+                    for (var x = 0; x < expected.Width; x++)
+                    {
+                        Assert.AreEqual(expected.GetPixel(x, y), actual.GetPixel(x, y), $"Pixel mismatch at ({x}, {y}).");
+                    }
+                }
+            }
+        }
+
+        private void CopyFiles(IEnumerable<FileInfo> files)
+        {
             foreach (FileInfo file in files)
             {
                 file.CopyTo(Path.Combine(_temp, file.Name), true);

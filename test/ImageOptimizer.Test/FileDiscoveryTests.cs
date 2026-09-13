@@ -23,16 +23,9 @@ namespace ImageOptimizer.Test
         [TestCleanup]
         public void Cleanup()
         {
-            try
+            if (Directory.Exists(_testFolder))
             {
-                if (Directory.Exists(_testFolder))
-                {
-                    Directory.Delete(_testFolder, true);
-                }
-            }
-            catch
-            {
-                // Ignore cleanup errors
+                Directory.Delete(_testFolder, true);
             }
         }
 
