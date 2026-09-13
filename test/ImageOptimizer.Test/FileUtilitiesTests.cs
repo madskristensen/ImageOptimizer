@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using MadsKristensen.ImageOptimizer;
 using MadsKristensen.ImageOptimizer.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -9,6 +10,23 @@ namespace ImageOptimizer.Test
     [TestClass]
     public class FileUtilitiesTests
     {
+        [TestMethod]
+        public void GetDistinctPaths_RemovesDuplicatesAndPreservesOrder()
+        {
+            string[] paths =
+            {
+                @"C:\images\first.png",
+                @"C:\images\second.png",
+                @"c:\IMAGES\FIRST.PNG",
+                @"C:\images\third.png",
+                @"C:\images\second.png"
+            };
+
+            var result = FileUtilities.GetDistinctPaths(paths);
+
+            CollectionAssert.AreEqual(paths.Take(2).Concat(paths.Skip(3).Take(1)).ToArray(), result.ToArray());
+        }
+
         private string _testFolder;
 
         [TestInitialize]

@@ -10,6 +10,22 @@ namespace MadsKristensen.ImageOptimizer.Common
     internal static class FileUtilities
     {
         /// <summary>
+        /// Removes duplicate file paths while preserving their original order.
+        /// </summary>
+        internal static IReadOnlyList<string> GetDistinctPaths(IEnumerable<string> filePaths)
+        {
+            if (filePaths is null)
+            {
+                return [];
+            }
+
+            var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            return filePaths
+                .Where(path => !string.IsNullOrWhiteSpace(path) && seenPaths.Add(path))
+                .ToList();
+        }
+
+        /// <summary>
         /// Checks if a file is supported for image optimization.
         /// </summary>
         /// <param name="fileName">The file path to check.</param>

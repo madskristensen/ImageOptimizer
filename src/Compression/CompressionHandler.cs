@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +5,7 @@ using System.Threading;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TaskStatusCenter;
+using MadsKristensen.ImageOptimizer.Common;
 using MadsKristensen.ImageOptimizer.Resx;
 
 namespace MadsKristensen.ImageOptimizer
@@ -16,6 +16,7 @@ namespace MadsKristensen.ImageOptimizer
     internal class CompressionHandler
     {
         private static readonly RatingPrompt _ratingPrompt = new("MadsKristensen.ImageOptimizer64bit", Vsix.Name, General.Instance);
+        private static readonly SemaphoreSlim _operationGate = new(1, 1);
         private static OutputWindowPane _outputWindowPane;
         private int _processedCount;
 
@@ -38,14 +39,36 @@ namespace MadsKristensen.ImageOptimizer
             string selectedFolderPath = null,
             CancellationToken cancellationToken = default)
         {
-            var imageFilesList = imageFilePaths.ToList();
-            var imageCount = imageFilesList.Count;
-
-            if (imageCount == 0)
+            IReadOnlyList<string> imageFilesList = FileUtilities.GetDistinctPaths(imageFilePaths);
+            if (imageFilesList.Count == 0)
             {
                 return;
             }
 
+            if (!await _operationGate.WaitAsync(0, cancellationToken))
+            {
+                await VS.StatusBar.ShowMessageAsync(Constants.OptimizationAlreadyRunningMessage);
+                return;
+            }
+
+            try
+            {
+                await OptimizeImagesExclusiveAsync(imageFilesList, type, solutionFullName, selectedFolderPath, cancellationToken);
+            }
+            finally
+            {
+                _operationGate.Release();
+            }
+        }
+
+        private async Task OptimizeImagesExclusiveAsync(
+            IReadOnlyList<string> imageFilesList,
+            CompressionType type,
+            string solutionFullName,
+            string selectedFolderPath,
+            CancellationToken cancellationToken)
+        {
+            var imageCount = imageFilesList.Count;
             IVsTaskStatusCenterService taskStatusCenter = await GetTaskStatusCenterServiceAsync(cancellationToken);
             if (taskStatusCenter == null)
             {
@@ -86,7 +109,7 @@ namespace MadsKristensen.ImageOptimizer
         }
 
         private async Task OptimizeImagesCoreAsync(
-            List<string> imageFilesList,
+            IReadOnlyList<string> imageFilesList,
             CompressionType type,
             string solutionFullName,
             string selectedFolderPath,
@@ -112,15 +135,12 @@ namespace MadsKristensen.ImageOptimizer
                 CancellationToken = cancellationToken
             };
 
-            var compressionResults = new ConcurrentBag<CompressionResult>();
-            var detailRows = new ConcurrentQueue<string>();
+            var compressionResults = new CompressionResult[imageCount];
             _processedCount = 0;
 
             // Initialize output pane (reuse existing static instance) and activate it
             _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
             await _outputWindowPane.ActivateAsync();
-            var showDetails = options.ShowDetailedResults;
-
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
@@ -131,8 +151,9 @@ namespace MadsKristensen.ImageOptimizer
             {
                 await Task.Run(() =>
                 {
-                    Parallel.ForEach(imageFilesList, parallelOptions, filePath =>
+                    Parallel.For(0, imageCount, parallelOptions, index =>
                     {
+                        var filePath = imageFilesList[index];
                         cancellationToken.ThrowIfCancellationRequested();
 
                         try
@@ -143,12 +164,7 @@ namespace MadsKristensen.ImageOptimizer
                                 : compressor.CompressFile(filePath, type);
 
                             ProcessCompressionResult(compressionResult, cache, options.CreateBackup);
-                            compressionResults.Add(compressionResult);
-
-                            if (showDetails && compressionResult.Saving > 0)
-                            {
-                                detailRows.Enqueue(FormatResultRow(compressionResult));
-                            }
+                            compressionResults[index] = compressionResult;
                         }
                         catch (OperationCanceledException)
                         {
@@ -161,7 +177,7 @@ namespace MadsKristensen.ImageOptimizer
                                 ex.LogAsync().FireAndForget();
                             }
 
-                            compressionResults.Add(CompressionResult.Zero(filePath));
+                            compressionResults[index] = CompressionResult.Zero(filePath);
 
                             if (!options.ContinueOnError)
                             {
@@ -214,7 +230,7 @@ namespace MadsKristensen.ImageOptimizer
                 await cache.SaveToDiskAsync();
             }
 
-            await DisplayOptimizationSummaryAsync(compressionResults, options, detailRows, selectedFolderPath);
+            await DisplayOptimizationSummaryAsync(compressionResults, options, selectedFolderPath);
 
             _ratingPrompt.RegisterSuccessfulUsage();
         }
@@ -313,7 +329,7 @@ namespace MadsKristensen.ImageOptimizer
             return null;
         }
 
-        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, IEnumerable<string> detailRows, string selectedFolderPath)
+        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, string selectedFolderPath)
         {
             var validResults = compressionResults.Where(r => r?.OriginalFileName != null).ToList();
             if (validResults.Count == 0)
@@ -327,8 +343,6 @@ namespace MadsKristensen.ImageOptimizer
                 await _outputWindowPane.WriteLineAsync(string.Empty);
             }
 
-            var detailRowsList = detailRows.ToList();
-
             var totalSavings = validResults.Sum(r => r.Saving);
             var totalOriginalSize = validResults.Sum(r => r.OriginalFileSize);
             var totalResultSize = validResults.Sum(r => r.ResultFileSize);
@@ -336,13 +350,14 @@ namespace MadsKristensen.ImageOptimizer
 
             if (totalSavings > 0)
             {
-                if (options.ShowDetailedResults && detailRowsList.Count > 0)
+                var detailResults = validResults.Where(r => r.Saving > 0).ToList();
+                if (options.ShowDetailedResults && detailResults.Count > 0)
                 {
                     await _outputWindowPane.WriteLineAsync(GetTableHeader());
 
-                    foreach (var row in detailRowsList)
+                    foreach (CompressionResult result in detailResults)
                     {
-                        await _outputWindowPane.WriteLineAsync(row);
+                        await _outputWindowPane.WriteLineAsync(FormatResultRow(result));
                     }
 
                     await _outputWindowPane.WriteLineAsync(GetTableSeparator());

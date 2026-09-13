@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using MadsKristensen.ImageOptimizer.Common;
 
 namespace MadsKristensen.ImageOptimizer
 {
@@ -39,7 +39,7 @@ namespace MadsKristensen.ImageOptimizer
             Func<string, bool> isConvertible,
             CancellationToken cancellationToken)
         {
-            var imageFilesList = imageFilePaths.Where(isConvertible).ToList();
+            IReadOnlyList<string> imageFilesList = FileUtilities.GetDistinctPaths(imageFilePaths).Where(isConvertible).ToList();
             var imageCount = imageFilesList.Count;
 
             if (imageCount == 0)
@@ -61,14 +61,11 @@ namespace MadsKristensen.ImageOptimizer
                 CancellationToken = cancellationToken
             };
 
-            var conversionResults = new ConcurrentBag<CompressionResult>();
-            var detailRows = new ConcurrentQueue<string>();
+            var conversionResults = new CompressionResult[imageCount];
             _processedCount = 0;
 
             _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
             await _outputWindowPane.ActivateAsync();
-            var showDetails = options.ShowDetailedResults;
-
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
@@ -79,20 +76,16 @@ namespace MadsKristensen.ImageOptimizer
             {
                 await Task.Run(() =>
                 {
-                    Parallel.ForEach(imageFilesList, parallelOptions, filePath =>
+                    Parallel.For(0, imageCount, parallelOptions, index =>
                     {
+                        var filePath = imageFilesList[index];
                         cancellationToken.ThrowIfCancellationRequested();
 
                         try
                         {
                             CompressionResult result = convertFunc(compressor, filePath);
                             ProcessConversionResult(result, targetExtension);
-                            conversionResults.Add(result);
-
-                            if (showDetails && result.Saving > 0)
-                            {
-                                detailRows.Enqueue(FormatResultRow(result, targetExtension));
-                            }
+                            conversionResults[index] = result;
 
                             if (options.ShowProgressInStatusBar)
                             {
@@ -132,7 +125,7 @@ namespace MadsKristensen.ImageOptimizer
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
 
-            await DisplayConversionSummaryAsync(conversionResults, options, detailRows, formatName);
+            await DisplayConversionSummaryAsync(conversionResults, options, formatName, targetExtension);
         }
 
         private static void ProcessConversionResult(CompressionResult result, string targetExtension)
@@ -183,15 +176,13 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private async Task DisplayConversionSummaryAsync(IEnumerable<CompressionResult> results, General options, IEnumerable<string> detailRows, string formatName)
+        private async Task DisplayConversionSummaryAsync(IEnumerable<CompressionResult> results, General options, string formatName, string targetExtension)
         {
             var validResults = results.Where(r => r?.OriginalFileName != null).ToList();
             if (validResults.Count == 0)
             {
                 return;
             }
-
-            var detailRowsList = detailRows.ToList();
 
             var totalSavings = validResults.Sum(r => r.Saving);
             var totalOriginalSize = validResults.Sum(r => r.OriginalFileSize);
@@ -200,13 +191,14 @@ namespace MadsKristensen.ImageOptimizer
 
             if (totalSavings > 0)
             {
-                if (options.ShowDetailedResults && detailRowsList.Count > 0)
+                var detailResults = validResults.Where(r => r.Saving > 0).ToList();
+                if (options.ShowDetailedResults && detailResults.Count > 0)
                 {
                     await _outputWindowPane.WriteLineAsync(GetTableHeader());
 
-                    foreach (var row in detailRowsList)
+                    foreach (CompressionResult result in detailResults)
                     {
-                        await _outputWindowPane.WriteLineAsync(row);
+                        await _outputWindowPane.WriteLineAsync(FormatResultRow(result, targetExtension));
                     }
 
                     await _outputWindowPane.WriteLineAsync(GetTableSeparator());
