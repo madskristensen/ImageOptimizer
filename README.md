@@ -102,7 +102,9 @@ the status bar.
 
 ![Output window](art/output-window.png)
 
-The output shows each file's before/after size, bytes saved, and percentage reduction.
+The output shows each file's outcome, before/after size, bytes saved, and
+percentage reduction. The final summary distinguishes optimized, unchanged,
+cached, failed, timed-out, and cancelled files and includes total elapsed time.
 
 ## Performance
 

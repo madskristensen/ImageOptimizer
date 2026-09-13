@@ -14,12 +14,6 @@ namespace MadsKristensen.ImageOptimizer
     [Command(PackageGuids.guidImageOptimizerCmdSetString, PackageIds.cmdOptimizelossless)]
     internal class OptimizeLosslessCommand : BaseCommand<OptimizeLosslessCommand>
     {
-        protected override Task InitializeCompletedAsync()
-        {
-            Command.Supported = false;
-            return base.InitializeCompletedAsync();
-        }
-
         protected override void BeforeQueryStatus(EventArgs e)
         {
             ThreadHelper.JoinableTaskFactory.Run(async () =>
@@ -49,12 +43,12 @@ namespace MadsKristensen.ImageOptimizer
 
             if (hasImages)
             {
-                optimizer.OptimizeImagesAsync(images, CompressionType.Lossless, solution?.FullPath, selectedFolderPath).FireAndForget();
+                await optimizer.OptimizeImagesAsync(images, CompressionType.Lossless, solution?.FullPath, selectedFolderPath);
             }
 
             if (hasResx)
             {
-                optimizer.OptimizeResxImagesAsync(resxFiles, CompressionType.Lossless, solution?.FullPath).FireAndForget();
+                await optimizer.OptimizeResxImagesAsync(resxFiles, CompressionType.Lossless, solution?.FullPath);
             }
         }
 
@@ -268,12 +262,8 @@ namespace MadsKristensen.ImageOptimizer
                 }
             }
 
-            if (hasFileSelection)
-            {
-                return hasSupportedFileSelection;
-            }
-
-            return hasFolderLikeSelection;
+            return hasFileSelection ? hasSupportedFileSelection : hasFolderLikeSelection;
         }
+
     }
 }

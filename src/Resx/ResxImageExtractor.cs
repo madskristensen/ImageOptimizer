@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml.Linq;
 using MadsKristensen.ImageOptimizer.Common;
 
@@ -27,7 +28,7 @@ namespace MadsKristensen.ImageOptimizer.Resx
         /// <param name="compressionType">Lossless or lossy compression.</param>
         /// <returns>List of compression results, one per optimized resource entry.</returns>
         public IReadOnlyList<ResxCompressionResult> OptimizeResxImages(
-            string resxPath, Compressor compressor, CompressionType compressionType)
+            string resxPath, Compressor compressor, CompressionType compressionType, CancellationToken cancellationToken = default)
         {
             if (compressor == null)
             {
@@ -59,7 +60,8 @@ namespace MadsKristensen.ImageOptimizer.Resx
 
             foreach (ImageDataNode node in imageNodes)
             {
-                ResxCompressionResult result = OptimizeSingleEntry(node, compressor, compressionType, validatedPath);
+                cancellationToken.ThrowIfCancellationRequested();
+                ResxCompressionResult result = OptimizeSingleEntry(node, compressor, compressionType, validatedPath, cancellationToken);
                 results.Add(result);
 
                 if (result.Saving > 0)
@@ -124,7 +126,7 @@ namespace MadsKristensen.ImageOptimizer.Resx
         /// Optimizes a single .resx image entry by extracting, compressing, and re-encoding.
         /// </summary>
         private static ResxCompressionResult OptimizeSingleEntry(
-            ImageDataNode node, Compressor compressor, CompressionType compressionType, string resxPath)
+            ImageDataNode node, Compressor compressor, CompressionType compressionType, string resxPath, CancellationToken cancellationToken)
         {
             byte[] originalBytes = TryDecodeBase64(node.ValueElement.Value);
             if (originalBytes == null || originalBytes.Length == 0)
@@ -166,9 +168,10 @@ namespace MadsKristensen.ImageOptimizer.Resx
                 tempInput = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + extension);
                 File.WriteAllBytes(tempInput, imageBytes);
 
-                CompressionResult compResult = compressor.CompressFile(tempInput, compressionType);
+                CompressionResult compResult = compressor.CompressFile(tempInput, compressionType, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
 
-                if (compResult.Saving <= 0 || !File.Exists(compResult.ResultFileName))
+                if (compResult.Outcome != CompressionOutcome.Optimized || !File.Exists(compResult.ResultFileName))
                 {
                     return ResxCompressionResult.Zero(node.ResourceName, resxPath);
                 }

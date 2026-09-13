@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -16,7 +17,6 @@ namespace MadsKristensen.ImageOptimizer
     internal class CompressionHandler
     {
         private static readonly RatingPrompt _ratingPrompt = new("MadsKristensen.ImageOptimizer64bit", Vsix.Name, General.Instance);
-        private static readonly SemaphoreSlim _operationGate = new(1, 1);
         private static OutputWindowPane _outputWindowPane;
         private int _processedCount;
 
@@ -24,6 +24,7 @@ namespace MadsKristensen.ImageOptimizer
         private const int _fileNameWidth = 40;
         private const int _sizeWidth = 10;
         private const int _percentWidth = 7;
+        private const int _statusWidth = 10;
 
         /// <summary>
         /// Optimizes a collection of images using the specified compression type.
@@ -45,19 +46,15 @@ namespace MadsKristensen.ImageOptimizer
                 return;
             }
 
-            if (!await _operationGate.WaitAsync(0, cancellationToken))
+            if (!ImageOperationCoordinator.TryStart(out IDisposable operationLease))
             {
                 await VS.StatusBar.ShowMessageAsync(Constants.OptimizationAlreadyRunningMessage);
                 return;
             }
 
-            try
+            using (operationLease)
             {
                 await OptimizeImagesExclusiveAsync(imageFilesList, type, solutionFullName, selectedFolderPath, cancellationToken);
-            }
-            finally
-            {
-                _operationGate.Release();
             }
         }
 
@@ -117,6 +114,7 @@ namespace MadsKristensen.ImageOptimizer
             IProgress<TaskProgressData> taskProgressReporter = null)
         {
             var imageCount = imageFilesList.Count;
+            var stopwatch = Stopwatch.StartNew();
 
             // Load options
             General options = await General.GetLiveInstanceAsync();
@@ -160,11 +158,10 @@ namespace MadsKristensen.ImageOptimizer
                         {
                             // Check if the file is already optimized (if caching is enabled)
                             CompressionResult compressionResult = cache?.IsFullyOptimized(filePath) == true
-                                ? CompressionResult.Zero(filePath)
-                                : compressor.CompressFile(filePath, type);
+                                ? CompressionResult.Cached(filePath)
+                                : compressor.CompressFile(filePath, type, cancellationToken);
 
-                            ProcessCompressionResult(compressionResult, cache, options.CreateBackup);
-                            compressionResults[index] = compressionResult;
+                            compressionResults[index] = CompressionResultProcessor.Process(compressionResult, cache, options.CreateBackup);
                         }
                         catch (OperationCanceledException)
                         {
@@ -177,7 +174,7 @@ namespace MadsKristensen.ImageOptimizer
                                 ex.LogAsync().FireAndForget();
                             }
 
-                            compressionResults[index] = CompressionResult.Zero(filePath);
+                            compressionResults[index] = CompressionResult.Failed(filePath, ex.Message, TimeSpan.Zero);
 
                             if (!options.ContinueOnError)
                             {
@@ -217,11 +214,14 @@ namespace MadsKristensen.ImageOptimizer
             }
             catch (OperationCanceledException)
             {
-                await VS.StatusBar.ShowMessageAsync("Image optimization cancelled");
-                return;
+                for (var index = 0; index < compressionResults.Length; index++)
+                {
+                    compressionResults[index] ??= CompressionResult.Cancelled(imageFilesList[index], TimeSpan.Zero);
+                }
             }
             finally
             {
+                stopwatch.Stop();
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
 
@@ -230,9 +230,12 @@ namespace MadsKristensen.ImageOptimizer
                 await cache.SaveToDiskAsync();
             }
 
-            await DisplayOptimizationSummaryAsync(compressionResults, options, selectedFolderPath);
+            await DisplayOptimizationSummaryAsync(compressionResults, options, selectedFolderPath, stopwatch.Elapsed);
 
-            _ratingPrompt.RegisterSuccessfulUsage();
+            if (compressionResults.Any(result => result?.Outcome == CompressionOutcome.Optimized))
+            {
+                _ratingPrompt.RegisterSuccessfulUsage();
+            }
         }
 
         private static async Task<IVsTaskStatusCenterService> GetTaskStatusCenterServiceAsync(CancellationToken cancellationToken)
@@ -257,82 +260,10 @@ namespace MadsKristensen.ImageOptimizer
             }
         }
 
-        private static void ProcessCompressionResult(CompressionResult compressionResult, Cache cache, bool createBackup)
+        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, string selectedFolderPath, TimeSpan elapsed)
         {
-            if (compressionResult.Saving > 0 &&
-                compressionResult.ResultFileSize > 0 &&
-                !string.IsNullOrEmpty(compressionResult.ResultFileName) &&
-                File.Exists(compressionResult.ResultFileName))
-            {
-                try
-                {
-                    // Create backup if enabled
-                    if (createBackup)
-                    {
-                        CreateBackup(compressionResult.OriginalFileName);
-                    }
-
-                    // Replace the original file with the optimized file
-                    File.Copy(compressionResult.ResultFileName, compressionResult.OriginalFileName, true);
-                    File.Delete(compressionResult.ResultFileName);
-                }
-                catch (Exception ex)
-                {
-                    ex.LogAsync().FireAndForget();
-                }
-            }
-            else if (compressionResult.OriginalFileName != null)
-            {
-                // Add the file to the cache if it is already fully optimized
-                cache?.AddToCache(compressionResult.OriginalFileName);
-            }
-        }
-
-        private static void CreateBackup(string originalFilePath)
-        {
-            try
-            {
-                var directory = Path.GetDirectoryName(originalFilePath);
-                var vsDir = FindVsDirectory(directory);
-
-                if (vsDir != null)
-                {
-                    var backupDir = Path.Combine(vsDir, Vsix.Name, "backups");
-                    if (!Directory.Exists(backupDir))
-                    {
-                        Directory.CreateDirectory(backupDir);
-                    }
-
-                    var backupFileName = $"{Path.GetFileNameWithoutExtension(originalFilePath)}_{DateTime.Now:yyyyMMddHHmmss}{Path.GetExtension(originalFilePath)}";
-                    var backupPath = Path.Combine(backupDir, backupFileName);
-                    File.Copy(originalFilePath, backupPath, false);
-                }
-            }
-            catch (Exception ex)
-            {
-                ex.LogAsync().FireAndForget();
-            }
-        }
-
-        private static string FindVsDirectory(string startDirectory)
-        {
-            var directory = new DirectoryInfo(startDirectory);
-            while (directory != null)
-            {
-                var vsPath = Path.Combine(directory.FullName, Constants.VsDirectoryName);
-                if (Directory.Exists(vsPath))
-                {
-                    return vsPath;
-                }
-                directory = directory.Parent;
-            }
-            return null;
-        }
-
-        private async Task DisplayOptimizationSummaryAsync(IEnumerable<CompressionResult> compressionResults, General options, string selectedFolderPath)
-        {
-            var validResults = compressionResults.Where(r => r?.OriginalFileName != null).ToList();
-            if (validResults.Count == 0)
+            CompressionSummary summary = CompressionSummary.Create(compressionResults, elapsed);
+            if (summary.Results.Count == 0)
             {
                 return;
             }
@@ -343,61 +274,33 @@ namespace MadsKristensen.ImageOptimizer
                 await _outputWindowPane.WriteLineAsync(string.Empty);
             }
 
-            var totalSavings = validResults.Sum(r => r.Saving);
-            var totalOriginalSize = validResults.Sum(r => r.OriginalFileSize);
-            var totalResultSize = validResults.Sum(r => r.ResultFileSize);
-            var successfulOptimizations = validResults.Count(r => r.Saving > 0);
-
-            if (totalSavings > 0)
+            if (options.ShowDetailedResults)
             {
-                var detailResults = validResults.Where(r => r.Saving > 0).ToList();
-                if (options.ShowDetailedResults && detailResults.Count > 0)
-                {
-                    await _outputWindowPane.WriteLineAsync(GetTableHeader());
+                await _outputWindowPane.WriteLineAsync(GetTableHeader());
 
-                    foreach (CompressionResult result in detailResults)
+                foreach (CompressionResult result in summary.Results)
+                {
+                    await _outputWindowPane.WriteLineAsync(FormatResultRow(result));
+
+                    if (options.LogErrorsToOutput && !string.IsNullOrWhiteSpace(result.ErrorMessage))
                     {
-                        await _outputWindowPane.WriteLineAsync(FormatResultRow(result));
+                        await _outputWindowPane.WriteLineAsync($"  {result.ErrorMessage}");
                     }
-
-                    await _outputWindowPane.WriteLineAsync(GetTableSeparator());
                 }
 
-                if (successfulOptimizations > 0)
-                {
-                    var totalPercentageReduction = totalOriginalSize > 0
-                        ? Math.Round(100 - (totalResultSize / (double)totalOriginalSize * 100), 1, MidpointRounding.AwayFromZero)
-                        : 0;
-
-                    var imageLabel = successfulOptimizations == 1 ? "image" : "images";
-                    var message = string.Format(Constants.OptimizationCompleteFormat,
-                        successfulOptimizations, imageLabel,
-                        CompressionResult.ToFileSize(totalSavings), totalPercentageReduction);
-
-                    await VS.StatusBar.ShowMessageAsync(message);
-                    await _outputWindowPane.WriteLineAsync(message + Environment.NewLine);
-
-                    // Update statistics
-                    await options.UpdateStatisticsAsync(totalSavings, successfulOptimizations);
-                }
-                else
-                {
-                    await ShowAlreadyOptimizedMessageAsync();
-                }
+                await _outputWindowPane.WriteLineAsync(GetTableSeparator());
             }
-            else
+
+            string message = summary.ToDisplayString();
+            await VS.StatusBar.ShowMessageAsync(message);
+            await _outputWindowPane.WriteLineAsync(message + Environment.NewLine);
+
+            if (summary.Optimized > 0)
             {
-                await ShowAlreadyOptimizedMessageAsync();
+                await options.UpdateStatisticsAsync(summary.TotalSavings, summary.Optimized);
             }
 
             await _outputWindowPane.ActivateAsync();
-        }
-
-
-        private async Task ShowAlreadyOptimizedMessageAsync()
-        {
-            await VS.StatusBar.ShowMessageAsync(Constants.AlreadyOptimizedMessage);
-            await _outputWindowPane.WriteLineAsync(Constants.AlreadyOptimizedMessage);
         }
 
         /// <summary>
@@ -405,8 +308,8 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         private static string GetTableHeader()
         {
-            var header = $"{"File",-_fileNameWidth}  {"Before",_sizeWidth}  {"After",_sizeWidth}  {"Saved",_sizeWidth}  {"%",_percentWidth}";
-            var separator = new string('-', _fileNameWidth + _sizeWidth * 3 + _percentWidth + 8);
+            var header = $"{"File",-_fileNameWidth}  {"Status",-_statusWidth}  {"Before",_sizeWidth}  {"After",_sizeWidth}  {"Saved",_sizeWidth}  {"%",_percentWidth}";
+            var separator = new string('-', _fileNameWidth + _statusWidth + _sizeWidth * 3 + _percentWidth + 10);
             return header + Environment.NewLine + separator;
         }
 
@@ -415,7 +318,7 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         private static string GetTableSeparator()
         {
-            return new string('-', _fileNameWidth + _sizeWidth * 3 + _percentWidth + 8);
+            return new string('-', _fileNameWidth + _statusWidth + _sizeWidth * 3 + _percentWidth + 10);
         }
 
         /// <summary>
@@ -436,7 +339,7 @@ namespace MadsKristensen.ImageOptimizer
             var saved = CompressionResult.ToFileSize(result.Saving);
             var percent = result.Percent.ToString("F1") + "%";
 
-            return $"{fileName,-_fileNameWidth}  {before,_sizeWidth}  {after,_sizeWidth}  {saved,_sizeWidth}  {percent,_percentWidth}";
+            return $"{fileName,-_fileNameWidth}  {result.Outcome,-_statusWidth}  {before,_sizeWidth}  {after,_sizeWidth}  {saved,_sizeWidth}  {percent,_percentWidth}";
         }
 
         /// <summary>
@@ -452,12 +355,29 @@ namespace MadsKristensen.ImageOptimizer
             string solutionFullName = null,
             CancellationToken cancellationToken = default)
         {
-            var resxList = resxFilePaths.ToList();
+            IReadOnlyList<string> resxList = FileUtilities.GetDistinctPaths(resxFilePaths);
             if (resxList.Count == 0)
             {
                 return;
             }
 
+            if (!ImageOperationCoordinator.TryStart(out IDisposable operationLease))
+            {
+                await VS.StatusBar.ShowMessageAsync(Constants.OptimizationAlreadyRunningMessage);
+                return;
+            }
+
+            using (operationLease)
+            {
+                await OptimizeResxImagesCoreAsync(resxList, type, cancellationToken);
+            }
+        }
+
+        private async Task OptimizeResxImagesCoreAsync(
+            IReadOnlyList<string> resxList,
+            CompressionType type,
+            CancellationToken cancellationToken)
+        {
             General options = await General.GetLiveInstanceAsync();
             var compressor = new Compressor(options.ProcessTimeoutMs, options.EffectiveLossyQuality);
             var extractor = new ResxImageExtractor();
@@ -488,7 +408,7 @@ namespace MadsKristensen.ImageOptimizer
                     try
                     {
                         IReadOnlyList<ResxCompressionResult> results =
-                            extractor.OptimizeResxImages(resxPath, compressor, type);
+                            extractor.OptimizeResxImages(resxPath, compressor, type, cancellationToken);
 
                         if (results.Count > 0)
                         {
@@ -500,6 +420,10 @@ namespace MadsKristensen.ImageOptimizer
                                 await _outputWindowPane.WriteLineAsync(FormatResxResultRow(result));
                             }
                         }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch (Exception ex)
                     {

@@ -74,6 +74,7 @@
         <Icon guid="ImageCatalogGuid" id="Resize" />
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Resize image...</ButtonText>
           <LocCanonicalName>.ImageOptimizer.ResizeImage</LocCanonicalName>
@@ -85,6 +86,7 @@
         <Icon guid="ImageCatalogGuid" id="ConvertToCodeWebTest" />
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Convert to WebP</ButtonText>
           <LocCanonicalName>.ImageOptimizer.ConvertToWebP</LocCanonicalName>
@@ -96,6 +98,7 @@
         <Icon guid="ImageCatalogGuid" id="Copy" />
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Copy base64 DataURI</ButtonText>
           <LocCanonicalName>.ImageOptimizer.CopyAsBase64</LocCanonicalName>
@@ -111,7 +114,7 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Optimize for Best Quality</ButtonText>
-          <LocCanonicalName>.ImageOptimizer.WorkspaceptimizeLossless</LocCanonicalName>
+          <LocCanonicalName>.ImageOptimizer.WorkspaceOptimizeLossless</LocCanonicalName>
         </Strings>
       </Button>
 
@@ -207,7 +210,7 @@
     <!-- Ctrl+Shift+Alt+Q for lossless optimization (Quality) -->
     <KeyBinding guid="guidImageOptimizerCmdSet" id="cmdOptimizelossless" editor="guidVSStd97" key1="Q" mod1="Control Shift Alt" />
     <!-- Ctrl+Shift+Alt+O for lossy optimization (Optimize for size) -->
-    <KeyBinding guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" editor="guidVSStd97" key1="L" mod1="Control Shift Alt" />
+    <KeyBinding guid="guidImageOptimizerCmdSet" id="cmdOptimizelossy" editor="guidVSStd97" key1="O" mod1="Control Shift Alt" />
   </KeyBindings>
 
   <Symbols>

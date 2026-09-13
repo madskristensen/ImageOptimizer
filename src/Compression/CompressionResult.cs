@@ -11,12 +11,35 @@ namespace MadsKristensen.ImageOptimizer
         private static readonly string[] _sizeSuffixes = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 
         /// <summary>
-        /// Creates a zero-savings result for a file (already optimized or failed).
+        /// Creates a result for a file that was skipped because it is cached.
         /// </summary>
         /// <param name="filePath">The path to the file.</param>
         /// <returns>A CompressionResult with no savings.</returns>
-        public static CompressionResult Zero(string filePath) =>
-            new(filePath, filePath, TimeSpan.Zero) { Processed = false };
+        public static CompressionResult Zero(string filePath) => Cached(filePath);
+
+        internal static CompressionResult Cached(string filePath) =>
+            new(filePath, filePath, TimeSpan.Zero)
+            {
+                Outcome = CompressionOutcome.Cached,
+                Processed = false
+            };
+
+        internal static CompressionResult Failed(string filePath, string errorMessage, TimeSpan elapsed) =>
+            CreateError(filePath, CompressionOutcome.Failed, errorMessage, elapsed);
+
+        internal static CompressionResult TimedOut(string filePath, string errorMessage, TimeSpan elapsed) =>
+            CreateError(filePath, CompressionOutcome.TimedOut, errorMessage, elapsed);
+
+        internal static CompressionResult Cancelled(string filePath, TimeSpan elapsed) =>
+            CreateError(filePath, CompressionOutcome.Cancelled, null, elapsed);
+
+        private static CompressionResult CreateError(string filePath, CompressionOutcome outcome, string errorMessage, TimeSpan elapsed) =>
+            new(filePath, filePath, elapsed)
+            {
+                Outcome = outcome,
+                ErrorMessage = errorMessage,
+                Processed = true
+            };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CompressionResult"/> class.
@@ -66,6 +89,7 @@ namespace MadsKristensen.ImageOptimizer
             }
 
             Processed = true;
+            Outcome = Saving > 0 ? CompressionOutcome.Optimized : CompressionOutcome.Unchanged;
         }
 
         /// <summary>
@@ -92,6 +116,16 @@ namespace MadsKristensen.ImageOptimizer
         /// Gets or sets a value indicating whether the file was processed.
         /// </summary>
         public bool Processed { get; set; }
+
+        /// <summary>
+        /// Gets the outcome of the operation.
+        /// </summary>
+        public CompressionOutcome Outcome { get; private set; }
+
+        /// <summary>
+        /// Gets the diagnostic message when the operation failed or timed out.
+        /// </summary>
+        public string ErrorMessage { get; private set; }
 
         /// <summary>
         /// Gets or sets the time elapsed during compression.

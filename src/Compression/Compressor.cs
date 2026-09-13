@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using BracketPipe;
 using MadsKristensen.ImageOptimizer.Common;
 
@@ -41,7 +42,7 @@ namespace MadsKristensen.ImageOptimizer
         /// <param name="type">The type of compression to apply.</param>
         /// <returns>A <see cref="CompressionResult"/> containing the compression outcome.</returns>
         /// <exception cref="ArgumentException">Thrown when the file path is invalid.</exception>
-        public CompressionResult CompressFile(string fileName, CompressionType type)
+        public CompressionResult CompressFile(string fileName, CompressionType type, CancellationToken cancellationToken = default)
         {
             // Validate input
             ValidationResult validation = InputValidator.ValidateFilePath(fileName);
@@ -57,28 +58,34 @@ namespace MadsKristensen.ImageOptimizer
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (fileExtension.Equals(".svg", StringComparison.OrdinalIgnoreCase))
                 {
                     CompressSvgFile(validatedPath, targetFile);
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
                 else
                 {
-                    CompressImageFile(validatedPath, targetFile, type);
+                    CompressImageFile(validatedPath, targetFile, type, cancellationToken);
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                FileUtilities.SafeDeleteFile(targetFile);
+                return CompressionResult.Cancelled(validatedPath, stopwatch.Elapsed);
             }
             catch (TimeoutException ex)
             {
-                // Clean up temp file on timeout
                 FileUtilities.SafeDeleteFile(targetFile);
                 ex.LogAsync().FireAndForget();
-                return new CompressionResult(validatedPath, targetFile, stopwatch.Elapsed);
+                return CompressionResult.TimedOut(validatedPath, ex.Message, stopwatch.Elapsed);
             }
             catch (Exception ex)
             {
-                // Clean up temp file on error
                 FileUtilities.SafeDeleteFile(targetFile);
                 ex.LogAsync().FireAndForget();
-                return new CompressionResult(validatedPath, targetFile, stopwatch.Elapsed);
+                return CompressionResult.Failed(validatedPath, ex.Message, stopwatch.Elapsed);
             }
             finally
             {
@@ -90,22 +97,19 @@ namespace MadsKristensen.ImageOptimizer
 
         private static void CompressSvgFile(string sourceFile, string targetFile)
         {
-            ErrorHandler.SafeExecute(() =>
-            {
-                var source = File.ReadAllText(sourceFile);
-                string minified = Html.Minify(source);
-                File.WriteAllText(targetFile, minified);
-            });
+            var source = File.ReadAllText(sourceFile);
+            string minified = Html.Minify(source);
+            File.WriteAllText(targetFile, minified);
         }
 
-        private void CompressImageFile(string sourceFile, string targetFile, CompressionType type)
+        private void CompressImageFile(string sourceFile, string targetFile, CompressionType type, CancellationToken cancellationToken)
         {
             if (!TryGetCompressionCommand(sourceFile, targetFile, type, out var executablePath, out var arguments))
             {
-                return;
+                throw new InvalidOperationException($"Unable to prepare compression for {Path.GetFileName(sourceFile)}.");
             }
 
-            RunTool(executablePath, arguments, sourceFile);
+            RunTool(executablePath, arguments, sourceFile, cancellationToken);
         }
 
         /// <summary>
@@ -116,7 +120,7 @@ namespace MadsKristensen.ImageOptimizer
         /// <param name="arguments">The command-line arguments to pass to the tool.</param>
         /// <param name="sourceFile">The source image file being processed (used for error messages).</param>
         /// <exception cref="TimeoutException">Thrown when the tool does not exit within the configured timeout.</exception>
-        private void RunTool(string executablePath, string arguments, string sourceFile)
+        internal void RunTool(string executablePath, string arguments, string sourceFile, CancellationToken cancellationToken)
         {
             var processStartInfo = new ProcessStartInfo(executablePath)
             {
@@ -132,25 +136,29 @@ namespace MadsKristensen.ImageOptimizer
             using var process = Process.Start(processStartInfo);
             if (process == null)
             {
-                return;
+                throw new InvalidOperationException($"Unable to start {Path.GetFileName(executablePath)}.");
             }
 
             // Read the output streams asynchronously so the child process never blocks
             // when its stdout/stderr buffers fill up while we wait for it to exit.
             Task<string> stdErrTask = process.StandardError.ReadToEndAsync();
             Task<string> stdOutTask = process.StandardOutput.ReadToEndAsync();
+            using CancellationTokenRegistration cancellationRegistration = cancellationToken.Register(() => TerminateProcessSafely(process));
 
             if (!process.WaitForExit(_processTimeoutMs))
             {
-                KillProcessSafely(process, sourceFile);
+                TerminateProcessSafely(process);
+                throw new TimeoutException($"Process timed out after {_processTimeoutMs}ms while compressing {Path.GetFileName(sourceFile)}");
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (process.ExitCode != 0)
             {
-                var error = SafeGetResult(stdErrTask);
+                var error = stdErrTask.GetAwaiter().GetResult();
                 if (string.IsNullOrWhiteSpace(error))
                 {
-                    error = SafeGetResult(stdOutTask);
+                    error = stdOutTask.GetAwaiter().GetResult();
                 }
 
                 var message = $"{Path.GetFileName(executablePath)} exited with code {process.ExitCode} while processing {Path.GetFileName(sourceFile)}.";
@@ -159,23 +167,11 @@ namespace MadsKristensen.ImageOptimizer
                     message += $" {error.Trim()}";
                 }
 
-                new Exception(message).LogAsync().FireAndForget();
+                throw new InvalidOperationException(message);
             }
         }
 
-        private static string SafeGetResult(Task<string> task)
-        {
-            try
-            {
-                return task?.Result ?? string.Empty;
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
-        private void KillProcessSafely(Process process, string sourceFile)
+        private static void TerminateProcessSafely(Process process)
         {
             try
             {
@@ -187,14 +183,12 @@ namespace MadsKristensen.ImageOptimizer
             }
             catch (InvalidOperationException)
             {
-                // Process already exited - this is fine
+                // The process exited between the state check and termination.
             }
             catch (Exception ex)
             {
                 ex.LogAsync().FireAndForget();
             }
-
-            throw new TimeoutException($"Process timed out after {_processTimeoutMs}ms while compressing {Path.GetFileName(sourceFile)}");
         }
 
         private bool TryGetCompressionCommand(string sourceFile, string targetFile, CompressionType type, out string executablePath, out string arguments)
@@ -301,7 +295,7 @@ namespace MadsKristensen.ImageOptimizer
         /// <param name="fileName">The path to the source image file (PNG or JPEG).</param>
         /// <returns>A <see cref="CompressionResult"/> with the WebP file as the result.</returns>
         /// <exception cref="ArgumentException">Thrown when the file path is invalid or not convertible.</exception>
-        public CompressionResult ConvertToWebp(string fileName)
+        public CompressionResult ConvertToWebp(string fileName, CancellationToken cancellationToken = default)
         {
             ValidationResult validation = InputValidator.ValidateFilePath(fileName);
             if (!validation.IsValid)
@@ -322,29 +316,36 @@ namespace MadsKristensen.ImageOptimizer
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (!FileUtilities.SafeCopyFile(validatedPath, tempSource))
                 {
-                    return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+                    throw new IOException($"Unable to create a temporary copy of {Path.GetFileName(validatedPath)}.");
                 }
 
                 // -s4 (max effort) yields smaller WebP than the default for JPEG sources.
                 var arguments = $"-webp -s4 -quality={_lossyQuality} \"{tempSource}\"";
 
-                RunTool(GetToolPath("pingo.exe"), arguments, validatedPath);
+                RunTool(GetToolPath("pingo.exe"), arguments, validatedPath, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                FileUtilities.SafeDeleteFile(expectedWebpFile);
+                return CompressionResult.Cancelled(validatedPath, stopwatch.Elapsed);
             }
             catch (TimeoutException ex)
             {
                 FileUtilities.SafeDeleteFile(tempSource);
                 FileUtilities.SafeDeleteFile(expectedWebpFile);
                 ex.LogAsync().FireAndForget();
-                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+                return CompressionResult.TimedOut(validatedPath, ex.Message, stopwatch.Elapsed);
             }
             catch (Exception ex)
             {
                 FileUtilities.SafeDeleteFile(tempSource);
                 FileUtilities.SafeDeleteFile(expectedWebpFile);
                 ex.LogAsync().FireAndForget();
-                return new CompressionResult(validatedPath, validatedPath, stopwatch.Elapsed);
+                return CompressionResult.Failed(validatedPath, ex.Message, stopwatch.Elapsed);
             }
             finally
             {

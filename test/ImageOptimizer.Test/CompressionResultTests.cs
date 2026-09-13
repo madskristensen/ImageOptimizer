@@ -42,6 +42,7 @@ namespace ImageOptimizer.Test
             Assert.AreEqual(1000, result.ResultFileSize);
             Assert.AreEqual(TimeSpan.Zero, result.Elapsed);
             Assert.IsFalse(result.Processed);
+            Assert.AreEqual(CompressionOutcome.Cached, result.Outcome);
         }
 
         [TestMethod]
@@ -56,6 +57,7 @@ namespace ImageOptimizer.Test
             Assert.AreEqual(800, result.ResultFileSize);
             Assert.AreEqual(elapsed, result.Elapsed);
             Assert.IsTrue(result.Processed);
+            Assert.AreEqual(CompressionOutcome.Optimized, result.Outcome);
         }
 
         [TestMethod]

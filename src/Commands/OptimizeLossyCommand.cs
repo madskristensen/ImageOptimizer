@@ -11,12 +11,6 @@ namespace MadsKristensen.ImageOptimizer
     [Command(PackageGuids.guidImageOptimizerCmdSetString, PackageIds.cmdOptimizelossy)]
     internal class OptimizeLossyCommand : BaseCommand<OptimizeLossyCommand>
     {
-        protected override Task InitializeCompletedAsync()
-        {
-            Command.Supported = false;
-            return base.InitializeCompletedAsync();
-        }
-
         protected override void BeforeQueryStatus(EventArgs e)
         {
             ThreadHelper.JoinableTaskFactory.Run(async () =>
@@ -46,12 +40,12 @@ namespace MadsKristensen.ImageOptimizer
 
             if (hasImages)
             {
-                optimizer.OptimizeImagesAsync(images, CompressionType.Lossy, solution?.FullPath, selectedFolderPath).FireAndForget();
+                await optimizer.OptimizeImagesAsync(images, CompressionType.Lossy, solution?.FullPath, selectedFolderPath);
             }
 
             if (hasResx)
             {
-                optimizer.OptimizeResxImagesAsync(resxFiles, CompressionType.Lossy, solution?.FullPath).FireAndForget();
+                await optimizer.OptimizeResxImagesAsync(resxFiles, CompressionType.Lossy, solution?.FullPath);
             }
         }
     }

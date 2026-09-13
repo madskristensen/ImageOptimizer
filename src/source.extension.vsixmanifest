@@ -7,8 +7,8 @@
         <MoreInfo>https://github.com/madskristensen/ImageOptimizer</MoreInfo>
         <License>Resources\LICENSE</License>
         <Icon>Resources\icon.png</Icon>
-        <PreviewImage>Resources\icon.png</PreviewImage>
-        <Tags>image, png, gif, jpg, svg, optimization</Tags>
+        <PreviewImage>Resources\preview.png</PreviewImage>
+        <Tags>image, png, gif, jpg, jpeg, svg, webp, resx, base64, compression, optimization</Tags>
     </Metadata>
     <Installation InstalledByMsi="false">
         <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[17.0,19.0)">

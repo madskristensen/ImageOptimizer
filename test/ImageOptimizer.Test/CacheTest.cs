@@ -168,6 +168,17 @@ namespace ImageOptimizer.Test
             Assert.AreNotEqual(firstSize, secondSize, "Cache should update with new file size");
         }
 
+        [TestMethod]
+        public void AddToCache_PathLookupIsCaseInsensitive()
+        {
+            var filePath = Path.Combine(_rootFolder, "CaseSensitiveName.jpg");
+            File.WriteAllText(filePath, "content");
+
+            _cache.AddToCache(filePath);
+
+            Assert.IsTrue(_cache.ContainsFile(filePath.ToUpperInvariant()));
+        }
+
         #endregion
 
         #region ContainsFile Tests
@@ -224,7 +235,7 @@ namespace ImageOptimizer.Test
         #region SaveToDiskAsync Tests
 
         [TestMethod]
-        public async Task SaveToDiskAsync_WithCachedFiles_PersistsCache()
+        public async Task SaveToDiskAsync_WithCachedFiles_PersistsCacheAsync()
         {
             var filePath1 = Path.Combine(_rootFolder, "file1.jpg");
             var filePath2 = Path.Combine(_rootFolder, "file2.png");
@@ -243,14 +254,14 @@ namespace ImageOptimizer.Test
         }
 
         [TestMethod]
-        public async Task SaveToDiskAsync_EmptyCache_DoesNotThrow()
+        public async Task SaveToDiskAsync_EmptyCache_DoesNotThrowAsync()
         {
             // Should not throw with empty cache
             await _cache.SaveToDiskAsync();
         }
 
         [TestMethod]
-        public async Task SaveToDiskAsync_PreservesFileSizes()
+        public async Task SaveToDiskAsync_PreservesFileSizesAsync()
         {
             var filePath = Path.Combine(_rootFolder, "testfile.jpg");
             File.WriteAllText(filePath, "test content");
@@ -336,7 +347,7 @@ namespace ImageOptimizer.Test
         }
 
         [TestMethod]
-        public async Task Cache_SeparateCachesForTypes_DoNotInterfere()
+        public async Task Cache_SeparateCachesForTypes_DoNotInterfereAsync()
         {
             var filePath = Path.Combine(_rootFolder, "testfile.jpg");
             File.WriteAllText(filePath, "test content");

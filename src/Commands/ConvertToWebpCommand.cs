@@ -29,7 +29,7 @@ namespace MadsKristensen.ImageOptimizer
             else
             {
                 ConversionHandler handler = new();
-                handler.ConvertToWebpAsync(files).FireAndForget();
+                await handler.ConvertToWebpAsync(files);
             }
         }
 

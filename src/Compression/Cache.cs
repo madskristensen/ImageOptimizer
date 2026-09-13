@@ -158,7 +158,7 @@ namespace MadsKristensen.ImageOptimizer
 
         private ConcurrentDictionary<string, CacheEntry> ReadCacheFromDisk()
         {
-            var dic = new ConcurrentDictionary<string, CacheEntry>();
+            var dic = CreateCacheDictionary();
 
             if (_cacheFile?.FullName == null || !_cacheFile.Exists)
             {
@@ -179,7 +179,7 @@ namespace MadsKristensen.ImageOptimizer
             {
                 // If cache is corrupted, start fresh and log the error
                 ex.LogAsync().FireAndForget();
-                return new ConcurrentDictionary<string, CacheEntry>();
+                return CreateCacheDictionary();
             }
 
             return dic;
@@ -190,7 +190,7 @@ namespace MadsKristensen.ImageOptimizer
         /// </summary>
         internal async Task<ConcurrentDictionary<string, CacheEntry>> ReadCacheFromDiskAsync()
         {
-            var dic = new ConcurrentDictionary<string, CacheEntry>();
+            var dic = CreateCacheDictionary();
 
             if (_cacheFile?.FullName == null || !_cacheFile.Exists)
             {
@@ -216,12 +216,17 @@ namespace MadsKristensen.ImageOptimizer
             catch (Exception ex)
             {
                 ex.LogAsync().FireAndForget();
-                return new ConcurrentDictionary<string, CacheEntry>();
+                return CreateCacheDictionary();
             }
 
 
 
             return dic;
+        }
+
+        private static ConcurrentDictionary<string, CacheEntry> CreateCacheDictionary()
+        {
+            return new ConcurrentDictionary<string, CacheEntry>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
