@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
@@ -102,7 +102,7 @@
     <PackageReference Include="BracketPipe" Version="0.7.7232.28997" />
     <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.551" />
     <PackageReference Include="Microsoft.VisualStudio.Workspace.VSIntegration" Version="16.3.43" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034">
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.9.820">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>

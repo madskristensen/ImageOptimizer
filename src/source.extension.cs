@@ -14,7 +14,7 @@ namespace MadsKristensen.ImageOptimizer
         public const string Language = "en-US";
         public const string Version = "6.0.900";
         public const string Author = "Mads Kristensen";
-        public const string Tags = "image, png, gif, jpg, svg, optimization";
+        public const string Tags = "image, png, gif, jpg, jpeg";
         public const bool IsPreview = false;
     }
 }

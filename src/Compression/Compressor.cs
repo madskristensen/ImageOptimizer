@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using BracketPipe;
 using MadsKristensen.ImageOptimizer.Common;
@@ -139,10 +140,12 @@ namespace MadsKristensen.ImageOptimizer
                 throw new InvalidOperationException($"Unable to start {Path.GetFileName(executablePath)}.");
             }
 
-            // Read the output streams asynchronously so the child process never blocks
-            // when its stdout/stderr buffers fill up while we wait for it to exit.
-            Task<string> stdErrTask = process.StandardError.ReadToEndAsync();
-            Task<string> stdOutTask = process.StandardOutput.ReadToEndAsync();
+            var standardError = new StringBuilder();
+            var standardOutput = new StringBuilder();
+            process.ErrorDataReceived += (_, e) => AppendProcessOutput(standardError, e.Data);
+            process.OutputDataReceived += (_, e) => AppendProcessOutput(standardOutput, e.Data);
+            process.BeginErrorReadLine();
+            process.BeginOutputReadLine();
             using CancellationTokenRegistration cancellationRegistration = cancellationToken.Register(() => TerminateProcessSafely(process));
 
             if (!process.WaitForExit(_processTimeoutMs))
@@ -151,14 +154,15 @@ namespace MadsKristensen.ImageOptimizer
                 throw new TimeoutException($"Process timed out after {_processTimeoutMs}ms while compressing {Path.GetFileName(sourceFile)}");
             }
 
+            process.WaitForExit();
             cancellationToken.ThrowIfCancellationRequested();
 
             if (process.ExitCode != 0)
             {
-                var error = stdErrTask.GetAwaiter().GetResult();
+                var error = standardError.ToString();
                 if (string.IsNullOrWhiteSpace(error))
                 {
-                    error = stdOutTask.GetAwaiter().GetResult();
+                    error = standardOutput.ToString();
                 }
 
                 var message = $"{Path.GetFileName(executablePath)} exited with code {process.ExitCode} while processing {Path.GetFileName(sourceFile)}.";
@@ -168,6 +172,19 @@ namespace MadsKristensen.ImageOptimizer
                 }
 
                 throw new InvalidOperationException(message);
+            }
+        }
+
+        private static void AppendProcessOutput(StringBuilder output, string line)
+        {
+            if (line == null)
+            {
+                return;
+            }
+
+            lock (output)
+            {
+                _ = output.AppendLine(line);
             }
         }
 
