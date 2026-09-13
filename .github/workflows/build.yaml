@@ -1,8 +1,5 @@
 # yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 name: "Build"
-permissions:
-  actions: write
-  contents: write
 
 on:
   push:
@@ -11,8 +8,15 @@ on:
     branches: [master]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    permissions:
+      contents: read
+      checks: write
     outputs:
       version: ${{ steps.vsix_version.outputs.version-number }}
     name: Build
@@ -22,6 +26,7 @@ jobs:
       DeployExtension: False
       Solution: ImageOptimizer.slnx
       TestProject: test\ImageOptimizer.Test\ImageOptimizer.Test.csproj
+      TestResultsDirectory: ${{ github.workspace }}\TestResults
       VsixManifestPath: src\source.extension.vsixmanifest
       VsixManifestSourcePath: src\source.extension.cs
 
@@ -30,6 +35,11 @@ jobs:
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 9.0.x
 
     - name: Cache NuGet packages
       uses: actions/cache@v5
@@ -47,32 +57,58 @@ jobs:
         vsix-token-source-file: ${{ env.VsixManifestSourcePath }}
 
     - name: Restore NuGet packages
-      run: msbuild ${{ env.Solution }} /v:m -restore /t:Restore
+      run: msbuild ${{ env.Solution }} /v:m /t:Restore /p:Configuration=${{ env.Configuration }}
 
     - name: Build
       run: msbuild ${{ env.Solution }} /v:m /m /p:Configuration=${{ env.Configuration }} /p:DeployExtension=${{ env.DeployExtension }}
 
     - name: Run tests
-      run: dotnet test ${{ env.TestProject }} --configuration ${{ env.Configuration }} --no-build --no-restore --verbosity normal --logger:"trx;LogFileName=test-results.trx"
+      run: >
+        dotnet test ${{ env.TestProject }}
+        --configuration ${{ env.Configuration }}
+        --no-build
+        --no-restore
+        --verbosity normal
+        --results-directory "${{ env.TestResultsDirectory }}"
+        --logger "trx;LogFileName=test-results.trx"
+        --collect "Code Coverage;Format=Cobertura"
 
     - name: Report test results
       uses: dorny/test-reporter@v3
-      if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+      if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
       with:
         name: Test Results
-        path: '**/test-results.trx'
+        path: TestResults/**/*.trx
         reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Add coverage summary
+      if: ${{ !cancelled() }}
+      shell: pwsh
+      run: |
+        $coverageFile = Get-ChildItem "${{ env.TestResultsDirectory }}" -Filter "*.cobertura.xml" -Recurse |
+          Select-Object -First 1
+        if (-not $coverageFile) {
+          throw "Cobertura coverage report was not produced."
+        }
+
+        [xml]$coverage = Get-Content $coverageFile.FullName
+        $lineCoverage = [double]$coverage.coverage.'line-rate'
+        "Code coverage: **$($lineCoverage.ToString('P2'))**" >> $env:GITHUB_STEP_SUMMARY
 
     - name: Upload artifact
       uses: actions/upload-artifact@v7
       with:
         name: ${{ github.event.repository.name }}.vsix
         path: src\bin\${{ env.Configuration }}\net48\ImageOptimizer.vsix
+        if-no-files-found: error
 
   publish:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     needs: build
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v6
