@@ -113,6 +113,21 @@ namespace ImageOptimizer.Test
             Console.Write($"Savings: {savings}");
         }
 
+        [TestMethod, TestCategory("WebP")]
+        public void Webp_Lossless_HandlesLossyBitstream()
+        {
+            string source = Path.Combine("artifacts", "webp", "f1-good-mOrdGw4n.webp");
+            string testFile = Path.Combine(_temp, Path.GetFileName(source));
+            File.Copy(source, testFile);
+
+            CompressionResult result = _compressor.CompressFile(testFile, CompressionType.Lossless);
+
+            Assert.AreNotEqual(CompressionOutcome.Failed, result.Outcome, result.ErrorMessage);
+            Assert.IsTrue(File.Exists(result.ResultFileName));
+            AssertValidOutput(result.ResultFileName);
+            File.Delete(result.ResultFileName);
+        }
+
         [TestMethod, TestCategory("PNG")]
         public void Png_Lossless_PreservesDecodedPixels()
         {

@@ -255,10 +255,32 @@ namespace MadsKristensen.ImageOptimizer
                 return $"-s4 -quality={_lossyQuality} \"{targetFile}\"";
             }
 
-            // Lossless: -s4 gives the smallest PNG/WebP output. JPEG output is
+            // pingo's -lossless mode only accepts WebP files with a lossless VP8L bitstream.
+            // Existing lossy WebP files are still optimized without changing their quality.
+            if (extension == ".webp" && !IsLosslessWebp(targetFile))
+            {
+                return $"-s4 \"{targetFile}\"";
+            }
+
+            // Lossless: -s4 gives the smallest PNG/lossless WebP output. JPEG output is
             // identical at -s3 and -s4, so -s3 is used for JPEG (slightly faster).
             var optimizationLevel = (extension == ".jpg" || extension == ".jpeg") ? "s3" : "s4";
             return $"-lossless -{optimizationLevel} \"{targetFile}\"";
+        }
+
+        private static bool IsLosslessWebp(string fileName)
+        {
+            using var stream = File.OpenRead(fileName);
+            if (stream.Length < 16)
+            {
+                return false;
+            }
+
+            using var reader = new BinaryReader(stream, Encoding.ASCII, leaveOpen: false);
+            return new string(reader.ReadChars(4)) == "RIFF"
+                && reader.ReadUInt32() <= stream.Length - 8
+                && new string(reader.ReadChars(4)) == "WEBP"
+                && new string(reader.ReadChars(4)) == "VP8L";
         }
 
         private string GetGifsicleArguments(string sourceFile, string targetFile, CompressionType type)
