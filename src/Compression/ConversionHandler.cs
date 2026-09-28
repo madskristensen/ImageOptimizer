@@ -12,7 +12,6 @@ namespace MadsKristensen.ImageOptimizer
     /// </summary>
     internal class ConversionHandler
     {
-        private static OutputWindowPane _outputWindowPane;
         private int _processedCount;
 
         private const int _fileNameWidth = 40;
@@ -69,8 +68,6 @@ namespace MadsKristensen.ImageOptimizer
             CompressionResult[] conversionResults = null;
             _processedCount = 0;
 
-            _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
-            await _outputWindowPane.ActivateAsync();
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
@@ -201,28 +198,35 @@ namespace MadsKristensen.ImageOptimizer
                 return;
             }
 
+            OutputWindowWriter output = await OutputWindow.BeginWriteAsync();
+
             if (options.ShowDetailedResults)
             {
-                await _outputWindowPane.WriteLineAsync(GetTableHeader());
+                await output.WriteLineAsync(GetTableHeader(), OutputColor.BrightCyan);
 
                 foreach (CompressionResult result in summary.Results)
                 {
-                    await _outputWindowPane.WriteLineAsync(FormatResultRow(result, targetExtension));
+                    await output.WriteLineAsync(
+                        FormatResultRow(result, targetExtension),
+                        OutputWindow.GetColor(result.Outcome));
 
                     if (options.LogErrorsToOutput && !string.IsNullOrWhiteSpace(result.ErrorMessage))
                     {
-                        await _outputWindowPane.WriteLineAsync($"  {result.ErrorMessage}");
+                        await output.WriteLineAsync($"  {result.ErrorMessage}", OutputColor.BrightRed);
                     }
                 }
 
-                await _outputWindowPane.WriteLineAsync(GetTableSeparator());
+                await output.WriteLineAsync(GetTableSeparator(), OutputColor.BrightCyan);
             }
 
             string message = summary.ToDisplayString($"converted to {formatName}");
             await VS.StatusBar.ShowMessageAsync(message);
-            await _outputWindowPane.WriteLineAsync(message + Environment.NewLine);
+            OutputColor summaryColor = summary.Failed > 0 || summary.TimedOut > 0
+                ? OutputColor.BrightRed
+                : OutputColor.BrightGreen;
+            await output.WriteLineAsync(message + Environment.NewLine, summaryColor);
 
-            await _outputWindowPane.ActivateAsync();
+            await output.ActivateAsync();
         }
 
         private static string GetTableHeader()

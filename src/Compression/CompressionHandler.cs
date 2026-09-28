@@ -17,7 +17,6 @@ namespace MadsKristensen.ImageOptimizer
     internal class CompressionHandler
     {
         private static readonly RatingPrompt _ratingPrompt = new("MadsKristensen.ImageOptimizer64bit", Vsix.Name, General.Instance);
-        private static OutputWindowPane _outputWindowPane;
         private int _processedCount;
 
         // Fixed column widths for table output
@@ -129,9 +128,6 @@ namespace MadsKristensen.ImageOptimizer
             CompressionResult[] compressionResults = null;
             _processedCount = 0;
 
-            // Initialize output pane (reuse existing static instance) and activate it
-            _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
-            await _outputWindowPane.ActivateAsync();
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
@@ -253,39 +249,46 @@ namespace MadsKristensen.ImageOptimizer
                 return;
             }
 
+            OutputWindowWriter output = await OutputWindow.BeginWriteAsync();
+
             if (!string.IsNullOrWhiteSpace(selectedFolderPath))
             {
-                await _outputWindowPane.WriteLineAsync(string.Format(Constants.SelectedFolderForOptimizationFormat, selectedFolderPath));
-                await _outputWindowPane.WriteLineAsync(string.Empty);
+                await output.WriteLineAsync(
+                    string.Format(Constants.SelectedFolderForOptimizationFormat, selectedFolderPath),
+                    OutputColor.BrightCyan);
+                await output.WriteLineAsync(string.Empty);
             }
 
             if (options.ShowDetailedResults)
             {
-                await _outputWindowPane.WriteLineAsync(GetTableHeader());
+                await output.WriteLineAsync(GetTableHeader(), OutputColor.BrightCyan);
 
                 foreach (CompressionResult result in summary.Results)
                 {
-                    await _outputWindowPane.WriteLineAsync(FormatResultRow(result));
+                    await output.WriteLineAsync(FormatResultRow(result), OutputWindow.GetColor(result.Outcome));
 
                     if (options.LogErrorsToOutput && !string.IsNullOrWhiteSpace(result.ErrorMessage))
                     {
-                        await _outputWindowPane.WriteLineAsync($"  {result.ErrorMessage}");
+                        await output.WriteLineAsync($"  {result.ErrorMessage}", OutputColor.BrightRed);
                     }
                 }
 
-                await _outputWindowPane.WriteLineAsync(GetTableSeparator());
+                await output.WriteLineAsync(GetTableSeparator(), OutputColor.BrightCyan);
             }
 
             string message = summary.ToDisplayString();
             await VS.StatusBar.ShowMessageAsync(message);
-            await _outputWindowPane.WriteLineAsync(message + Environment.NewLine);
+            OutputColor summaryColor = summary.Failed > 0 || summary.TimedOut > 0
+                ? OutputColor.BrightRed
+                : OutputColor.BrightGreen;
+            await output.WriteLineAsync(message + Environment.NewLine, summaryColor);
 
             if (summary.Optimized > 0)
             {
                 await options.UpdateStatisticsAsync(summary.TotalSavings, summary.Optimized);
             }
 
-            await _outputWindowPane.ActivateAsync();
+            await output.ActivateAsync();
         }
 
         /// <summary>
@@ -367,9 +370,6 @@ namespace MadsKristensen.ImageOptimizer
             var compressor = new Compressor(options.ProcessTimeoutMs, options.EffectiveLossyQuality);
             var extractor = new ResxImageExtractor();
 
-            _outputWindowPane ??= await VS.Windows.CreateOutputWindowPaneAsync(Vsix.Name);
-            await _outputWindowPane.ActivateAsync();
-
             if (options.ShowProgressInStatusBar)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
@@ -377,6 +377,7 @@ namespace MadsKristensen.ImageOptimizer
 
             var allResults = new List<ResxCompressionResult>();
             var resxFileCount = 0;
+            OutputWindowWriter output = await OutputWindow.BeginWriteAsync();
 
             try
             {
@@ -402,7 +403,7 @@ namespace MadsKristensen.ImageOptimizer
 
                             foreach (ResxCompressionResult result in results.Where(r => r.Saving > 0))
                             {
-                                await _outputWindowPane.WriteLineAsync(FormatResxResultRow(result));
+                                await output.WriteLineAsync(FormatResxResultRow(result), OutputColor.BrightGreen);
                             }
                         }
                     }
@@ -430,17 +431,21 @@ namespace MadsKristensen.ImageOptimizer
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
 
-            await DisplayResxSummaryAsync(allResults, resxFileCount);
+            await DisplayResxSummaryAsync(allResults, resxFileCount, output);
         }
 
-        private async Task DisplayResxSummaryAsync(List<ResxCompressionResult> results, int resxFileCount)
+        private async Task DisplayResxSummaryAsync(
+            List<ResxCompressionResult> results,
+            int resxFileCount,
+            OutputWindowWriter output)
         {
             var optimized = results.Where(r => r.Saving > 0).ToList();
 
             if (optimized.Count == 0)
             {
                 await VS.StatusBar.ShowMessageAsync(Constants.NoResxImagesFoundMessage);
-                await _outputWindowPane.WriteLineAsync(Constants.NoResxImagesFoundMessage);
+                await output.WriteLineAsync(Constants.NoResxImagesFoundMessage, OutputColor.BrightYellow);
+                await output.ActivateAsync();
                 return;
             }
 
@@ -457,8 +462,8 @@ namespace MadsKristensen.ImageOptimizer
                 CompressionResult.ToFileSize(totalSavings), totalPercent);
 
             await VS.StatusBar.ShowMessageAsync(message);
-            await _outputWindowPane.WriteLineAsync(message + Environment.NewLine);
-            await _outputWindowPane.ActivateAsync();
+            await output.WriteLineAsync(message + Environment.NewLine, OutputColor.BrightGreen);
+            await output.ActivateAsync();
         }
 
         /// <summary>
